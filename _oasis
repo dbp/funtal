@@ -1,0 +1,24 @@
+Name: ftal
+Version: 0.1
+Synopsis: .
+Authors: Daniel Patterson <dbp@ccs.neu.edu>
+License: PROP
+OASISFormat: 0.4
+BuildTools: ocamlbuild
+Plugins: META (0.4), DevFiles (0.4)
+Library "ftal"
+  Path: .
+  Modules: Ftal
+  BuildDepends: ppx_deriving.show,str
+
+Executable "test_ftal"
+  Path: .
+  MainIs: test.ml
+  CompiledObject: best
+  Install: false
+  BuildDepends: ftal, oUnit, str
+
+Test "test_ftal"
+  TestTools: test_ftal
+  Command: $test_ftal
+  WorkingDirectory: .

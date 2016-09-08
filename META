@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: 1ed6496aebc6e12e23af8d6a16eda4d4)
+version = "0.1"
+description = "."
+requires = "ppx_deriving.show str"
+archive(byte) = "ftal.cma"
+archive(byte, plugin) = "ftal.cma"
+archive(native) = "ftal.cmxa"
+archive(native, plugin) = "ftal.cmxs"
+exists_if = "ftal.cma"
+# OASIS_STOP
+
