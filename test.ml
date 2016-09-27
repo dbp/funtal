@@ -76,6 +76,15 @@ let test_factorial_t _ =
     (snd (F.stepn 100 (empty, F.EApp (fact, [], [F.EInt 3]))))
     (F.EInt 6)
 
+let test_closures _ =
+  let f = F.(ELam ("z", [("x", TInt)],
+                   EApp (EBoundary (TArrow ("z2", [TInt], TInt),
+                                    ([TAL.Iimport ("rf", TAL.SZeta "z2", TArrow ("z3", [TInt], TInt), ELam ("z3", [("y", TInt)], EBinop (EVar "x", BMinus, EVar "y"))); TAL.Iret (TAL.QEnd (FTAL.tytrans (TArrow ("z3", [TInt], TInt)), TAL.SZeta "z3"), "rf")], [])),
+                         [TAL.SZeta "z"],
+                         [EInt 1]))) in
+  assert_equal
+    (snd (F.stepn 40 (empty, F.EApp (f, [], [F.EInt 3]))))
+    (F.EInt 2)
 
 
 let suite = "FTAL evaluations" >:::
@@ -85,6 +94,7 @@ let suite = "FTAL evaluations" >:::
               "F: (\x -> x + x) 1 = 2" >:: test_f_app;
               "F: fact 3 = 6" >:: test_factorial_f;
               "TAL: fact 3 = 6" >:: test_factorial_t;
+              "FTAL: (\x -> FT(TF(\y -> x - y)) 1) 3 = 2" >:: test_closures
             ]
 ;;
 

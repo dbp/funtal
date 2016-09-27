@@ -38,13 +38,13 @@ module rec FTAL : sig
   val ft : F.t -> TAL.w -> TAL.mem -> (TAL.mem * F.exp)
   val tf : F.t -> F.exp -> TAL.mem -> (TAL.mem * TAL.w)
 
-  val gen_sym : unit -> string
+  val gen_sym : ?pref:string -> unit -> string
 
 end = struct
 
   let gen_sym =
     let count = ref 0 in
-    fun () -> let v = !count in count := v + 1; String.concat "" ["g"; string_of_int v]
+    fun ?(pref="g") () -> let v = !count in count := v + 1; String.concat "" [pref; string_of_int v]
 
   let rec tytrans t =
     match t with
@@ -86,14 +86,14 @@ end = struct
       let (m', v) = ft (F.tysub t (F.TRec (a, t)) a) w m in
       (m', F.EFold (a, t, v))
     | (F.TArrow (z,ts,t1), TAL.WLoc l) ->
-      let lend = gen_sym () in
+      let lend = gen_sym ~pref:"lend" () in
       let hend =
         TAL.HCode ([TAL.DZeta z],
                    [("r1", tytrans t1)],
                    (TAL.SZeta z),
                    (TAL.QEnd (tytrans t1, TAL.SZeta z)),
                    [TAL.Iret (TAL.QEnd (tytrans t1, TAL.SZeta z), "r1")]) in
-      let ps = List.map (fun t -> (gen_sym (), t)) ts in
+      let ps = List.map (fun t -> (gen_sym ~pref:"arg" (), t)) ts in
       let v = F.ELam (z, ps, F.EBoundary
                         (t1, (TAL.(List.append
                                      (List.concat (List.map (fun (x,xt) -> [Iimport ("r1", SZeta z, xt, F.EVar x); Isalloc 1; Isst (0, "r1")]) ps))
@@ -113,14 +113,14 @@ end = struct
           (fun (mx, b) (t,v) -> let (m'', w) = tf t v mx in (m'', w::b))
           (m, [])
           (List.combine ts es) in
-      let l = gen_sym () in
+      let l = gen_sym ~pref:"loc" () in
       (((l,TAL.HTuple ws)::hm',rm',sm'), TAL.WLoc l)
     | (F.TRec (a,t), F.EFold (a',t',e)) when (a',t') = (a,t) ->
       let (m', w) = tf (F.tysub t (F.TRec (a,t)) a) e m in
       (m', TAL.WFold (a,tytrans t,w))
     | (F.TArrow (z,ts,t1), F.ELam (z',ps,body)) when z = z' ->
-      let l = gen_sym () in
-      let e = gen_sym () in
+      let l = gen_sym ~pref:"lf" () in
+      let e = gen_sym ~pref:"e" () in
       let s' =
         List.fold_left (fun r e -> TAL.SCons (e,r))
           (TAL.SZeta z)
@@ -130,13 +130,13 @@ end = struct
                      s')) in
       let body_wrapped =
         let n = List.length ts in
-        List.fold_left (fun b (i, (id, t')) ->
-            F.sub (id, F.EBoundary (t', ([TAL.Isld ("r1", n+1-i);
-                                          TAL.Iret
-                                            (TAL.QEnd (tytrans t1, s),
-                                           "r1")], []))) body)
-          body
-          (List.mapi (fun i x -> (i,x)) ps)
+        F.EApp (F.ELam (z',ps,body), [TAL.SZeta z'],
+                List.mapi (fun i t' ->
+                    F.EBoundary (t', ([TAL.Isld ("r1", n-i);
+                                       TAL.Iret
+                                         (TAL.QEnd (tytrans t1, s),
+                                          "r1")], [])))
+                  (List.map snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", SZeta z, t1, body_wrapped);
                          Isld ("ra",0); Isfree (List.length ts + 1); Iret (QR "ra", "r1")]) in
@@ -406,8 +406,13 @@ end = struct
       let () = Debug.log "decomp TI ctxt" (F.show_context ctxt) in
       let _ = Debug.log "decomp TI instrs" (String.concat "; " (List.map (fun i -> TAL.show_instr i) is)) in
       let _ = Debug.log "decomp TI regs" (TAL.show_regm r) in
+      let _ = Debug.log "decomp TI stack" (TAL.show_stackm s) in
       let (m', is') = TAL.reduce (m, is) in
+      let (h',r',s') = m' in
       let _ = Debug.log "stepped TI instrs" (String.concat "; " (List.map (fun i -> TAL.show_instr i) is')) in
+      let _ = Debug.log "stepped TI regs" (TAL.show_regm r') in
+      let _ = Debug.log "stepped TI stack" (TAL.show_stackm s') in
+      let _ = Debug.log "stepped TI heap" (TAL.show_heapm h') in
       (m', plug ctxt (TI is'))
     | Some (ctxt, TC (is,h)) ->
       let m' = TAL.load m h in
@@ -524,10 +529,13 @@ and TAL : sig
   val show_h : h -> bytes
 
   type heapm = (loc * h) list
+  val show_heapm : heapm -> bytes
+
   type regm = (reg * w) list
   val show_regm : regm -> bytes
 
   type stackm = w list
+  val show_stackm : stackm -> bytes
 
   type mem = heapm * regm * stackm
 
@@ -729,7 +737,7 @@ end = struct
     | [] ->
       begin match is with
         | [] -> None
-        | Iret _ :: _-> None
+        | Iret (QEnd _, _) :: _-> None
         | Iimport (r,s,t,e) :: rest ->
           begin match F.decomp e with
             | None -> if F.value e then Some (CComponentEmpty CHoleI, F.TI is) else None
@@ -843,7 +851,7 @@ end = struct
         | _ -> raise (Failure "unfold: trying to unpack non-pack")
       end
     | ((hm,rm,sm), Isalloc n::is) ->
-      ((hm,rm,list_repeat n WUnit), is)
+      ((hm,rm,List.append (list_repeat n WUnit) sm), is)
     | ((hm,rm,sm), Isfree n::is) when List.length sm >= n ->
       ((hm,rm,list_drop n sm), is)
     | ((hm,rm,sm), Isld (rd,i)::is) when List.length sm > i ->
