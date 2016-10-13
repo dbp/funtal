@@ -28,30 +28,37 @@ let test_f_app _ =
                              [EInt 1]))))
     (empty, F.EInt 2)
 
-(* NOTE(dbp 2016-09-07): I'm confused about binding for zetas - are
-   they _all_ the same?  It doesn't actually matter for now, as they have
-   no runtime consequences, but... *)
+
+let factorial_f =
+  let f = F.(ELam ("z1", [("f", TRec ("a", TArrow ("z2", [TVar "a"; TInt], TInt)));
+                          ("x1", TInt)],
+                   EIf0 (EVar "x1",
+                         EInt 1,
+                         EBinop (EVar "x1",
+                                 BTimes,
+                                 EApp (EUnfold (EVar "f"),
+                                       TAL.SZeta "z3",
+                                       [EVar "f"; EBinop (EVar "x1", BMinus, EInt 1)]))))) in
+  F.(ELam ("z4", [("x2", TInt)],
+           EApp (f, TAL.SZeta "z4", [EFold ("b",
+                                            TArrow ("z5", [TVar "b"; TInt], TInt),
+                                            f);
+                                    EVar "x2"])))
+
+
 let test_factorial_f _ =
-  let f = F.(ELam ("z1", [("f", TRec ("a", TArrow ("z2", [TVar "a"], TInt)))],
-                   ELam ("z3", [("x1", TInt)], EIf0 (EVar "x1",
-                                                     EInt 1,
-                                                     EBinop (EVar "x1",
-                                                             BTimes,
-                                                             EApp (EApp (EUnfold (EVar "f"),
-                                                                         TAL.SZeta "z3",
-                                                                         [EVar "f"]),
-                                                                   TAL.SZeta "z3",
-                                                                   [EBinop (EVar "x1", BMinus, EInt 1)])))))) in
-  let fact = F.(ELam ("z4", [("x2", TInt)],
-                      EApp (EApp (f, TAL.SZeta "z4", [EFold ("b",
-                                                               TArrow ("z5", [TVar "b"], TInt),
-                                                               f)]),
-                            TAL.SZeta "z4",
-                            [EVar "x2"]))) in
-  (* let () = print_endline (F.show_exp (snd (F.stepn 100 (empty, F.EApp (fact, [], [F.EInt 3]))))) in *)
+    (* let () = print_endline (F.show_exp (snd (F.stepn 100 (empty, F.EApp (fact, [], [F.EInt 3]))))) in *)
   assert_equal
-    (snd (F.stepn 100 (empty, F.EApp (fact, TAL.SNil, [F.EInt 3]))))
+    (snd (F.stepn 100 (empty, F.EApp (factorial_f, TAL.SNil, [F.EInt 3]))))
     (F.EInt 6)
+
+let test_factorial_f_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC factorial_f))
+    (FTAL.FT (F.TArrow ("z4", [F.TInt], F.TInt)), TAL.SNil);;
+
 
 
 let test_factorial_t _ =
@@ -101,6 +108,7 @@ let suite = "FTAL evaluations" >:::
               "TAL: 1 + 1 = 2" >:: test2;
               "F: (\x -> x + x) 1 = 2" >:: test_f_app;
               "F: fact 3 = 6" >:: test_factorial_f;
+              "fact : int -> int" >:: test_factorial_f_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;
               "FTAL: (\x -> FT(TF(\y -> x - y)) 1) 3 = 2" >:: test_closures
             ]

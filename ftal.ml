@@ -12,7 +12,6 @@ DEBUG:
 TODO:
    - write examples out
    - do renaming for heap fragment loading
-   - actually implement type substitutions
    - implement type checker
    ...
 *)
@@ -57,6 +56,11 @@ module rec FTAL : sig
                     | TType of string * TAL.t
                     | SType of string * TAL.sigma
                     | EMarker of string * TAL.q
+
+  type rebinding = SBinding of string * string
+                 | FBinding of string * string
+                 | TBinding of string * string
+                 | EBinding of string * string
 
   val gen_sym : ?pref:string -> unit -> string
 
@@ -190,6 +194,11 @@ end = struct
                     | SType of string * TAL.sigma
                     | EMarker of string * TAL.q
 
+  type rebinding = SBinding of string * string
+                 | FBinding of string * string
+                 | TBinding of string * string
+                 | EBinding of string * string
+
   exception TypeError of string * e
 
   type context = TAL.psi list * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
@@ -208,6 +217,7 @@ end = struct
   let rec tc context e = match e with
     | FC exp -> begin
         let tc' e = tc context (FC e) in
+        let show_type = show in
         let open F in
         match exp, get_ret context with
         | EVar i, TAL.QOut -> if List.mem_assoc i (get_env context)
@@ -227,7 +237,7 @@ end = struct
           begin match tc' c with
             | FT TInt, s1 -> begin match tc (set_stack context s1) (FC e1) with
                 | FT t1, s2 -> begin match tc (set_stack context s2) (FC e2) with
-                    | FT t2, s3 -> if t1 = t2 && s2 = s3 then (FT t1, s2) else
+                    | FT t2, s3 -> if t_eq t1 t2 && s2 = s3 then (FT t1, s2) else
                         raise (TypeError ("If branches not same type", e))
                     | _ -> raise (TypeError ("If else branch not F expression", e))
                   end
@@ -245,18 +255,25 @@ end = struct
           end
         | EApp (f,s,args), TAL.QOut -> begin match tc' f with
             | FT (TArrow (z, ps, rv)), s ->
+              let _ = Debug.log "tc app" ("f: " ^ show_type (fst (tc' f))) in
+              let _ = Debug.log "tc app" ("args: " ^ (String.concat ";\n" (List.map (fun e -> show_type (fst (tc' e))) args))) in
               if List.length ps <> List.length args then
                 raise (TypeError ("Applying function to wrong number of args", e))
               else
                 (FT rv, List.fold_left (fun s0 (t,e) -> match tc (set_stack context s0) (FC e) with
-                     | FT t', s1 when t = t' -> s1
+                     | FT t', s1 when t_eq t t' -> s1
                      | _ -> raise (TypeError ("Argument to application did not have correct type", FC e))) s (List.combine ps args))
-            | _ -> raise (TypeError ("Applying non-function", e))
+            | t ->
+              let _ = Debug.log "tc gamma" (F.show_gamma (get_env context)) in
+              let _ = Debug.log "tc apply non-function" (F.show_exp f ^ " : " ^ show_type (fst t)) in
+              raise (TypeError ("Applying non-function", e))
           end
         | EFold (a,t,e), TAL.QOut ->
           begin match tc' e with
-            | FT t', s -> if t' = F.type_sub (FTAL.FType (a, TRec (a,t))) t then (FT (TRec (a,t)), s)
-              else raise (TypeError ("Type of fold doesn't match declared type", FC e))
+            | FT t', s -> if F.t_eq t' (F.type_sub (FTAL.FType (a, TRec (a,t))) t) then (FT (TRec (a,t)), s)
+              else
+                let _ = Debug.log "tc fold" (show t' ^ " <>\n" ^ show (F.type_sub (FTAL.FType (a, TRec (a,t))) t)) in
+                raise (TypeError ("Type of fold doesn't match declared type", FC e))
             | _ -> raise (TypeError ("Body of fold isn't F expression", FC e))
           end
         | EUnfold e, TAL.QOut -> begin match tc' e with
@@ -275,7 +292,7 @@ end = struct
           end
         | EBoundary (t,s,c), TAL.QOut ->
           begin match tc (set_ret context (TAL.QEnd (tytrans t, s))) (TC c) with
-            | TT t0, s0 when t0 = tytrans t && s0 = s -> (FT t, s0)
+            | TT t0, s0 when TAL.t_eq t0 (tytrans t) && s0 = s -> (FT t, s0)
             | _ -> raise (TypeError ("Boundary with contents not matching type", e))
           end
         | _ -> raise (TypeError ("F expression with invalid return marker", e))
@@ -294,6 +311,7 @@ and F : sig
     | TTuple of t list
   val show : t -> bytes
   val pp : Format.formatter -> t -> unit
+  val t_eq : t -> t -> bool
 
   type binop = BPlus | BMinus | BTimes
   val show_binop : binop -> bytes
@@ -346,7 +364,7 @@ and F : sig
   val stepn : int -> TAL.mem * exp -> TAL.mem * exp
 
   type gamma = (string * F.t) list
-
+  val show_gamma : gamma -> bytes
 
 end = struct
 
@@ -417,6 +435,38 @@ end = struct
       end
     | TTuple ts -> TTuple (List.map (type_sub p) ts)
     | _ -> typ
+
+  let rec type_rebind bind t = match t with
+    | TArrow (z,params,ret) -> begin match bind with
+        | FTAL.SBinding (z1, z2) when z = z1 ->
+          let f = type_sub (FTAL.SType (z, TAL.SZeta z2)) in
+          TArrow (z2, List.map f params, f ret)
+        | _ -> TArrow (z, List.map (type_rebind bind) params, type_rebind bind ret)
+      end
+    | TRec (a, t) -> begin match bind with
+        | FTAL.FBinding (a1, a2) when a = a1 ->
+          TRec (a2, type_sub (FTAL.FType (a, F.TVar a2)) t)
+        | _ -> TRec (a, type_rebind bind t)
+      end
+    | TTuple ts -> TTuple (List.map (type_rebind bind) ts)
+    | TVar a -> begin match bind with
+        | FTAL.FBinding (a1,a2) when a = a1 -> TVar a2
+        | _ -> t
+      end
+    | _ -> t
+
+
+  let rec t_eq t1 t2 = match t1, t2 with
+    | TVar v1, TVar v2 -> v1 = v2
+    | TUnit, TUnit -> true
+    | TInt, TInt -> true
+    | TArrow (z1, ps1, r1), TArrow (z2, ps2, r2) ->
+      List.for_all2 t_eq ps1 (List.map (type_rebind (FTAL.SBinding (z2, z1))) ps2) &&
+      t_eq r1 (type_rebind (FTAL.SBinding (z2, z1)) r2)
+    | TRec (s1, b1), TRec (s2, b2) ->
+      t_eq b1 (type_rebind (FTAL.FBinding (s2, s1)) b2)
+    | TTuple ts, TTuple ts1 -> List.for_all2 t_eq ts ts1
+    | _ -> false
 
 
   let rec sub p e =
@@ -591,6 +641,7 @@ end = struct
 
 
   type gamma = (string * F.t) list
+  [@@deriving show]
 
 end
 and TAL : sig
@@ -616,6 +667,7 @@ and TAL : sig
     | TTupleRef of t list
     | TBox of psi
 
+
   and sigma =
       SZeta of string
     | SNil
@@ -636,6 +688,7 @@ and TAL : sig
 
   val show : t -> bytes
   val pp : Format.formatter -> t -> unit
+  val t_eq : t -> t -> bool
   val show_sigma : sigma -> bytes
   val pp_sigma : Format.formatter -> sigma -> unit
   val show_q : q -> bytes
@@ -990,6 +1043,48 @@ end = struct
     | OT t -> OT (type_sub p t)
     | OS s -> OS (stack_sub p s)
     | OQ q -> OQ (retmarker_sub p q)
+
+
+  let rec type_rebind bind t = match t with
+    | TVar a -> begin match bind with
+        | FTAL.TBinding (a1,a2) when a = a1 -> TVar a2
+        | _ -> t
+      end
+    | TExists (a, b) -> begin match bind with
+        | FTAL.TBinding (a1,a2) when a = a1 ->
+          TExists (a2, type_sub (FTAL.TType (a1, TAL.TVar a2)) b)
+        | _ -> TExists (a, type_rebind bind b)
+      end
+    | TRec (a, b) -> begin match bind with
+        | FTAL.TBinding (a1,a2) when a = a1 ->
+          TRec (a2, type_sub (FTAL.TType (a1, TAL.TVar a2)) b)
+        | _ -> TRec (a, type_rebind bind b)
+      end
+    | TTupleRef ts ->
+      TTupleRef (List.map (type_rebind bind) ts)
+    | TBox (PBlock (d1, c1, s1, q1)) ->
+      raise (Failure "Not yet implemented")
+    | TBox (PTuple ts) ->
+      TBox (PTuple (List.map (type_rebind bind) ts))
+    | _ -> t
+
+
+  let rec t_eq t1 t2 = match t1, t2 with
+    | TVar v1, TVar v2 -> v1 = v2
+    | TUnit, TUnit -> true
+    | TInt, TInt -> true
+    | TExists (a1, b1), TExists (a2, b2) ->
+      t_eq b1 (type_rebind (FTAL.TBinding (a2, a1)) b2)
+    | TRec (a1, b1), TRec (a2, b2) ->
+      t_eq b1 (type_rebind (FTAL.TBinding (a2, a1)) b2)
+    | TTupleRef ts1, TTupleRef ts2 ->
+      List.for_all2 t_eq ts1 ts2
+    | TBox (PBlock (d1, c1, s1, q1)), TBox (PBlock (d2, c2, s2, q2)) ->
+      raise (Failure "Not yet implemented")
+    | TBox (PTuple ts1), TBox (PTuple ts2) ->
+      List.for_all2 t_eq ts1 ts2
+    | _ -> false
+
 
 
 
