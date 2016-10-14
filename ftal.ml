@@ -16,6 +16,40 @@ TODO:
    ...
 *)
 
+let replace rm r w = (r, w) :: List.remove_assoc r rm
+
+let rec list_replace i l x =
+  if i < 0 then raise (Failure "list_replace: don't pass negative indices!") else
+    match (i, l) with
+    | (0, _::xs) -> x::xs
+    | (_, y::xs) -> y::(list_replace (i-1) xs x)
+    | (_, []) -> raise (Failure "list_replace: index larger than list")
+
+let rec list_take n l =
+  match (n, l) with
+  | (0, _) -> []
+  | (_, x::xs) -> x::(list_take (n-1) xs)
+  | (_, []) -> raise (Failure "list_take: taking more elements than exist")
+
+let rec list_drop n l =
+  match (n, l) with
+  | (0, _) -> l
+  | (_, _::xs) -> list_drop (n-1) xs
+  | (_, []) -> raise (Failure "list_drop: dropping more elements than exist")
+
+let rec list_repeat n v =
+  match n with
+  | 0 -> []
+  | _ -> v :: list_repeat (n-1) v
+
+let list_index l x =
+  let rec f i l =
+    match l with
+    | [] -> None
+    | x'::_ when x' = x -> Some i
+    | _::xs -> f (i+1) xs
+  in f 0 l
+
 module Debug = struct
 
   let log cls msg =
@@ -1063,10 +1097,86 @@ end = struct
     | TTupleRef ts ->
       TTupleRef (List.map (type_rebind bind) ts)
     | TBox (PBlock (d1, c1, s1, q1)) ->
-      raise (Failure "Not yet implemented")
+      let (d2, s) = begin match bind with
+        | FTAL.TBinding (a1, a2) ->
+          begin match list_index d1 (DAlpha a1) with
+            | None -> (d1, None)
+            | Some idx ->
+              (list_replace idx d1 (DAlpha a2), Some (FTAL.TType (a1, TVar a2)))
+          end
+        | FTAL.SBinding (z1, z2) ->
+          begin match list_index d1 (DZeta z1) with
+            | None -> (d1, None)
+            | Some idx ->
+              (list_replace idx d1 (DZeta z2), Some (FTAL.SType (z1, SZeta z2)))
+          end
+        | FTAL.EBinding (e1, e2) ->
+          begin match list_index d1 (DEpsilon e1) with
+            | None -> (d1, None)
+            | Some idx ->
+              (list_replace idx d1 (DEpsilon e2), Some (FTAL.EMarker (e1, QEpsilon e2)))
+          end
+        | _ -> (d1, None)
+      end in
+      begin match s with
+        | None -> t
+        | Some s ->
+          TBox (PBlock (d2,
+                        List.map (fun (r, t) ->
+                            (r, type_sub s t))
+                          c1,
+                        stack_sub s s1,
+                        retmarker_sub s q1))
+      end
     | TBox (PTuple ts) ->
       TBox (PTuple (List.map (type_rebind bind) ts))
     | _ -> t
+
+  and stack_rebind bind s = match s with
+    | SZeta z -> begin match bind with
+        | FTAL.SBinding (z1,z2) when z1 = z -> SZeta z2
+        | _ -> s
+      end
+    | SNil -> s
+    | SCons (t,srest) -> SCons (type_rebind bind t,
+                                stack_rebind bind srest)
+
+
+  and retmarker_rebind bind q = match q with
+    | QEpsilon e -> begin match bind with
+        | FTAL.EBinding (e1,e2) when e = e1 ->
+          QEpsilon e2
+        | _ -> q
+      end
+    | QEnd (t,s) -> QEnd (type_rebind bind t,
+                          stack_rebind bind s)
+    | _ -> q
+
+
+  let option_cons o1 o2 = match o1,o2 with
+    | None, _ -> None
+    | _, None -> None
+    | Some x, Some xs -> Some (x::xs)
+
+  let rec delta_rebindings d1 d2 =
+    match d1,d2 with
+    | DAlpha a1::d1', DAlpha a2::d2' ->
+      option_cons
+        (if a1 = a2 then None
+         else Some (FTAL.TBinding (a1,a2)))
+        (delta_rebindings d1' d2')
+    | DZeta a1::d1', DZeta a2::d2'->
+      option_cons
+        (if a1 = a2 then None
+         else Some (FTAL.SBinding (a1,a2)))
+        (delta_rebindings d1' d2')
+    | DEpsilon a1::d1', DEpsilon a2::d2' when a1 <> a2 ->
+      option_cons
+        (if a1 = a2 then None
+         else Some (FTAL.EBinding (a1,a2)))
+        (delta_rebindings d1' d2')
+    | [], [] -> Some []
+    | _ -> None
 
 
   let rec t_eq t1 t2 = match t1, t2 with
@@ -1080,9 +1190,37 @@ end = struct
     | TTupleRef ts1, TTupleRef ts2 ->
       List.for_all2 t_eq ts1 ts2
     | TBox (PBlock (d1, c1, s1, q1)), TBox (PBlock (d2, c2, s2, q2)) ->
-      raise (Failure "Not yet implemented")
+      begin match delta_rebindings d1 d2 with
+        | None -> false
+        | Some binds ->
+          let c1 = List.sort (fun (a,_) (b,_) -> compare a b) c1 in
+          let c2 = List.sort (fun (a,_) (b,_) -> compare a b) c2 in
+          List.length c1 = List.length c2 &&
+          List.for_all2 (fun (r1, t1) (r2, t2) ->
+              r1 = r2 && t_eq t1 (List.fold_left
+                                    (fun t' b -> type_rebind b t')
+                                    t2 binds)) c1 c2 &&
+          s_eq s1 (List.fold_left (fun s b -> stack_rebind b s) s2 binds) &&
+          q_eq q1 (List.fold_left (fun q b -> retmarker_rebind b q) q2 binds)
+      end
     | TBox (PTuple ts1), TBox (PTuple ts2) ->
       List.for_all2 t_eq ts1 ts2
+    | _ -> false
+
+  and s_eq s1 s2 = match s1,s2 with
+    | SZeta z1, SZeta z2 -> z1 = z2
+    | SNil, SNil -> true
+    | SCons (t1,srest1), SCons (t2, srest2) ->
+      t_eq t1 t2 && s_eq srest1 srest2
+    | _ -> false
+
+  and q_eq q1 q2 = match q1, q2 with
+    | QR r1, QR r2 -> r1 = r2
+    | QI i1, QI i2 -> i1 = i2
+    | QEpsilon e1, QEpsilon e2 -> e1 = e2
+    | QEnd (t1, s1), QEnd (t2, s2) ->
+      t_eq t1 t2 && s_eq s1 s2
+    | QOut, QOut -> true
     | _ -> false
 
 
@@ -1117,31 +1255,6 @@ end = struct
     | (Mult, WInt n1, WInt n2) -> WInt (n1 * n2)
     | _ -> raise (Failure "delta given args that don't make any sense")
 
-  let replace rm r w = (r, w) :: List.remove_assoc r rm
-
-  let rec list_replace i l x =
-    if i < 0 then raise (Failure "list_replace: don't pass negative indices!") else
-      match (i, l) with
-      | (0, _::xs) -> x::xs
-      | (_, y::xs) -> y::(list_replace (i-1) xs x)
-      | (_, []) -> raise (Failure "list_replace: index larger than list")
-
-  let rec list_take n l =
-    match (n, l) with
-    | (0, _) -> []
-    | (_, x::xs) -> x::(list_take (n-1) xs)
-    | (_, []) -> raise (Failure "list_take: taking more elements than exist")
-
-  let rec list_drop n l =
-    match (n, l) with
-    | (0, _) -> l
-    | (_, _::xs) -> list_drop (n-1) xs
-    | (_, []) -> raise (Failure "list_drop: dropping more elements than exist")
-
-  let rec list_repeat n v =
-    match n with
-    | 0 -> []
-    | _ -> v :: list_repeat (n-1) v
 
 
   let type_zip delt os =
@@ -1153,6 +1266,7 @@ end = struct
           raise (Failure ("Trying to instantiate wrong type of type variables: "
                           ^ show_delta delt ^ " and " ^ show_omega_list os)))
       delt os
+
 
   let instrs_sub delt os is =
     let subs = type_zip delt os in
