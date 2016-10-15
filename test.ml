@@ -1,5 +1,6 @@
 open OUnit2;;
 open Ftal;;
+open Examples;;
 
 let empty = ([],[],[])
 
@@ -29,25 +30,7 @@ let test_f_app _ =
     (empty, F.EInt 2)
 
 
-let factorial_f =
-  let f = F.(ELam ("z1", [("f", TRec ("a", TArrow ("z2", [TVar "a"; TInt], TInt)));
-                          ("x1", TInt)],
-                   EIf0 (EVar "x1",
-                         EInt 1,
-                         EBinop (EVar "x1",
-                                 BTimes,
-                                 EApp (EUnfold (EVar "f"),
-                                       TAL.SZeta "z3",
-                                       [EVar "f"; EBinop (EVar "x1", BMinus, EInt 1)]))))) in
-  F.(ELam ("z4", [("x2", TInt)],
-           EApp (f, TAL.SZeta "z4", [EFold ("b",
-                                            TArrow ("z5", [TVar "b"; TInt], TInt),
-                                            f);
-                                    EVar "x2"])))
-
-
 let test_factorial_f _ =
-    (* let () = print_endline (F.show_exp (snd (F.stepn 100 (empty, F.EApp (fact, [], [F.EInt 3]))))) in *)
   assert_equal
     (snd (F.stepn 100 (empty, F.EApp (factorial_f, TAL.SNil, [F.EInt 3]))))
     (F.EInt 6)
@@ -59,35 +42,9 @@ let test_factorial_f_ty _ =
        (FTAL.FC factorial_f))
     (FTAL.FT (F.TArrow ("z4", [F.TInt], F.TInt)), TAL.SNil);;
 
-
-
 let test_factorial_t _ =
-  let lf = FTAL.gen_sym () in
-  let la = FTAL.gen_sym () in
-  let h = [(lf, TAL.(HCode ([DZeta "z3"; DEpsilon "e"],
-                            [],
-                            SCons (TInt, SZeta "z3"),
-                            QEnd (TInt, SZeta "z3"),
-                            [Isld ("rn", 0); Imv ("rr", UW (WInt 1));
-                             Ibnz ("rn", UApp (UW (WLoc la), [OS (SZeta "z3")]));
-                             Isfree 1;
-                             Iret (QEnd (TInt, SZeta "z1"), "rr")])));
-           (la, TAL.(HCode ([DZeta "z4"],
-                            [("rr", TInt); ("ri", TInt); ("rn", TInt)],
-                            SCons (TInt, SZeta "z3"),
-                            QEnd (TInt, SZeta "z3"),
-                            [Iaop (Mult, "rr", "rr", UR "rn");
-                             Iaop (Sub, "rn", "rn", UW (WInt 1));
-                             Ibnz ("rn", UApp (UW (WLoc la), [OS (SZeta "z1")]));
-                             Isfree 1;
-                             Iret (QEnd (TInt, SZeta "z4"), "rr")])))] in
-  let fact = F.(ELam ("z1", [("x", TInt)],
-                      EApp (EBoundary (TArrow ("z2", [TInt], TInt), TAL.SZeta "z2",
-                                       ([TAL.(Imv ("r1", UW (WLoc lf))); TAL.(Iret (QEnd (FTAL.tytrans (TArrow ("z1", [TInt], TInt)), SZeta "z2"), "r1"))], h)),
-                            TAL.SZeta "z1",
-                            [EVar "x"]))) in
   assert_equal
-    (snd (F.stepn 30 (empty, F.EApp (fact, TAL.SNil, [F.EInt 3]))))
+    (snd (F.stepn 30 (empty, F.EApp (factorial_t, TAL.SNil, [F.EInt 3]))))
     (F.EInt 6)
 
 let test_closures _ =
@@ -100,6 +57,16 @@ let test_closures _ =
     (snd (F.stepn 40 (empty, F.EApp (f, TAL.SNil, [F.EInt 3]))))
     (F.EInt 2)
 
+let test_blocks1 _ =
+  assert_equal
+    (snd (F.stepn 20 (empty, F.EApp (blocks_1, TAL.SNil, [F.EInt 3]))))
+    (F.EInt 5)
+
+let test_blocks2 _ =
+  assert_equal
+    (snd (F.stepn 20 (empty, F.EApp (blocks_2, TAL.SNil, [F.EInt 3]))))
+    (F.EInt 5)
+
 
 let suite = "FTAL evaluations" >:::
             [
@@ -110,7 +77,9 @@ let suite = "FTAL evaluations" >:::
               "F: fact 3 = 6" >:: test_factorial_f;
               "fact : int -> int" >:: test_factorial_f_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;
-              "FTAL: (\x -> FT(TF(\y -> x - y)) 1) 3 = 2" >:: test_closures
+              "FTAL: (\x -> FT(TF(\y -> x - y)) 1) 3 = 2" >:: test_closures;
+              "TAL(1block): (\x -> x + 2)3 = 5" >:: test_blocks1;
+              "TAL(2blocks): (\x -> x + 2)3 = 5" >:: test_blocks2;
             ]
 ;;
 
