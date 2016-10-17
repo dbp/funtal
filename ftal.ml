@@ -112,8 +112,7 @@ end = struct
     | F.TInt -> TAL.TInt
     | F.TRec (a,t) -> TAL.TRec (a, tytrans t)
     | F.TTuple ts -> TAL.TBox (TAL.PTuple (List.map tytrans ts))
-    | F.TArrow (z,ps,t1) ->
-      let zeta = gen_sym () in
+    | F.TArrow (zeta,ps,t1) ->
       let epsilon = gen_sym () in
       TAL.TBox (TAL.PBlock ([TAL.DZeta zeta; TAL.DEpsilon epsilon],
                             [("ra", TAL.TBox (TAL.PBlock ([],
