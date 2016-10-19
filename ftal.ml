@@ -83,7 +83,7 @@ module rec FTAL : sig
 
   val default_context : TAL.q -> context
 
-  val tc : context -> e -> t * TAL.sigma
+  (* val tc : context -> e -> t * TAL.sigma *)
 
   type substitution = FTerm of string * F.exp
                     | FType of string * F.t
@@ -112,17 +112,29 @@ end = struct
     | F.TInt -> TAL.TInt
     | F.TRec (a,t) -> TAL.TRec (a, tytrans t)
     | F.TTuple ts -> TAL.TBox (TAL.PTuple (List.map tytrans ts))
-    | F.TArrow (zeta,ps,t1) ->
-      let epsilon = gen_sym () in
+    | F.TArrow (ps,t1) ->
+      let zeta = gen_sym ~pref:"z" () in
+      let epsilon = gen_sym ~pref:"e" () in
       TAL.TBox (TAL.PBlock ([TAL.DZeta zeta; TAL.DEpsilon epsilon],
                             [("ra", TAL.TBox (TAL.PBlock ([],
                                                           [("r1", tytrans t1)],
-                                                          (TAL.SZeta zeta),
+                                                          (TAL.SAbstract ([], zeta)),
                                                           (TAL.QEpsilon epsilon))))],
-                            (List.fold_left (fun r e -> TAL.SCons (e,r))
-                               (TAL.SZeta zeta)
-                               (List.map tytrans ps)),
+                            TAL.SAbstract (List.map tytrans ps, zeta),
                             (TAL.QR "ra")))
+    | F.TArrowMod (ps, sin, sout, rt) ->
+      let zeta = gen_sym ~pref:"z" () in
+      let epsilon = gen_sym ~pref:"e" () in
+      TAL.(TBox (PBlock ([DZeta zeta; DEpsilon epsilon],
+                         [("ra", TBox (PBlock ([],
+                                               [("r1", tytrans rt)],
+                                               SAbstract (sout, zeta),
+                                               (QEpsilon epsilon))))],
+                         SAbstract (List.append
+                                      (List.map tytrans ps)
+                                      sin,
+                                    zeta),
+                         (QR "ra"))))
 
   let rec ft t w m =
     let (hm,rm,sm) = m in
@@ -143,22 +155,55 @@ end = struct
     | (F.TRec (a, t), TAL.WFold (a',t',w)) when tytrans (F.TRec (a,t)) = TAL.TRec (a', t') ->
       let (m', v) = ft (F.type_sub (FTAL.FType (a, F.TRec (a, t))) t) w m in
       (m', F.EFold (a, t, v))
-    | (F.TArrow (z,ts,t1), TAL.WLoc l) ->
+    | (F.TArrow (ts,t1), TAL.WLoc l) ->
+      let z1 = gen_sym ~pref:"z" () in
+      let z2 = gen_sym ~pref:"z" () in
       let lend = gen_sym ~pref:"lend" () in
       let hend =
-        TAL.HCode ([TAL.DZeta z],
+        TAL.HCode ([TAL.DZeta z1],
                    [("r1", tytrans t1)],
-                   (TAL.SZeta z),
-                   (TAL.QEnd (tytrans t1, TAL.SZeta z)),
-                   [TAL.Iret (TAL.QEnd (tytrans t1, TAL.SZeta z), "r1")]) in
+                   (TAL.SAbstract ([], z1)),
+                   (TAL.QEnd (tytrans t1, TAL.SAbstract ([], z1))),
+                   [TAL.Iret (TAL.QEnd (tytrans t1, TAL.SAbstract ([], z1)), "r1")]) in
       let ps = List.map (fun t -> (gen_sym ~pref:"arg" (), t)) ts in
-      let v = F.ELam (z, ps, F.EBoundary
-                        (t1, TAL.SZeta z, (TAL.(List.append
-                                     (List.concat (List.map (fun (x,xt) -> [Iimport ("r1", SZeta z, xt, F.EVar x); Isalloc 1; Isst (0, "r1")]) ps))
-                                     [Imv ("ra", UApp (UW (WLoc lend), [OS (SZeta z)]));
-                                      Ijmp (UApp (UW w, [OS (SZeta z); OQ (QEnd (tytrans t1, SZeta z))]))], []))))
+      let v = F.ELam
+          (ps, F.EBoundary
+             (t1, (TAL.(List.concat
+                          [[Iprotect ([], z2)];
+                           (List.concat (List.map (fun (x,xt) ->
+                                [Iimport ("r1", SAbstract ([], z2), xt, F.EVar x);
+                                 Isalloc 1;
+                                 Isst (0, "r1")]) ps));
+                           [Imv ("ra", UApp (UW (WLoc lend), [OS (SAbstract ([], z2))]));
+                            Ijmp (UApp (UW w, [OS (SAbstract ([], z2));
+                                               OQ (QEnd (tytrans t1, SAbstract ([], z2)))]))]],
+                        []))))
       in (((lend, hend)::hm,rm,sm), v)
-
+    | (F.TArrowMod (ts,sin,sout,t1), TAL.WLoc l) ->
+      let lend = gen_sym ~pref:"lend" () in
+      let z1 = gen_sym ~pref:"z" () in
+      let z2 = gen_sym ~pref:"z" () in
+      let hend =
+        TAL.HCode ([TAL.DZeta z1],
+                   [("r1", tytrans t1)],
+                   TAL.SAbstract (sin, z1),
+                   (TAL.QEnd (tytrans t1, TAL.SAbstract (sout, z1))),
+                   [TAL.Iret (TAL.QEnd (tytrans t1, TAL.SAbstract (sout, z1)), "r1")]) in
+      let ps = List.map (fun t -> (gen_sym ~pref:"arg" (), t)) ts in
+      let v = F.ELamMod
+          (ps, sin, sout, F.EBoundary
+             (t1, (TAL.(List.concat
+                          [(List.concat (List.map (fun (x,xt) ->
+                               [Iprotect (sin, z2);
+                                Iimport ("r1", SAbstract (sin, z2), xt, F.EVar x);
+                                Isalloc 1;
+                                Isst (0, "r1")]) ps));
+                           [Imv ("ra", UApp (UW (WLoc lend),
+                                             [OS (SAbstract (sout, z2))]));
+                            Ijmp (UApp (UW w, [OS (SAbstract (sin, z2));
+                                               OQ (QEnd (tytrans t1, SAbstract (sout, z2)))]))]],
+                        []))))
+      in (((lend, hend)::hm,rm,sm), v)
     | _ -> raise (Failure "ft: can't convert")
 
   let rec tf t v m =
@@ -176,32 +221,63 @@ end = struct
     | (F.TRec (a,t), F.EFold (a',t',e)) when (a',t') = (a,t) ->
       let (m', w) = tf (F.type_sub (FTAL.FType (a, F.TRec (a,t))) t) e m in
       (m', TAL.WFold (a,tytrans t,w))
-    | (F.TArrow (z,ts,t1), F.ELam (z',ps,body)) when z = z' ->
+    | (F.TArrow (ts,t1), F.ELam (ps,body)) ->
       let l = gen_sym ~pref:"lf" () in
       let e = gen_sym ~pref:"e" () in
-      let s' =
-        List.fold_left (fun r e -> TAL.SCons (e,r))
-          (TAL.SZeta z)
-          (List.map tytrans ts) in
-      let s = TAL.(SCons (TBox (PBlock ([], [("r1", tytrans t1)],
-                                           SZeta z, QEpsilon e)),
-                     s')) in
+      let z1 = gen_sym ~pref:"z" () in
+      let s' = TAL.SAbstract (List.map tytrans ts, z1) in
+      let s = TAL.(SAbstract ((TBox (PBlock ([], [("r1", tytrans t1)],
+                                             SAbstract ([], z1), QEpsilon e))) ::
+                              List.map tytrans ts, z1)) in
       let body_wrapped =
         let n = List.length ts in
-        F.EApp (F.ELam (z',ps,body), TAL.SZeta z',
+        F.EApp (F.ELam (ps,body),
                 List.mapi (fun i t' ->
-                    F.EBoundary (t', s, ([TAL.Isld ("r1", n-i);
+                    F.EBoundary (t', ([TAL.Isld ("r1", n-i);
                                        TAL.Iret
                                          (TAL.QEnd (tytrans t1, s),
                                           "r1")], [])))
                   (List.map snd ps))
       in
-      let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", SZeta z, t1, body_wrapped);
+      let instrs = TAL.([Isalloc 1; Isst (0, "ra");
+                         Iimport ("r1", SAbstract ([], z1), t1, body_wrapped);
                          Isld ("ra",0); Isfree (List.length ts + 1); Iret (QR "ra", "r1")]) in
       let h =
         TAL.(HCode
-               ([DZeta z; DEpsilon e],
-                [("ra", TBox (PBlock ([], [("r1", tytrans t1)], SZeta z, QEpsilon e)))],
+               ([DZeta z1; DEpsilon e],
+                [("ra", TBox (PBlock ([], [("r1", tytrans t1)], SAbstract ([], z1), QEpsilon e)))],
+                s',
+                QR "ra",
+                instrs))
+      in
+      (((l,h)::hm,rm,sm), TAL.WLoc l)
+
+    | (F.TArrowMod (ts,sin,sout,t1), F.ELamMod (ps,sin',sout',body))
+      when sin = sin && sout = sout' ->
+      let l = gen_sym ~pref:"lf" () in
+      let e = gen_sym ~pref:"e" () in
+      let z1 = gen_sym ~pref:"z" () in
+      let s' = TAL.SAbstract (List.map tytrans ts, z1) in
+      let s = TAL.(SAbstract ((TBox (PBlock ([], [("r1", tytrans t1)],
+                                             SAbstract ([], z1), QEpsilon e))) ::
+                              List.map tytrans ts, z1)) in
+
+      let body_wrapped =
+        let n = List.length ts in
+        F.EApp (F.ELamMod (ps,sin,sout,body),
+                List.mapi (fun i t' ->
+                    F.EBoundary (t', ([TAL.Isld ("r1", n-i);
+                                       TAL.Iret
+                                         (TAL.QEnd (tytrans t1, s),
+                                          "r1")], [])))
+                  (List.map snd ps))
+      in
+      let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", SAbstract ([], z1), t1, body_wrapped);
+                         Isld ("ra",0); Isfree (List.length ts + 1); Iret (QR "ra", "r1")]) in
+      let h =
+        TAL.(HCode
+               ([DZeta z1; DEpsilon e],
+                [("ra", TBox (PBlock ([], [("r1", tytrans t1)], SAbstract ([], z1), QEpsilon e)))],
                 s',
                 QR "ra",
                 instrs))
@@ -236,7 +312,7 @@ end = struct
 
   type context = TAL.psi list * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
 
-  let default_context q = ([],[],[],[],q,TAL.SNil)
+  let default_context q = ([],[],[],[],q,TAL.SConcrete [])
 
   let get_env (_,_,g,_,_,_) = g
   let set_env (p,d,_,c,q,s) g = (p,d,g,c,q,s)
@@ -247,90 +323,100 @@ end = struct
   let get_stack (_,_,_,_,_,s) = s
   let set_stack (p,d,g,c,q,_) s = (p,d,g,c,q,s)
 
-  let rec tc context e = match e with
-    | FC exp -> begin
-        let tc' e = tc context (FC e) in
-        let show_type = show in
-        let open F in
-        match exp, get_ret context with
-        | EVar i, TAL.QOut -> if List.mem_assoc i (get_env context)
-          then (FT (List.assoc i (get_env context)), get_stack context)
-          else raise (TypeError ("Variable not in scope", e))
-        | EUnit, TAL.QOut  -> (FT TUnit, get_stack context)
-        | EInt _, TAL.QOut -> (FT TInt, get_stack context)
-        | EBinop (e1,_,e2), TAL.QOut ->
-          begin match tc' e1 with
-            | (FT TInt, s1) -> begin match tc (set_stack context s1) (FC e2) with
-                | (FT TInt, s2) -> (FT TInt, s2)
-                | _ -> raise (TypeError ("Second argument to binop not integer", e))
-              end
-            | _ -> raise (TypeError ("First argument to binop not integer", e))
-          end
-        | EIf0 (c,e1,e2), TAL.QOut ->
-          begin match tc' c with
-            | FT TInt, s1 -> begin match tc (set_stack context s1) (FC e1) with
-                | FT t1, s2 -> begin match tc (set_stack context s2) (FC e2) with
-                    | FT t2, s3 -> if t_eq t1 t2 && s2 = s3 then (FT t1, s2) else
-                        raise (TypeError ("If branches not same type", e))
-                    | _ -> raise (TypeError ("If else branch not F expression", e))
-                  end
-                | _ -> raise (TypeError ("If then branch not F expression", e))
-              end
-            | _ -> raise (TypeError ("If condition not an integer", e))
-          end
-        | ELam (z,ps,b), TAL.QOut ->
-          let zeta = TAL.SZeta (gen_sym ~pref:"z" ()) in
-          begin match tc (set_stack (set_env context (List.append ps (get_env context))) zeta)
-                        (FC b) with
-          | (FT t, zeta') when zeta = zeta' -> (FT (TArrow (z, List.map snd ps, t)), get_stack context)
-          | (FT _, _) -> raise (TypeError ("Function body does not preserve stack", e))
-          | _ -> raise (TypeError ("Function body not F code", e))
-          end
-        | EApp (f,s,args), TAL.QOut -> begin match tc' f with
-            | FT (TArrow (z, ps, rv)), s ->
-              let _ = Debug.log "tc app" ("f: " ^ show_type (fst (tc' f))) in
-              let _ = Debug.log "tc app" ("args: " ^ (String.concat ";\n" (List.map (fun e -> show_type (fst (tc' e))) args))) in
-              if List.length ps <> List.length args then
-                raise (TypeError ("Applying function to wrong number of args", e))
-              else
-                (FT rv, List.fold_left (fun s0 (t,e) -> match tc (set_stack context s0) (FC e) with
-                     | FT t', s1 when t_eq t t' -> s1
-                     | _ -> raise (TypeError ("Argument to application did not have correct type", FC e))) s (List.combine ps args))
-            | t ->
-              let _ = Debug.log "tc gamma" (F.show_gamma (get_env context)) in
-              let _ = Debug.log "tc apply non-function" (F.show_exp f ^ " : " ^ show_type (fst t)) in
-              raise (TypeError ("Applying non-function", e))
-          end
-        | EFold (a,t,e), TAL.QOut ->
-          begin match tc' e with
-            | FT t', s -> if F.t_eq t' (F.type_sub (FTAL.FType (a, TRec (a,t))) t) then (FT (TRec (a,t)), s)
-              else
-                let _ = Debug.log "tc fold" (show t' ^ " <>\n" ^ show (F.type_sub (FTAL.FType (a, TRec (a,t))) t)) in
-                raise (TypeError ("Type of fold doesn't match declared type", FC e))
-            | _ -> raise (TypeError ("Body of fold isn't F expression", FC e))
-          end
-        | EUnfold e, TAL.QOut -> begin match tc' e with
-            | FT (TRec (a,t)), s -> (FT (F.type_sub (FTAL.FType (a, TRec (a,t))) t), s)
-            | _ -> raise (TypeError ("Unfolding a non recursive type", FC e))
-          end
-        | ETuple es, TAL.QOut ->
-          begin match List.fold_left (fun (l,s0) e -> match tc (set_stack context s0) (FC e) with
-              | FT t', s1 -> (List.append l [t'], s1)
-              | _ -> raise (TypeError ("Tuple element isn't an F expression", FC e))) ([], get_stack context) es with
-          | l,s -> (FT (TTuple l), s)
-          end
-        | EPi (n,e'), TAL.QOut -> begin match tc' e' with
-            | FT (TTuple l), s when List.length l > n -> (FT (List.nth l n), s)
-            | _ -> raise (TypeError ("Applying pi to non-tuple, or with too high index", e))
-          end
-        | EBoundary (t,s,c), TAL.QOut ->
-          begin match tc (set_ret context (TAL.QEnd (tytrans t, s))) (TC c) with
-            | TT t0, s0 when TAL.t_eq t0 (tytrans t) && s0 = s -> (FT t, s0)
-            | _ -> raise (TypeError ("Boundary with contents not matching type", e))
-          end
-        | _ -> raise (TypeError ("F expression with invalid return marker", e))
-      end
-    | TC comp -> raise (Failure "Not defined yet")
+  (* let rec tc context e = match e with *)
+  (*   | FC exp -> begin *)
+  (*       let tc' e = tc context (FC e) in *)
+  (*       let show_type = show in *)
+  (*       let open F in *)
+  (*       match exp, get_ret context with *)
+  (*       | EVar i, TAL.QOut -> if List.mem_assoc i (get_env context) *)
+  (*         then (FT (List.assoc i (get_env context)), get_stack context) *)
+  (*         else raise (TypeError ("Variable not in scope", e)) *)
+  (*       | EUnit, TAL.QOut  -> (FT TUnit, get_stack context) *)
+  (*       | EInt _, TAL.QOut -> (FT TInt, get_stack context) *)
+  (*       | EBinop (e1,_,e2), TAL.QOut -> *)
+  (*         begin match tc' e1 with *)
+  (*           | (FT TInt, s1) -> begin match tc (set_stack context s1) (FC e2) with *)
+  (*               | (FT TInt, s2) -> (FT TInt, s2) *)
+  (*               | _ -> raise (TypeError ("Second argument to binop not integer", e)) *)
+  (*             end *)
+  (*           | _ -> raise (TypeError ("First argument to binop not integer", e)) *)
+  (*         end *)
+  (*       | EIf0 (c,e1,e2), TAL.QOut -> *)
+  (*         begin match tc' c with *)
+  (*           | FT TInt, s1 -> begin match tc (set_stack context s1) (FC e1) with *)
+  (*               | FT t1, s2 -> begin match tc (set_stack context s2) (FC e2) with *)
+  (*                   | FT t2, s3 -> if t_eq t1 t2 && s2 = s3 then (FT t1, s2) else *)
+  (*                       raise (TypeError ("If branches not same type", e)) *)
+  (*                   | _ -> raise (TypeError ("If else branch not F expression", e)) *)
+  (*                 end *)
+  (*               | _ -> raise (TypeError ("If then branch not F expression", e)) *)
+  (*             end *)
+  (*           | _ -> raise (TypeError ("If condition not an integer", e)) *)
+  (*         end *)
+  (*       | ELam (ps,b), TAL.QOut -> *)
+  (*         let zeta = TAL.SAbstract ([], gen_sym ~pref:"z" ()) in *)
+  (*         begin match tc (set_stack (set_env context (List.append ps (get_env context))) zeta) *)
+  (*                       (FC b) with *)
+  (*         | (FT t, zeta') when zeta = zeta' -> (FT (TArrow (List.map snd ps, t)), get_stack context) *)
+  (*         | (FT _, _) -> raise (TypeError ("Function body does not preserve stack", e)) *)
+  (*         | _ -> raise (TypeError ("Function body not F code", e)) *)
+  (*         end *)
+  (*       | ELamMod (ps,sin,sout,b), TAL.QOut -> *)
+  (*         let z = gen_sym ~pref:"z" () in *)
+  (*         let zeta = TAL.SAbstract (sin, z) in *)
+  (*         let zeta_out = TAL.SAbstract (sout, z) in *)
+  (*         begin match tc (set_stack (set_env context (List.append ps (get_env context))) zeta) *)
+  (*                       (FC b) with *)
+  (*         | (FT t, zeta') when zeta_out = zeta' -> (FT (TArrow (List.map snd ps, t)), get_stack context) *)
+  (*         | (FT _, _) -> raise (TypeError ("Function body manipulates stack in illegal way", e)) *)
+  (*         | _ -> raise (TypeError ("Function body not F code", e)) *)
+  (*         end *)
+  (*       | EApp (f,args), TAL.QOut -> begin match tc' f with *)
+  (*           | FT (TArrow (ps, rv)), s -> *)
+  (*             let _ = Debug.log "tc app" ("f: " ^ show_type (fst (tc' f))) in *)
+  (*             let _ = Debug.log "tc app" ("args: " ^ (String.concat ";\n" (List.map (fun e -> show_type (fst (tc' e))) args))) in *)
+  (*             if List.length ps <> List.length args then *)
+  (*               raise (TypeError ("Applying function to wrong number of args", e)) *)
+  (*             else *)
+  (*               (FT rv, List.fold_left (fun s0 (t,e) -> match tc (set_stack context s0) (FC e) with *)
+  (*                    | FT t', s1 when t_eq t t' -> s1 *)
+  (*                    | _ -> raise (TypeError ("Argument to application did not have correct type", FC e))) s (List.combine ps args)) *)
+  (*           | t -> *)
+  (*             let _ = Debug.log "tc gamma" (F.show_gamma (get_env context)) in *)
+  (*             let _ = Debug.log "tc apply non-function" (F.show_exp f ^ " : " ^ show_type (fst t)) in *)
+  (*             raise (TypeError ("Applying non-function", e)) *)
+  (*         end *)
+  (*       | EFold (a,t,e), TAL.QOut -> *)
+  (*         begin match tc' e with *)
+  (*           | FT t', s -> if F.t_eq t' (F.type_sub (FTAL.FType (a, TRec (a,t))) t) then (FT (TRec (a,t)), s) *)
+  (*             else *)
+  (*               let _ = Debug.log "tc fold" (show t' ^ " <>\n" ^ show (F.type_sub (FTAL.FType (a, TRec (a,t))) t)) in *)
+  (*               raise (TypeError ("Type of fold doesn't match declared type", FC e)) *)
+  (*           | _ -> raise (TypeError ("Body of fold isn't F expression", FC e)) *)
+  (*         end *)
+  (*       | EUnfold e, TAL.QOut -> begin match tc' e with *)
+  (*           | FT (TRec (a,t)), s -> (FT (F.type_sub (FTAL.FType (a, TRec (a,t))) t), s) *)
+  (*           | _ -> raise (TypeError ("Unfolding a non recursive type", FC e)) *)
+  (*         end *)
+  (*       | ETuple es, TAL.QOut -> *)
+  (*         begin match List.fold_left (fun (l,s0) e -> match tc (set_stack context s0) (FC e) with *)
+  (*             | FT t', s1 -> (List.append l [t'], s1) *)
+  (*             | _ -> raise (TypeError ("Tuple element isn't an F expression", FC e))) ([], get_stack context) es with *)
+  (*         | l,s -> (FT (TTuple l), s) *)
+  (*         end *)
+  (*       | EPi (n,e'), TAL.QOut -> begin match tc' e' with *)
+  (*           | FT (TTuple l), s when List.length l > n -> (FT (List.nth l n), s) *)
+  (*           | _ -> raise (TypeError ("Applying pi to non-tuple, or with too high index", e)) *)
+  (*         end *)
+  (*       | EBoundary (t,s,c), TAL.QOut -> *)
+  (*         begin match tc (set_ret context (TAL.QEnd (tytrans t, s))) (TC c) with *)
+  (*           | TT t0, s0 when TAL.t_eq t0 (tytrans t) && s0 = s -> (FT t, s0) *)
+  (*           | _ -> raise (TypeError ("Boundary with contents not matching type", e)) *)
+  (*         end *)
+  (*       | _ -> raise (TypeError ("F expression with invalid return marker", e)) *)
+  (*     end *)
+  (*   | TC (is,h) -> raise (Failure "Undefined") *)
 
 end
 and F : sig
@@ -339,7 +425,8 @@ and F : sig
     TVar of string
     | TUnit
     | TInt
-    | TArrow of string * t list * t
+    | TArrow of t list * t
+    | TArrowMod of t list * TAL.sigma_prefix * TAL.sigma_prefix * t
     | TRec of string * t
     | TTuple of t list
   val show : t -> bytes
@@ -355,13 +442,14 @@ and F : sig
     | EInt of int
     | EBinop of exp * binop * exp
     | EIf0 of exp * exp * exp
-    | ELam of string * (string * t) list * exp
-    | EApp of exp * TAL.sigma * exp list
+    | ELam of (string * t) list * exp
+    | ELamMod of (string * t) list * TAL.sigma_prefix * TAL.sigma_prefix * exp
+    | EApp of exp * exp list
     | EFold of string * t * exp
     | EUnfold of exp
     | ETuple of exp list
     | EPi of int * exp
-    | EBoundary of t * TAL.sigma * TAL.component
+    | EBoundary of t * TAL.component
   val show_exp : exp -> bytes
   val pp_exp : Format.formatter -> exp -> unit
 
@@ -370,13 +458,13 @@ and F : sig
     | CBinop1 of context * binop * exp
     | CBinop2 of exp * binop * context
     | CIf0 of context * exp * exp
-    | CApp1 of context * TAL.sigma * exp list
-    | CAppn of exp * TAL.sigma * exp list * context * exp list
+    | CApp1 of context * exp list
+    | CAppn of exp * exp list * context * exp list
     | CFold of string * t * context
     | CUnfold of context
     | CTuple of exp list * context * exp list
     | CPi of int * context
-    | CBoundary of t * TAL.sigma * TAL.context
+    | CBoundary of t * TAL.context
   val show_context : context -> bytes
   val pp_context : Format.formatter -> context -> unit
 
@@ -405,7 +493,8 @@ end = struct
     TVar of string
     | TUnit
     | TInt
-    | TArrow of string * t list * t
+    | TArrow of t list * t
+    | TArrowMod of t list * TAL.sigma_prefix * TAL.sigma_prefix * t
     | TRec of string * t
     | TTuple of t list
   [@@deriving show]
@@ -419,13 +508,14 @@ end = struct
     | EInt of int
     | EBinop of exp * binop * exp
     | EIf0 of exp * exp * exp
-    | ELam of string * (string * t) list * exp
-    | EApp of exp * TAL.sigma * exp list
+    | ELam of (string * t) list * exp
+    | ELamMod of (string * t) list * TAL.sigma_prefix * TAL.sigma_prefix * exp
+    | EApp of exp * exp list
     | EFold of string * t * exp
     | EUnfold of exp
     | ETuple of exp list
     | EPi of int * exp
-    | EBoundary of t * TAL.sigma * TAL.component
+    | EBoundary of t * TAL.component
   [@@deriving show]
 
   let rec value e =
@@ -442,13 +532,13 @@ end = struct
     | CBinop1 of context * binop * exp
     | CBinop2 of exp * binop * context
     | CIf0 of context * exp * exp
-    | CApp1 of context * TAL.sigma * exp list
-    | CAppn of exp * TAL.sigma * exp list * context * exp list
+    | CApp1 of context * exp list
+    | CAppn of exp * exp list * context * exp list
     | CFold of string * t * context
     | CUnfold of context
     | CTuple of exp list * context * exp list
     | CPi of int * context
-    | CBoundary of t * TAL.sigma * TAL.context
+    | CBoundary of t * TAL.context
   [@@deriving show]
 
   type env = (string * t) list
@@ -458,10 +548,10 @@ end = struct
         | FTAL.FType (a', t) when a = a' -> t
         | _ -> typ
       end
-    | TArrow (z,params,ret) -> begin match p with
-        | FTAL.SType (z', s) when z = z' -> typ
-        | _ -> TArrow (z, List.map (type_sub p) params, type_sub p ret)
-      end
+    | TArrow (params,ret) ->
+      TArrow (List.map (type_sub p) params, type_sub p ret)
+    | TArrowMod (params, sin, sout, ret) ->
+      TArrowMod (List.map (type_sub p) params, List.map (TAL.type_sub p) sin, List.map (TAL.type_sub p) sout, type_sub p ret)
     | TRec (a, t) -> begin match p with
         | FTAL.FType (a', t) when a = a' -> typ
         | _ -> TRec (a, type_sub p t)
@@ -470,12 +560,12 @@ end = struct
     | _ -> typ
 
   let rec type_rebind bind t = match t with
-    | TArrow (z,params,ret) -> begin match bind with
-        | FTAL.SBinding (z1, z2) when z = z1 ->
-          let f = type_sub (FTAL.SType (z, TAL.SZeta z2)) in
-          TArrow (z2, List.map f params, f ret)
-        | _ -> TArrow (z, List.map (type_rebind bind) params, type_rebind bind ret)
-      end
+    | TArrow (params,ret) -> TArrow (List.map (type_rebind bind) params, type_rebind bind ret)
+    | TArrowMod (params,sin,sout,ret) ->
+      TArrowMod (List.map (type_rebind bind) params,
+                 List.map (TAL.type_rebind bind) sin,
+                 List.map (TAL.type_rebind bind) sout,
+                 type_rebind bind ret)
     | TRec (a, t) -> begin match bind with
         | FTAL.FBinding (a1, a2) when a = a1 ->
           TRec (a2, type_sub (FTAL.FType (a, F.TVar a2)) t)
@@ -493,9 +583,14 @@ end = struct
     | TVar v1, TVar v2 -> v1 = v2
     | TUnit, TUnit -> true
     | TInt, TInt -> true
-    | TArrow (z1, ps1, r1), TArrow (z2, ps2, r2) ->
-      List.for_all2 t_eq ps1 (List.map (type_rebind (FTAL.SBinding (z2, z1))) ps2) &&
-      t_eq r1 (type_rebind (FTAL.SBinding (z2, z1)) r2)
+    | TArrow (ps1, r1), TArrow (ps2, r2) ->
+      List.for_all2 t_eq ps1 ps2 &&
+      t_eq r1 r2
+    | TArrowMod (ps1, sin1, sout1, r1), TArrowMod (ps2, sin2, sout2, r2) ->
+      List.for_all2 t_eq ps1 ps2 &&
+      List.for_all2 TAL.t_eq sin1 sin2 &&
+      List.for_all2 TAL.t_eq sout1 sout2 &&
+      t_eq r1 r2
     | TRec (s1, b1), TRec (s2, b2) ->
       t_eq b1 (type_rebind (FTAL.FBinding (s2, s1)) b2)
     | TTuple ts, TTuple ts1 -> List.for_all2 t_eq ts ts1
@@ -512,14 +607,18 @@ end = struct
     | EInt _ -> e
     | EBinop (e1, b, e2) -> EBinop (sub p e1, b, sub p e2)
     | EIf0 (e1, e2, e3) -> EIf0 (sub p e1, sub p e2, sub p e3)
-    | ELam (zeta, args, body) ->
+    | ELam (args, body) ->
       begin match p with
         | FTAL.FTerm (x', e') when List.mem_assoc x' args -> e
-        | FTAL.SType (z, s) when zeta = z -> e
-        | _ -> ELam (zeta, args, sub p body)
+        | _ -> ELam (args, sub p body)
       end
-    | EApp (e1, s, eargs) ->
-      EApp (sub p e1, TAL.stack_sub p s, List.map (sub p) eargs)
+    | ELamMod (args, sin, sout, body) ->
+      begin match p with
+        | FTAL.FTerm (x', e') when List.mem_assoc x' args -> e
+        | _ -> ELamMod (args, sin, sout, sub p body)
+      end
+    | EApp (e1, eargs) ->
+      EApp (sub p e1, List.map (sub p) eargs)
     | EFold (s, t, e1) ->
       begin match p with
         | FTAL.FType (a, t') when a = s -> e
@@ -528,7 +627,7 @@ end = struct
     | EUnfold e1 -> EUnfold (sub p e1)
     | ETuple es -> ETuple (List.map (sub p) es)
     | EPi (n, e1) -> EPi (n, sub p e1)
-    | EBoundary (t,s,comp) -> EBoundary (type_sub p t, TAL.stack_sub p s, TAL.sub p comp)
+    | EBoundary (t,comp) -> EBoundary (type_sub p t, TAL.sub p comp)
 
 
 
@@ -540,14 +639,16 @@ end = struct
     | EBinop (EInt n1, BTimes, EInt n2) -> (m, EInt (n1 * n2))
     | EIf0 (EInt 0, e2, e3) -> (m, e2)
     | EIf0 (EInt _, e2, e3) -> (m, e3)
-    | EApp (ELam (zeta, ps, body), s, eargs) when List.(length ps = length eargs) ->
-      (m, List.fold_left (fun e p -> sub p e) (sub (FTAL.SType (zeta, s)) body) (List.map2 (fun (x,_) e -> FTAL.FTerm (x,e)) ps eargs))
+    | EApp (ELam (ps, body), eargs) when List.(length ps = length eargs) ->
+      (m, List.fold_left (fun e p -> sub p e) body (List.map2 (fun (x,_) e -> FTAL.FTerm (x,e)) ps eargs))
+    | EApp (ELamMod (ps, sin, sout, body), eargs) when List.(length ps = length eargs) ->
+      (m, List.fold_left (fun e p -> sub p e) body (List.map2 (fun (x,_) e -> FTAL.FTerm (x,e)) ps eargs))
     | EUnfold (EFold (_,_,eb)) -> (m, eb)
     | EPi (n, (ETuple vs)) when List.length vs > n -> (m, List.nth vs n)
     (* NOTE(dbp 2016-10-13): FTAL.tytrans t = t' should hold as well,
        but tytrans gen_syms so we need some sort of alpha equivalence (or
        to just fix how we do names). *)
-    | EBoundary (t, s, ([TAL.Iret (TAL.QEnd (t',s'),r)],[])) when s = s' ->
+    | EBoundary (t, ([TAL.Iret (TAL.QEnd (t',s'),r)],[]))->
       let (hm,rm,sm) = m in
       FTAL.ft t (List.assoc r rm) m
     | _ -> (m, e)
@@ -585,11 +686,11 @@ end = struct
     | EIf0 (e1, e2, e3) when value e1 ->
       Some (CHole, F e)
 
-    | EApp (e1, s, eargs) when not (value e1) ->
-      decomp_cont e1 (fun ctxt e' -> Some (CApp1 (ctxt, s, eargs), e'))
-    | EApp (e1, s, eargs) when value e1 && List.exists (fun x -> not (value x)) eargs ->
-      decomp_list eargs (fun bef ctxt aft e' -> Some (CAppn (e1, s, bef, ctxt, aft), e'))
-    | EApp (e1, os, eargs) -> Some (CHole, F e)
+    | EApp (e1, eargs) when not (value e1) ->
+      decomp_cont e1 (fun ctxt e' -> Some (CApp1 (ctxt, eargs), e'))
+    | EApp (e1, eargs) when value e1 && List.exists (fun x -> not (value x)) eargs ->
+      decomp_list eargs (fun bef ctxt aft e' -> Some (CAppn (e1, bef, ctxt, aft), e'))
+    | EApp (e1, eargs) -> Some (CHole, F e)
 
     | EUnfold e1 when value e1 -> Some (CHole, F e)
     | EUnfold e1 -> decomp_cont e1 (fun ctxt e' -> Some (CUnfold ctxt, e'))
@@ -601,10 +702,10 @@ end = struct
     | EPi (n, e1) ->
       decomp_cont e1 (fun ctxt e' -> Some (CPi (n, ctxt), e'))
 
-    | EBoundary (t, s, comp) ->
+    | EBoundary (t, comp) ->
       begin match TAL.decomp comp with
           None -> Some (CHole, F e)
-        | Some (ctxt, e') -> Some (CBoundary (t, s, ctxt), e')
+        | Some (ctxt, e') -> Some (CBoundary (t, ctxt), e')
       end
 
     | _ -> None
@@ -631,13 +732,13 @@ end = struct
     | CBinop1 (ctxt', b, e1) -> EBinop (plug ctxt' e, b, e1)
     | CBinop2 (e1, b, ctxt') -> EBinop (e1, b, plug ctxt' e)
     | CIf0 (ctxt', e1, e2) -> EIf0 (plug ctxt' e, e1, e2)
-    | CApp1 (ctxt', s, es) -> EApp (plug ctxt' e, s, es)
-    | CAppn (ef, s, bef, ctxt', aft) -> EApp (ef, s, List.concat [bef; [plug ctxt' e]; aft])
+    | CApp1 (ctxt', es) -> EApp (plug ctxt' e, es)
+    | CAppn (ef, bef, ctxt', aft) -> EApp (ef, List.concat [bef; [plug ctxt' e]; aft])
     | CFold (s, t, ctxt') -> EFold (s, t, plug ctxt' e)
     | CUnfold ctxt' -> EUnfold (plug ctxt' e)
     | CTuple (bef, ctxt', aft) -> ETuple (List.concat [bef; [plug ctxt' e]; aft])
     | CPi (n, ctxt') -> EPi (n, plug ctxt' e)
-    | CBoundary (t,s,talctxt) -> EBoundary (t, s, TAL.plug talctxt e)
+    | CBoundary (t,talctxt) -> EBoundary (t, TAL.plug talctxt e)
 
 
   let step (m, e) =
@@ -700,11 +801,11 @@ and TAL : sig
     | TTupleRef of t list
     | TBox of psi
 
-
   and sigma =
-      SZeta of string
-    | SNil
-    | SCons of t * sigma
+      SAbstract of sigma_prefix * string
+    | SConcrete of sigma_prefix
+
+  and sigma_prefix = t list
 
   and q =
       QR of reg
@@ -724,6 +825,8 @@ and TAL : sig
   val t_eq : t -> t -> bool
   val show_sigma : sigma -> bytes
   val pp_sigma : Format.formatter -> sigma -> unit
+  val show_sigma_prefix : sigma_prefix -> bytes
+  val pp_sigma_prefix : Format.formatter -> sigma_prefix -> unit
   val show_q : q -> bytes
   val pp_q : Format.formatter -> q -> unit
   val show_psi : psi -> bytes
@@ -772,6 +875,7 @@ and TAL : sig
     | Ijmp of u
     | Icall of u * sigma * q
     | Iret of q * reg
+    | Iprotect of sigma_prefix * string
     | Iimport of reg * sigma * F.t * F.exp
   val show_instr : instr -> bytes
   val pp_instr : Format.formatter -> instr -> unit
@@ -824,6 +928,8 @@ and TAL : sig
 
   val retmarker_sub : FTAL.substitution -> q -> q
 
+  val type_rebind : FTAL.rebinding -> t -> t
+
   val plug : context -> F.ft -> component
 
   val reduce : mem * instr list -> mem * instr list
@@ -857,10 +963,12 @@ end = struct
   [@@deriving show]
 
   and sigma =
-      SZeta of string
-    | SNil
-    | SCons of t * sigma
+      SAbstract of sigma_prefix * string
+    | SConcrete of sigma_prefix
   [@@deriving show]
+
+  and sigma_prefix = t list
+      [@@deriving show]
 
   and q =
       QR of reg
@@ -923,6 +1031,7 @@ end = struct
     | Ijmp of u
     | Icall of u * sigma * q
     | Iret of q * reg
+    | Iprotect of sigma_prefix * string
     | Iimport of reg * sigma * F.t * F.exp
   [@@deriving show]
 
@@ -1065,12 +1174,16 @@ end = struct
     | _ -> t
 
   and stack_sub p s = match s with
-    | SNil -> SNil
-    | SZeta z -> begin match p with
-        | FTAL.SType (z', s') when z = z' -> s'
+    | SAbstract (pref, z) -> begin match p with
+        | FTAL.SType (z', s') when z = z' -> begin match s' with
+            | SConcrete rest ->
+              SConcrete (List.append (List.map (type_sub p) pref) rest)
+            | SAbstract (some, var) ->
+              SAbstract (List.append (List.map (type_sub p) pref) some, var)
+          end
         | _ -> s
       end
-    | SCons (h,r) -> SCons (type_sub p h, stack_sub p r)
+    | SConcrete ts -> SConcrete (List.map (type_sub p) ts)
 
   and omega_sub p o = match o with
     | OT t -> OT (type_sub p t)
@@ -1107,7 +1220,7 @@ end = struct
           begin match list_index d1 (DZeta z1) with
             | None -> (d1, None)
             | Some idx ->
-              (list_replace idx d1 (DZeta z2), Some (FTAL.SType (z1, SZeta z2)))
+              (list_replace idx d1 (DZeta z2), Some (FTAL.SType (z1, SAbstract ([], z2))))
           end
         | FTAL.EBinding (e1, e2) ->
           begin match list_index d1 (DEpsilon e1) with
@@ -1132,13 +1245,11 @@ end = struct
     | _ -> t
 
   and stack_rebind bind s = match s with
-    | SZeta z -> begin match bind with
-        | FTAL.SBinding (z1,z2) when z1 = z -> SZeta z2
+    | SAbstract (pref, z) -> begin match bind with
+        | FTAL.SBinding (z1,z2) when z1 = z -> SAbstract (pref, z2)
         | _ -> s
       end
-    | SNil -> s
-    | SCons (t,srest) -> SCons (type_rebind bind t,
-                                stack_rebind bind srest)
+    | SConcrete ts -> SConcrete (List.map (type_rebind bind) ts)
 
 
   and retmarker_rebind bind q = match q with
@@ -1207,10 +1318,9 @@ end = struct
     | _ -> false
 
   and s_eq s1 s2 = match s1,s2 with
-    | SZeta z1, SZeta z2 -> z1 = z2
-    | SNil, SNil -> true
-    | SCons (t1,srest1), SCons (t2, srest2) ->
-      t_eq t1 t2 && s_eq srest1 srest2
+    | SAbstract (pr1, z1), SAbstract (pr2, z2) -> List.for_all2 t_eq pr1 pr2 && z1 = z2
+    | SConcrete ts1, SConcrete ts2 ->
+      List.for_all2 t_eq ts1 ts2
     | _ -> false
 
   and q_eq q1 q2 = match q1, q2 with
@@ -1375,6 +1485,8 @@ end = struct
     | ((hm,rm,sm), Iimport (r,s,t,v)::is) ->
       let (m, w) = FTAL.tf t v (hm,rm,sm) in
       (m, Imv (r, UW w)::is)
+    | ((hm,rm,sm), Iprotect (_,_)::is) ->
+      ((hm,rm,sm), is)
     | _ -> c
 
 end
