@@ -67,6 +67,21 @@ let test_blocks2 _ =
     (snd (F.stepn 20 (empty, F.EApp (blocks_2, [F.EInt 3]))))
     (F.EInt 5)
 
+let test_ref1 _ =
+  assert_equal
+    (snd (F.stepn 50 (empty, ref_1)))
+    (F.EInt 20)
+
+let test_ref2 _ =
+  assert_equal
+    (snd (F.stepn 50 (empty, ref_2)))
+    (F.EInt 25)
+
+let test_profiling1 _ =
+  assert_equal
+    (snd (F.stepn 70 (empty, profiling_1)))
+    (F.EInt 2)
+
 
 let suite = "FTAL evaluations" >:::
             [
@@ -80,6 +95,9 @@ let suite = "FTAL evaluations" >:::
               "FTAL: (\x -> FT(TF(\y -> x - y)) 1) 3 = 2" >:: test_closures;
               "TAL(1block): (\x -> x + 2)3 = 5" >:: test_blocks1;
               "TAL(2blocks): (\x -> x + 2)3 = 5" >:: test_blocks2;
+              "REF: r = ref 1; r := 20; !r = 20" >:: test_ref1;
+              "REF: r = ref 1; r := 20; r := !r + 5; !r = 25" >:: test_ref2;
+              "PROFILING_1 = 2" >:: test_profiling1;
             ]
 ;;
 

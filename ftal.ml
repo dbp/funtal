@@ -523,6 +523,7 @@ end = struct
     | EUnit -> true
     | EInt _ -> true
     | ELam _ -> true
+    | ELamMod _ -> true
     | EFold _ -> true
     | ETuple es -> List.for_all value es
     | _ -> false

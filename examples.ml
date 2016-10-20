@@ -83,11 +83,86 @@ let blocks_2 =
                         [Isld ("r1", 0);
                          Iaop (Add, "r1", "r1", UW (WInt 1));
                          Iret (QR "ra", "r1")])))
-            ] in
+          ] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt),
                             (TAL.([Imv ("r1", UW (WLoc l1)); TAL.(Iret (QEnd (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2")), "r1"))], h))),
                  [EVar "x"])))
+
+
+
+let ref_settyp = F.(TArrowMod ([TInt], [TAL.(TTupleRef [TInt])], [TAL.(TTupleRef [TInt])], TUnit))
+let ref_gettyp = F.(TArrowMod ([], [TAL.(TTupleRef [TInt])], [TAL.(TTupleRef [TInt])], TInt))
+
+let with_ref =
+  let ref_k = F.(TArrow ([ref_settyp; ref_gettyp], TInt)) in
+  let ftyp = F.(TArrow ([ref_settyp; ref_gettyp],TInt)) in
+  let stack = TAL.(SAbstract ([TTupleRef [TInt]; FTAL.tytrans ftyp], "z1")) in
+  F.(ELam ([("init", TInt);
+            ("k", ref_k)],
+           EApp (ELam ([("_", TUnit);
+                        ("res", TInt);
+                        ("_", TUnit)],
+                      EVar "res"),
+                 [EBoundary (TUnit, (TAL.([
+                      Iprotect ([], "z");
+                      Isalloc 1;
+                      Iimport ("r1", SAbstract ([], "z"), F.TInt, EVar "init");
+                      Isst (0, "r1");
+                      Iralloc ("rc", 1);
+                      Isalloc 1;
+                      Isst (0, "rc");
+                      Imv ("r1", UW WUnit);
+                      Iret (QEnd (TUnit, SAbstract ([TTupleRef [TInt]], "z")), "r1")],
+                      [])));
+                  EApp (EVar "k",
+                        [ELamMod ([("x", TInt)],
+                                  [TAL.(TTupleRef [TInt])],
+                                  [TAL.(TTupleRef [TInt])],
+                                  (EBoundary (TUnit,
+                                              TAL.([Isld ("r1", 0);
+                                                    Iimport ("r2",
+                                                             stack,
+                                                             F.TInt,
+                                                             F.EVar "x");
+                                                    Ist ("r1", 0, "r2");
+                                                    Imv ("r1", UW WUnit);
+                                                    Iret (QEnd (TUnit, stack), "r1")], []))));
+                         ELamMod ([],
+                                  [TAL.(TTupleRef [TInt])],
+                                  [TAL.(TTupleRef [TInt])],
+                                  (EBoundary (TInt,
+                                              TAL.([Isld ("r1", 0);
+                                                    Ild ("r2", "r1", 0);
+                                                    Iret (QEnd (TInt, stack), "r2")], []))))]);
+                  EBoundary (TUnit, (TAL.([
+                      Iprotect ([TTupleRef [TInt]], "z");
+                      Isfree 1;
+                      Imv ("r1", UW WUnit);
+                      Iret (QEnd (TUnit, SAbstract ([], "z")), "r1")],
+                      []
+                    )))])))
+
+
+(* References *)
+
+let ref_1 = F.(EApp (with_ref, [EInt 1; ELam ([("set", ref_settyp); ("get", ref_gettyp)],
+                                              EApp (ELam ([("_", TUnit);
+                                                           ("res", TInt)],
+                                                          EVar "res"),
+                                                    [EApp (EVar "set", [EInt 20]);
+                                                     EApp (EVar "get", [])]))]))
+
+
+let ref_2 = F.(EApp (with_ref, [EInt 1; ELam ([("set", ref_settyp); ("get", ref_gettyp)],
+                                              EApp (ELam ([("_", TUnit);
+                                                           ("_", TUnit);
+                                                           ("res", TInt)],
+                                                          EVar "res"),
+                                                    [EApp (EVar "set", [EInt 20]);
+                                                     EApp (EVar "set", [EBinop (EApp (EVar "get", []), BPlus, EInt 5)]);
+                                                     EApp (EVar "get", [])]))]))
+
 
 
 (* Higher-order Profiling *)
@@ -98,54 +173,28 @@ e1 = λf.λg.λa.let <g′,g'′> = p g in (f g′ ; g′ <> ; a g ′ ; g′′
 e2 = λf.λg.λa.let <g′,g′′> = p g in (f g′ ; g <> ; a g′ ; g′′ <> + 1)
 *)
 
-(* let gen_ref = TAL.(HCode ([DZeta "z1"; DEpsilon "e1"], *)
-(*                           [("ra", TBox (PBlock ([], [("r1", TTupleRef [TInt])], *)
-(*                                                 SZeta "z1", QEpsilon "e1")))], *)
-(*                           SZeta "z1", *)
-(*                           QR "ra", *)
-(*                           [Imv ("r1", UW (WInt 0)); *)
-(*                            Isalloc 1; *)
-(*                            Isst (0, "r1"); *)
-(*                            Iralloc ("r1", 1); *)
-(*                            Iret (QR "ra", "r1")])) *)
-
-(* let read_ref = TAL.(HCode ([DZeta "z1"; DEpsilon "e1"], *)
-(*                            [("ra", TBox (PBlock ([], [("r1", TInt)], *)
-(*                                                 SZeta "z1", QEpsilon "e1")))], *)
-(*                            SZeta "z1", *)
-(*                            QR "ra", *)
-(*                            [Isld ("r1", 0); *)
-(*                             Ild ("r1", "r1", 0); *)
-(*                             Iret (QR "ra", "r1")])) *)
-
-(* let write_ref = TAL.(HCode ([DZeta "z1"; DEpsilon "e1"], *)
-(*                             [("ra", TBox (PBlock ([], [("r1", TUnit)], *)
-(*                                                   SCons (TTupleRef [TInt], SCons (TInt, SZeta "z1")), *)
-(*                                                   QEpsilon "e1")))], *)
-(*                             SCons (TTupleRef [TInt], SCons (TInt, SZeta "z1")), *)
-(*                             QR "ra", *)
-(*                             [Isld ("r1", 0); *)
-(*                              Isld ("r2", 1); *)
-(*                              Ist ("r1", 0, "r2"); *)
-(*                              Imv ("r1", UW WUnit); *)
-(*                              Iret (QR "ra", "r1")])) *)
+let p =
+  F.(ELam ([("f", TArrow ([], TUnit));
+            ("k", TArrow ([TArrow ([], TUnit); TArrow ([], TInt)], TInt))],
+           EApp (with_ref,
+                 [EInt 0;
+                  ELam ([("set", ref_settyp); ("get", ref_gettyp)],
+                        EApp (EVar "k",
+                              [ELam ([],
+                                     EApp (ELam ([("_", TUnit); ("res", TUnit)], EVar "res"),
+                                           [EApp (EVar "set", [EBinop (EApp (EVar "get", []), BPlus, EInt 1)]);
+                                            EApp (EVar "f", [])]));
+                               EVar "get"]))])))
 
 
-
-(* let profiler = *)
-(*   TAL.(HCode ([DZeta "z1", DEpsilon "e1"], *)
-(*               [("ra", TBox (PBlock ([], [("r1", FTAL.tytrans F.(TTuple [TArrow ("z2",[TUnit],TUnit); TArrow ("z3", [TUnit], TInt)]))], SZeta "z1", QEpsilon "e1")))], *)
-(*               SCons (FTAL.tytrans F.(TArrow ("z4",[TUnit],TUnit)), SZeta "z1"), *)
-(*               QR "ra", *)
-(*               [Isalloc 1; *)
-(*                Imv ("r1", WInt 0); *)
-(*                Isst (0, "r1"); *)
-(*                Iralloc ("rc", 1); *)
-(*                Iimport ("rf", SZeta "z1", F.(TArrow ("z5",[TUnit],TUnit)), *)
-(*                         F.(ELam ("z6", [("x", TUnit)], *)
-
-(*                                 ))) *)
-(*                Iballoc ("r1", 2); *)
-
-
-(* let profiling_1 = *)
+let profiling_1 = F.(EApp (p,
+                           [ELam ([], EUnit);
+                            ELam ([("f'", TArrow ([], TUnit));
+                                   ("get", TArrow ([], TInt))],
+                                  EApp (ELam ([("_", TUnit);
+                                               ("_", TUnit);
+                                               ("res", TInt)],
+                                              EVar "res"),
+                                        [EApp (EVar "f'", []);
+                                         EApp (EVar "f'", []);
+                                         EApp (EVar "get", [])]))]))
