@@ -9,7 +9,7 @@ Plugins: META (0.4), DevFiles (0.4)
 Library "ftal"
   Path: .
   Modules: Ftal, Examples
-  BuildDepends: ppx_deriving.show,str
+  BuildDepends: ppx_deriving.show,str,core_kernel
 
 Executable "test_ftal"
   Path: .

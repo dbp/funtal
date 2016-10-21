@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: f3398cbef0188b6e9a90323d290b8327)
+# DO NOT EDIT (digest: d1ddaa390c3f240d1d0948fbfc07014a)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -17,10 +17,12 @@ true: annot, bin_annot
 # Library ftal
 "ftal.cmxs": use_ftal
 # Executable test_ftal
+<test.{native,byte}>: pkg_core_kernel
 <test.{native,byte}>: pkg_oUnit
 <test.{native,byte}>: pkg_ppx_deriving.show
 <test.{native,byte}>: pkg_str
 <test.{native,byte}>: use_ftal
+<*.ml{,i,y}>: pkg_core_kernel
 <*.ml{,i,y}>: pkg_oUnit
 <*.ml{,i,y}>: pkg_ppx_deriving.show
 <*.ml{,i,y}>: pkg_str

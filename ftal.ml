@@ -1,7 +1,7 @@
 (*
 SETUP:
    - install opam, and ocaml 4.03
-   - opam install ppx_deriving ounit
+   - opam install ppx_deriving ounit core_kernel
 
 RUN TESTS:
    - make test
@@ -10,13 +10,14 @@ DEBUG:
    - `DEBUG=1 make test` will print out debug logging messages.
 
 TODO:
-   - write examples out
    - do renaming for heap fragment loading
    - implement type checker
    ...
 *)
 
-let replace rm r w = (r, w) :: List.remove_assoc r rm
+open Core_kernel.Std
+
+let replace rm r w = (r, w) :: List.Assoc.remove rm r
 
 let rec list_replace i l x =
   if i < 0 then raise (Failure "list_replace: don't pass negative indices!") else
@@ -24,23 +25,6 @@ let rec list_replace i l x =
     | (0, _::xs) -> x::xs
     | (_, y::xs) -> y::(list_replace (i-1) xs x)
     | (_, []) -> raise (Failure "list_replace: index larger than list")
-
-let rec list_take n l =
-  match (n, l) with
-  | (0, _) -> []
-  | (_, x::xs) -> x::(list_take (n-1) xs)
-  | (_, []) -> raise (Failure "list_take: taking more elements than exist")
-
-let rec list_drop n l =
-  match (n, l) with
-  | (0, _) -> l
-  | (_, _::xs) -> list_drop (n-1) xs
-  | (_, []) -> raise (Failure "list_drop: dropping more elements than exist")
-
-let rec list_repeat n v =
-  match n with
-  | 0 -> []
-  | _ -> v :: list_repeat (n-1) v
 
 let list_index l x =
   let rec f i l =
@@ -72,10 +56,10 @@ module rec FTAL : sig
   val tf : F.t -> F.exp -> TAL.mem -> (TAL.mem * TAL.w)
 
   type e = FC of F.exp | TC of TAL.component
-  val show_e : e -> bytes
+  val show_e : e -> string
 
   type t = FT of F.t | TT of TAL.t
-  val show : t -> bytes
+  val show : t -> string
 
   exception TypeError of string * e
 
@@ -103,7 +87,7 @@ end = struct
 
   let gen_sym =
     let count = ref 0 in
-    fun ?(pref="g") () -> let v = !count in count := v + 1; String.concat "" [pref; string_of_int v]
+    fun ?(pref="g") () -> let v = !count in count := v + 1; String.concat [pref; string_of_int v]
 
   let rec tytrans t =
     match t with
@@ -111,7 +95,7 @@ end = struct
     | F.TUnit -> TAL.TUnit
     | F.TInt -> TAL.TInt
     | F.TRec (a,t) -> TAL.TRec (a, tytrans t)
-    | F.TTuple ts -> TAL.TBox (TAL.PTuple (List.map tytrans ts))
+    | F.TTuple ts -> TAL.TBox (TAL.PTuple (List.map ~f:tytrans ts))
     | F.TArrow (ps,t1) ->
       let zeta = gen_sym ~pref:"z" () in
       let epsilon = gen_sym ~pref:"e" () in
@@ -120,7 +104,7 @@ end = struct
                                                           [("r1", tytrans t1)],
                                                           (TAL.SAbstract ([], zeta)),
                                                           (TAL.QEpsilon epsilon))))],
-                            TAL.SAbstract (List.map tytrans ps, zeta),
+                            TAL.SAbstract (List.map ~f:tytrans ps, zeta),
                             (TAL.QR "ra")))
     | F.TArrowMod (ps, sin, sout, rt) ->
       let zeta = gen_sym ~pref:"z" () in
@@ -131,7 +115,7 @@ end = struct
                                                SAbstract (sout, zeta),
                                                (QEpsilon epsilon))))],
                          SAbstract (List.append
-                                      (List.map tytrans ps)
+                                      (List.map ~f:tytrans ps)
                                       sin,
                                     zeta),
                          (QR "ra"))))
@@ -142,13 +126,13 @@ end = struct
     | (F.TUnit, TAL.WUnit) -> (m, F.EUnit)
     | (F.TInt, TAL.WInt n) -> (m, F.EInt n)
     | (F.TTuple ts, TAL.WLoc l) ->
-      begin match List.assoc l hm with
+      begin match List.Assoc.find_exn hm l with
         | TAL.HTuple ws ->
           let (m', vs) =
             List.fold_left
-              (fun (mx, b) (t,w) -> let (m'',v) = ft t w mx in (m'', v::b))
-              (m, [])
-              (List.combine ts ws) in
+              ~f:(fun (mx, b) (t,w) -> let (m'',v) = ft t w mx in (m'', v::b))
+              ~init:(m, [])
+              (List.zip_exn ts ws) in
           (m', F.ETuple vs)
         | _ -> raise (Failure "ft: can't convert tuple if loc isn't pointing to tuple")
       end
@@ -165,12 +149,12 @@ end = struct
                    (TAL.SAbstract ([], z1)),
                    (TAL.QEnd (tytrans t1, TAL.SAbstract ([], z1))),
                    [TAL.Iret (TAL.QEnd (tytrans t1, TAL.SAbstract ([], z1)), "r1")]) in
-      let ps = List.map (fun t -> (gen_sym ~pref:"arg" (), t)) ts in
+      let ps = List.map ~f:(fun t -> (gen_sym ~pref:"arg" (), t)) ts in
       let v = F.ELam
           (ps, F.EBoundary
              (t1, (TAL.(List.concat
                           [[Iprotect ([], z2)];
-                           (List.concat (List.map (fun (x,xt) ->
+                           (List.concat (List.map ~f:(fun (x,xt) ->
                                 [Iimport ("r1", SAbstract ([], z2), xt, F.EVar x);
                                  Isalloc 1;
                                  Isst (0, "r1")]) ps));
@@ -189,11 +173,11 @@ end = struct
                    TAL.SAbstract (sin, z1),
                    (TAL.QEnd (tytrans t1, TAL.SAbstract (sout, z1))),
                    [TAL.Iret (TAL.QEnd (tytrans t1, TAL.SAbstract (sout, z1)), "r1")]) in
-      let ps = List.map (fun t -> (gen_sym ~pref:"arg" (), t)) ts in
+      let ps = List.map ~f:(fun t -> (gen_sym ~pref:"arg" (), t)) ts in
       let v = F.ELamMod
           (ps, sin, sout, F.EBoundary
              (t1, (TAL.(List.concat
-                          [(List.concat (List.map (fun (x,xt) ->
+                          [(List.concat (List.map ~f:(fun (x,xt) ->
                                [Iprotect (sin, z2);
                                 Iimport ("r1", SAbstract (sin, z2), xt, F.EVar x);
                                 Isalloc 1;
@@ -213,9 +197,9 @@ end = struct
     | (F.TInt, F.EInt n) -> (m, TAL.WInt n)
     | (F.TTuple ts, F.ETuple es) ->
       let ((hm',rm',sm'), ws) = List.fold_left
-          (fun (mx, b) (t,v) -> let (m'', w) = tf t v mx in (m'', w::b))
-          (m, [])
-          (List.combine ts es) in
+          ~f:(fun (mx, b) (t,v) -> let (m'', w) = tf t v mx in (m'', w::b))
+          ~init:(m, [])
+          (List.zip_exn ts es) in
       let l = gen_sym ~pref:"loc" () in
       (((l,TAL.HTuple ws)::hm',rm',sm'), TAL.WLoc l)
     | (F.TRec (a,t), F.EFold (a',t',e)) when (a',t') = (a,t) ->
@@ -225,19 +209,19 @@ end = struct
       let l = gen_sym ~pref:"lf" () in
       let e = gen_sym ~pref:"e" () in
       let z1 = gen_sym ~pref:"z" () in
-      let s' = TAL.SAbstract (List.map tytrans ts, z1) in
+      let s' = TAL.SAbstract (List.map ~f:tytrans ts, z1) in
       let s = TAL.(SAbstract ((TBox (PBlock ([], [("r1", tytrans t1)],
                                              SAbstract ([], z1), QEpsilon e))) ::
-                              List.map tytrans ts, z1)) in
+                              List.map ~f:tytrans ts, z1)) in
       let body_wrapped =
         let n = List.length ts in
         F.EApp (F.ELam (ps,body),
-                List.mapi (fun i t' ->
+                List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', ([TAL.Isld ("r1", n-i);
                                        TAL.Iret
                                          (TAL.QEnd (tytrans t1, s),
                                           "r1")], [])))
-                  (List.map snd ps))
+                  (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra");
                          Iimport ("r1", SAbstract ([], z1), t1, body_wrapped);
@@ -257,20 +241,20 @@ end = struct
       let l = gen_sym ~pref:"lf" () in
       let e = gen_sym ~pref:"e" () in
       let z1 = gen_sym ~pref:"z" () in
-      let s' = TAL.SAbstract (List.map tytrans ts, z1) in
+      let s' = TAL.SAbstract (List.map ~f:tytrans ts, z1) in
       let s = TAL.(SAbstract ((TBox (PBlock ([], [("r1", tytrans t1)],
                                              SAbstract ([], z1), QEpsilon e))) ::
-                              List.map tytrans ts, z1)) in
+                              List.map ~f:tytrans ts, z1)) in
 
       let body_wrapped =
         let n = List.length ts in
         F.EApp (F.ELamMod (ps,sin,sout,body),
-                List.mapi (fun i t' ->
+                List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', ([TAL.Isld ("r1", n-i);
                                        TAL.Iret
                                          (TAL.QEnd (tytrans t1, s),
                                           "r1")], [])))
-                  (List.map snd ps))
+                  (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", SAbstract ([], z1), t1, body_wrapped);
                          Isld ("ra",0); Isfree (List.length ts + 1); Iret (QR "ra", "r1")]) in
@@ -358,7 +342,7 @@ end = struct
   (*         let zeta = TAL.SAbstract ([], gen_sym ~pref:"z" ()) in *)
   (*         begin match tc (set_stack (set_env context (List.append ps (get_env context))) zeta) *)
   (*                       (FC b) with *)
-  (*         | (FT t, zeta') when zeta = zeta' -> (FT (TArrow (List.map snd ps, t)), get_stack context) *)
+  (*         | (FT t, zeta') when zeta = zeta' -> (FT (TArrow (List.map ~f:snd ps, t)), get_stack context) *)
   (*         | (FT _, _) -> raise (TypeError ("Function body does not preserve stack", e)) *)
   (*         | _ -> raise (TypeError ("Function body not F code", e)) *)
   (*         end *)
@@ -368,14 +352,14 @@ end = struct
   (*         let zeta_out = TAL.SAbstract (sout, z) in *)
   (*         begin match tc (set_stack (set_env context (List.append ps (get_env context))) zeta) *)
   (*                       (FC b) with *)
-  (*         | (FT t, zeta') when zeta_out = zeta' -> (FT (TArrow (List.map snd ps, t)), get_stack context) *)
+  (*         | (FT t, zeta') when zeta_out = zeta' -> (FT (TArrow (List.map ~f:snd ps, t)), get_stack context) *)
   (*         | (FT _, _) -> raise (TypeError ("Function body manipulates stack in illegal way", e)) *)
   (*         | _ -> raise (TypeError ("Function body not F code", e)) *)
   (*         end *)
   (*       | EApp (f,args), TAL.QOut -> begin match tc' f with *)
   (*           | FT (TArrow (ps, rv)), s -> *)
   (*             let _ = Debug.log "tc app" ("f: " ^ show_type (fst (tc' f))) in *)
-  (*             let _ = Debug.log "tc app" ("args: " ^ (String.concat ";\n" (List.map (fun e -> show_type (fst (tc' e))) args))) in *)
+  (*             let _ = Debug.log "tc app" ("args: " ^ (String.concat ";\n" (List.map ~f:(fun e -> show_type (fst (tc' e))) args))) in *)
   (*             if List.length ps <> List.length args then *)
   (*               raise (TypeError ("Applying function to wrong number of args", e)) *)
   (*             else *)
@@ -429,12 +413,12 @@ and F : sig
     | TArrowMod of t list * TAL.sigma_prefix * TAL.sigma_prefix * t
     | TRec of string * t
     | TTuple of t list
-  val show : t -> bytes
+  val show : t -> string
   val pp : Format.formatter -> t -> unit
   val t_eq : t -> t -> bool
 
   type binop = BPlus | BMinus | BTimes
-  val show_binop : binop -> bytes
+  val show_binop : binop -> string
 
   type exp =
       EVar of string
@@ -450,7 +434,7 @@ and F : sig
     | ETuple of exp list
     | EPi of int * exp
     | EBoundary of t * TAL.component
-  val show_exp : exp -> bytes
+  val show_exp : exp -> string
   val pp_exp : Format.formatter -> exp -> unit
 
   type context =
@@ -465,7 +449,7 @@ and F : sig
     | CTuple of exp list * context * exp list
     | CPi of int * context
     | CBoundary of t * TAL.context
-  val show_context : context -> bytes
+  val show_context : context -> string
   val pp_context : Format.formatter -> context -> unit
 
   val value : exp -> bool
@@ -474,7 +458,7 @@ and F : sig
   val type_sub : FTAL.substitution -> t -> t
 
   type ft = F of exp | TC of TAL.component | TI of TAL.instr list
-  val show_ft : ft -> bytes
+  val show_ft : ft -> string
 
   val plug : context -> ft -> exp
 
@@ -485,7 +469,7 @@ and F : sig
   val stepn : int -> TAL.mem * exp -> TAL.mem * exp
 
   type gamma = (string * F.t) list
-  val show_gamma : gamma -> bytes
+  val show_gamma : gamma -> string
 
 end = struct
 
@@ -525,7 +509,7 @@ end = struct
     | ELam _ -> true
     | ELamMod _ -> true
     | EFold _ -> true
-    | ETuple es -> List.for_all value es
+    | ETuple es -> List.for_all ~f:value es
     | _ -> false
 
   type context =
@@ -550,29 +534,29 @@ end = struct
         | _ -> typ
       end
     | TArrow (params,ret) ->
-      TArrow (List.map (type_sub p) params, type_sub p ret)
+      TArrow (List.map ~f:(type_sub p) params, type_sub p ret)
     | TArrowMod (params, sin, sout, ret) ->
-      TArrowMod (List.map (type_sub p) params, List.map (TAL.type_sub p) sin, List.map (TAL.type_sub p) sout, type_sub p ret)
+      TArrowMod (List.map ~f:(type_sub p) params, List.map ~f:(TAL.type_sub p) sin, List.map ~f:(TAL.type_sub p) sout, type_sub p ret)
     | TRec (a, t) -> begin match p with
         | FTAL.FType (a', t) when a = a' -> typ
         | _ -> TRec (a, type_sub p t)
       end
-    | TTuple ts -> TTuple (List.map (type_sub p) ts)
+    | TTuple ts -> TTuple (List.map ~f:(type_sub p) ts)
     | _ -> typ
 
   let rec type_rebind bind t = match t with
-    | TArrow (params,ret) -> TArrow (List.map (type_rebind bind) params, type_rebind bind ret)
+    | TArrow (params,ret) -> TArrow (List.map ~f:(type_rebind bind) params, type_rebind bind ret)
     | TArrowMod (params,sin,sout,ret) ->
-      TArrowMod (List.map (type_rebind bind) params,
-                 List.map (TAL.type_rebind bind) sin,
-                 List.map (TAL.type_rebind bind) sout,
+      TArrowMod (List.map ~f:(type_rebind bind) params,
+                 List.map ~f:(TAL.type_rebind bind) sin,
+                 List.map ~f:(TAL.type_rebind bind) sout,
                  type_rebind bind ret)
     | TRec (a, t) -> begin match bind with
         | FTAL.FBinding (a1, a2) when a = a1 ->
           TRec (a2, type_sub (FTAL.FType (a, F.TVar a2)) t)
         | _ -> TRec (a, type_rebind bind t)
       end
-    | TTuple ts -> TTuple (List.map (type_rebind bind) ts)
+    | TTuple ts -> TTuple (List.map ~f:(type_rebind bind) ts)
     | TVar a -> begin match bind with
         | FTAL.FBinding (a1,a2) when a = a1 -> TVar a2
         | _ -> t
@@ -585,16 +569,16 @@ end = struct
     | TUnit, TUnit -> true
     | TInt, TInt -> true
     | TArrow (ps1, r1), TArrow (ps2, r2) ->
-      List.for_all2 t_eq ps1 ps2 &&
+      List.for_all2_exn ~f:t_eq ps1 ps2 &&
       t_eq r1 r2
     | TArrowMod (ps1, sin1, sout1, r1), TArrowMod (ps2, sin2, sout2, r2) ->
-      List.for_all2 t_eq ps1 ps2 &&
-      List.for_all2 TAL.t_eq sin1 sin2 &&
-      List.for_all2 TAL.t_eq sout1 sout2 &&
+      List.for_all2_exn ~f:t_eq ps1 ps2 &&
+      List.for_all2_exn ~f:TAL.t_eq sin1 sin2 &&
+      List.for_all2_exn ~f:TAL.t_eq sout1 sout2 &&
       t_eq r1 r2
     | TRec (s1, b1), TRec (s2, b2) ->
       t_eq b1 (type_rebind (FTAL.FBinding (s2, s1)) b2)
-    | TTuple ts, TTuple ts1 -> List.for_all2 t_eq ts ts1
+    | TTuple ts, TTuple ts1 -> List.for_all2_exn ~f:t_eq ts ts1
     | _ -> false
 
 
@@ -610,23 +594,23 @@ end = struct
     | EIf0 (e1, e2, e3) -> EIf0 (sub p e1, sub p e2, sub p e3)
     | ELam (args, body) ->
       begin match p with
-        | FTAL.FTerm (x', e') when List.mem_assoc x' args -> e
+        | FTAL.FTerm (x', e') when List.Assoc.mem args x' -> e
         | _ -> ELam (args, sub p body)
       end
     | ELamMod (args, sin, sout, body) ->
       begin match p with
-        | FTAL.FTerm (x', e') when List.mem_assoc x' args -> e
+        | FTAL.FTerm (x', e') when List.Assoc.mem args x' -> e
         | _ -> ELamMod (args, sin, sout, sub p body)
       end
     | EApp (e1, eargs) ->
-      EApp (sub p e1, List.map (sub p) eargs)
+      EApp (sub p e1, List.map ~f:(sub p) eargs)
     | EFold (s, t, e1) ->
       begin match p with
         | FTAL.FType (a, t') when a = s -> e
         | _ -> EFold (s, t, sub p e1)
       end
     | EUnfold e1 -> EUnfold (sub p e1)
-    | ETuple es -> ETuple (List.map (sub p) es)
+    | ETuple es -> ETuple (List.map ~f:(sub p) es)
     | EPi (n, e1) -> EPi (n, sub p e1)
     | EBoundary (t,comp) -> EBoundary (type_sub p t, TAL.sub p comp)
 
@@ -641,17 +625,17 @@ end = struct
     | EIf0 (EInt 0, e2, e3) -> (m, e2)
     | EIf0 (EInt _, e2, e3) -> (m, e3)
     | EApp (ELam (ps, body), eargs) when List.(length ps = length eargs) ->
-      (m, List.fold_left (fun e p -> sub p e) body (List.map2 (fun (x,_) e -> FTAL.FTerm (x,e)) ps eargs))
+      (m, List.fold_left ~f:(fun e p -> sub p e) ~init:body (List.map2_exn ~f:(fun (x,_) e -> FTAL.FTerm (x,e)) ps eargs))
     | EApp (ELamMod (ps, sin, sout, body), eargs) when List.(length ps = length eargs) ->
-      (m, List.fold_left (fun e p -> sub p e) body (List.map2 (fun (x,_) e -> FTAL.FTerm (x,e)) ps eargs))
+      (m, List.fold_left ~f:(fun e p -> sub p e) ~init:body (List.map2_exn ~f:(fun (x,_) e -> FTAL.FTerm (x,e)) ps eargs))
     | EUnfold (EFold (_,_,eb)) -> (m, eb)
-    | EPi (n, (ETuple vs)) when List.length vs > n -> (m, List.nth vs n)
+    | EPi (n, (ETuple vs)) when List.length vs > n -> (m, List.nth_exn vs n)
     (* NOTE(dbp 2016-10-13): FTAL.tytrans t = t' should hold as well,
        but tytrans gen_syms so we need some sort of alpha equivalence (or
        to just fix how we do names). *)
     | EBoundary (t, ([TAL.Iret (TAL.QEnd (t',s'),r)],[]))->
       let (hm,rm,sm) = m in
-      FTAL.ft t (List.assoc r rm) m
+      FTAL.ft t (List.Assoc.find_exn rm r) m
     | _ -> (m, e)
 
 
@@ -689,7 +673,7 @@ end = struct
 
     | EApp (e1, eargs) when not (value e1) ->
       decomp_cont e1 (fun ctxt e' -> Some (CApp1 (ctxt, eargs), e'))
-    | EApp (e1, eargs) when value e1 && List.exists (fun x -> not (value x)) eargs ->
+    | EApp (e1, eargs) when value e1 && List.exists ~f:(fun x -> not (value x)) eargs ->
       decomp_list eargs (fun bef ctxt aft e' -> Some (CAppn (e1, bef, ctxt, aft), e'))
     | EApp (e1, eargs) -> Some (CHole, F e)
 
@@ -717,9 +701,9 @@ end = struct
   and decomp_list es f =
     match split_at
                 (fun x -> is_some (snd x))
-                (List.map (fun ea -> (ea, decomp ea)) es) with
+                (List.map ~f:(fun ea -> (ea, decomp ea)) es) with
     | (bef, Some (_, Some (ctxt, e')), aft) ->
-      f (List.map fst bef) ctxt (List.map fst aft) e'
+      f (List.map ~f:fst bef) ctxt (List.map ~f:fst aft) e'
     | _ -> None
 
   let un_f = function
@@ -753,12 +737,12 @@ end = struct
       (m', plug ctxt (F e''))
     | Some (ctxt, TI is) ->
       let () = Debug.log "decomp TI ctxt" (F.show_context ctxt) in
-      let _ = Debug.log "decomp TI instrs" (String.concat "; " (List.map (fun i -> TAL.show_instr i) is)) in
+      let _ = Debug.log "decomp TI instrs" (String.concat ~sep:"; " (List.map ~f:(fun i -> TAL.show_instr i) is)) in
       let _ = Debug.log "decomp TI regs" (TAL.show_regm r) in
       let _ = Debug.log "decomp TI stack" (TAL.show_stackm s) in
       let (m', is') = TAL.reduce (m, is) in
       let (h',r',s') = m' in
-      let _ = Debug.log "stepped TI instrs" (String.concat "; " (List.map (fun i -> TAL.show_instr i) is')) in
+      let _ = Debug.log "stepped TI instrs" (String.concat ~sep:"; " (List.map ~f:(fun i -> TAL.show_instr i) is')) in
       let _ = Debug.log "stepped TI regs" (TAL.show_regm r') in
       let _ = Debug.log "stepped TI stack" (TAL.show_stackm s') in
       let _ = Debug.log "stepped TI heap" (TAL.show_heapm h') in
@@ -789,7 +773,7 @@ and TAL : sig
       DAlpha of string
     | DZeta of string
     | DEpsilon of string
-  val show_delta_elem : delta_elem -> bytes
+  val show_delta_elem : delta_elem -> string
 
   type delta = delta_elem list
 
@@ -821,23 +805,23 @@ and TAL : sig
 
   and chi = (reg * t) list
 
-  val show : t -> bytes
+  val show : t -> string
   val pp : Format.formatter -> t -> unit
   val t_eq : t -> t -> bool
-  val show_sigma : sigma -> bytes
+  val show_sigma : sigma -> string
   val pp_sigma : Format.formatter -> sigma -> unit
-  val show_sigma_prefix : sigma_prefix -> bytes
+  val show_sigma_prefix : sigma_prefix -> string
   val pp_sigma_prefix : Format.formatter -> sigma_prefix -> unit
-  val show_q : q -> bytes
+  val show_q : q -> string
   val pp_q : Format.formatter -> q -> unit
-  val show_psi : psi -> bytes
+  val show_psi : psi -> string
   val pp_psi : Format.formatter -> psi -> unit
 
   type omega =
       OT of t
     | OS of sigma
     | OQ of q
-  val show_omega : omega -> bytes
+  val show_omega : omega -> string
 
   type w =
       WUnit
@@ -846,7 +830,7 @@ and TAL : sig
     | WPack of t * w * string * t
     | WFold of string * t * w
     | WApp of w * omega list
-  val show_w : w -> bytes
+  val show_w : w -> string
 
   type u =
       UW of w
@@ -854,10 +838,10 @@ and TAL : sig
     | UPack of t * u * string * t
     | UFold of string * t * u
     | UApp of u * omega list
-  val show_u : u -> bytes
+  val show_u : u -> string
 
   type aop = Add | Sub | Mult
-  val show_aop : aop -> bytes
+  val show_aop : aop -> string
 
   type instr =
       Iaop of aop * reg * reg * u
@@ -878,29 +862,29 @@ and TAL : sig
     | Iret of q * reg
     | Iprotect of sigma_prefix * string
     | Iimport of reg * sigma * F.t * F.exp
-  val show_instr : instr -> bytes
+  val show_instr : instr -> string
   val pp_instr : Format.formatter -> instr -> unit
 
   type h =
       HCode of delta * chi * sigma * q * instr list
     | HTuple of w list
-  val show_h : h -> bytes
+  val show_h : h -> string
 
   type heapm = (loc * h) list
-  val show_heapm : heapm -> bytes
+  val show_heapm : heapm -> string
 
   type regm = (reg * w) list
-  val show_regm : regm -> bytes
+  val show_regm : regm -> string
 
   type stackm = w list
-  val show_stackm : stackm -> bytes
+  val show_stackm : stackm -> string
 
   type mem = heapm * regm * stackm
 
   val load : mem -> heapm -> mem
 
   type component = instr list * heapm
-  val show_component : component -> bytes
+  val show_component : component -> string
   val pp_component : Format.formatter -> component -> unit
 
   type context =
@@ -914,10 +898,10 @@ and TAL : sig
   and contextC =
       CHoleC
 
-  val show_context : context -> bytes
+  val show_context : context -> string
   val pp_context : Format.formatter -> context -> unit
-  val show_contextI : contextI -> bytes
-  val show_contextC : contextC -> bytes
+  val show_contextI : contextI -> string
+  val show_contextC : contextC -> string
 
   val sub : FTAL.substitution -> component -> component
 
@@ -1093,10 +1077,10 @@ end = struct
     | CComponentHeap CHoleC -> un_tc e
 
   let rec sub p (is, hm) =
-    (List.map (instr_sub p) is,
-     List.map (fun (l,h) ->
+    (List.map ~f:(instr_sub p) is,
+     List.map ~f:(fun (l,h) ->
          match h with
-         | HCode (d,c,s,q,is) -> (l, HCode (d,c,s,q, List.map (instr_sub p) is))
+         | HCode (d,c,s,q,is) -> (l, HCode (d,c,s,q, List.map ~f:(instr_sub p) is))
          | _ -> (l,h)
        ) hm)
 
@@ -1124,7 +1108,7 @@ end = struct
         | FTAL.TType (a', _) when a = a' -> u
         | _ -> UFold (a, type_sub p t, u_sub p ubody)
       end
-    | UApp (ubody, os) -> UApp (u_sub p ubody, List.map (omega_sub p) os)
+    | UApp (ubody, os) -> UApp (u_sub p ubody, List.map ~f:(omega_sub p) os)
 
   and w_sub p w = match w with
     | WPack (t',wbody,a,t) -> begin match p with
@@ -1136,18 +1120,18 @@ end = struct
         | FTAL.TType (a', _) when a = a' -> w
         | _ -> WFold (a, type_sub p t, w_sub p wbody)
       end
-    | WApp (wbody, os) -> WApp (w_sub p wbody, List.map (omega_sub p) os)
+    | WApp (wbody, os) -> WApp (w_sub p wbody, List.map ~f:(omega_sub p) os)
     | _ -> w
 
   and psi_sub (p:FTAL.substitution) t = match t with
     | PBlock (d, x, s, q) ->
       begin match p with
-        | FTAL.TType (a, t') when List.mem (DAlpha a) d -> t
-        | FTAL.SType (a, s') when List.mem (DZeta a) d -> t
-        | _ -> PBlock (d, List.map (fun (x,t') -> (x, type_sub p t')) x,
+        | FTAL.TType (a, t') when List.mem d (DAlpha a) -> t
+        | FTAL.SType (a, s') when List.mem d (DZeta a) -> t
+        | _ -> PBlock (d, List.map ~f:(fun (x,t') -> (x, type_sub p t')) x,
                        stack_sub p s, retmarker_sub p q)
       end
-    | PTuple ts -> PTuple (List.map (type_sub p) ts)
+    | PTuple ts -> PTuple (List.map ~f:(type_sub p) ts)
 
   and retmarker_sub p t = match t with
     | QEpsilon a -> begin match p with
@@ -1170,7 +1154,7 @@ end = struct
         | FTAL.TType (a', _) when a = a' -> t
         | _ -> TRec (a, type_sub p tbody)
       end
-    | TTupleRef ts -> TTupleRef (List.map (type_sub p) ts)
+    | TTupleRef ts -> TTupleRef (List.map ~f:(type_sub p) ts)
     | TBox ps -> TBox (psi_sub p ps)
     | _ -> t
 
@@ -1178,13 +1162,13 @@ end = struct
     | SAbstract (pref, z) -> begin match p with
         | FTAL.SType (z', s') when z = z' -> begin match s' with
             | SConcrete rest ->
-              SConcrete (List.append (List.map (type_sub p) pref) rest)
+              SConcrete (List.append (List.map ~f:(type_sub p) pref) rest)
             | SAbstract (some, var) ->
-              SAbstract (List.append (List.map (type_sub p) pref) some, var)
+              SAbstract (List.append (List.map ~f:(type_sub p) pref) some, var)
           end
         | _ -> s
       end
-    | SConcrete ts -> SConcrete (List.map (type_sub p) ts)
+    | SConcrete ts -> SConcrete (List.map ~f:(type_sub p) ts)
 
   and omega_sub p o = match o with
     | OT t -> OT (type_sub p t)
@@ -1208,7 +1192,7 @@ end = struct
         | _ -> TRec (a, type_rebind bind b)
       end
     | TTupleRef ts ->
-      TTupleRef (List.map (type_rebind bind) ts)
+      TTupleRef (List.map ~f:(type_rebind bind) ts)
     | TBox (PBlock (d1, c1, s1, q1)) ->
       let (d2, s) = begin match bind with
         | FTAL.TBinding (a1, a2) ->
@@ -1235,14 +1219,14 @@ end = struct
         | None -> t
         | Some s ->
           TBox (PBlock (d2,
-                        List.map (fun (r, t) ->
+                        List.map ~f:(fun (r, t) ->
                             (r, type_sub s t))
                           c1,
                         stack_sub s s1,
                         retmarker_sub s q1))
       end
     | TBox (PTuple ts) ->
-      TBox (PTuple (List.map (type_rebind bind) ts))
+      TBox (PTuple (List.map ~f:(type_rebind bind) ts))
     | _ -> t
 
   and stack_rebind bind s = match s with
@@ -1250,7 +1234,7 @@ end = struct
         | FTAL.SBinding (z1,z2) when z1 = z -> SAbstract (pref, z2)
         | _ -> s
       end
-    | SConcrete ts -> SConcrete (List.map (type_rebind bind) ts)
+    | SConcrete ts -> SConcrete (List.map ~f:(type_rebind bind) ts)
 
 
   and retmarker_rebind bind q = match q with
@@ -1299,7 +1283,7 @@ end = struct
     | TRec (a1, b1), TRec (a2, b2) ->
       t_eq b1 (type_rebind (FTAL.TBinding (a2, a1)) b2)
     | TTupleRef ts1, TTupleRef ts2 ->
-      List.for_all2 t_eq ts1 ts2
+      List.for_all2_exn ~f:t_eq ts1 ts2
     | TBox (PBlock (d1, c1, s1, q1)), TBox (PBlock (d2, c2, s2, q2)) ->
       begin match delta_rebindings d1 d2 with
         | None -> false
@@ -1307,21 +1291,21 @@ end = struct
           let c1 = List.sort (fun (a,_) (b,_) -> compare a b) c1 in
           let c2 = List.sort (fun (a,_) (b,_) -> compare a b) c2 in
           List.length c1 = List.length c2 &&
-          List.for_all2 (fun (r1, t1) (r2, t2) ->
+          List.for_all2_exn ~f:(fun (r1, t1) (r2, t2) ->
               r1 = r2 && t_eq t1 (List.fold_left
-                                    (fun t' b -> type_rebind b t')
-                                    t2 binds)) c1 c2 &&
-          s_eq s1 (List.fold_left (fun s b -> stack_rebind b s) s2 binds) &&
-          q_eq q1 (List.fold_left (fun q b -> retmarker_rebind b q) q2 binds)
+                                    ~f:(fun t' b -> type_rebind b t')
+                                    ~init:t2 binds)) c1 c2 &&
+          s_eq s1 (List.fold_left ~f:(fun s b -> stack_rebind b s) ~init:s2 binds) &&
+          q_eq q1 (List.fold_left ~f:(fun q b -> retmarker_rebind b q) ~init:q2 binds)
       end
     | TBox (PTuple ts1), TBox (PTuple ts2) ->
-      List.for_all2 t_eq ts1 ts2
+      List.for_all2_exn ~f:t_eq ts1 ts2
     | _ -> false
 
   and s_eq s1 s2 = match s1,s2 with
-    | SAbstract (pr1, z1), SAbstract (pr2, z2) -> List.for_all2 t_eq pr1 pr2 && z1 = z2
+    | SAbstract (pr1, z1), SAbstract (pr2, z2) -> List.for_all2_exn ~f: t_eq pr1 pr2 && z1 = z2
     | SConcrete ts1, SConcrete ts2 ->
-      List.for_all2 t_eq ts1 ts2
+      List.for_all2_exn ~f: t_eq ts1 ts2
     | _ -> false
 
   and q_eq q1 q2 = match q1, q2 with
@@ -1356,7 +1340,7 @@ end = struct
     | UPack (t1, u, s, t2) -> WPack (t1, ru r u, s, t2)
     | UFold (s, t, u) -> WFold (s, t, ru r u)
     | UW w -> w
-    | UR rn -> List.assoc rn r
+    | UR rn -> List.Assoc.find_exn r rn
 
   let delta op w1 w2 =
     match (op, w1, w2) with
@@ -1368,7 +1352,7 @@ end = struct
 
 
   let type_zip delt os =
-    List.map2 (fun d o -> match d,o with
+    List.map2_exn ~f:(fun d o -> match d,o with
         | DAlpha a, OT t -> FTAL.TType (a,t)
         | DZeta z, OS s -> FTAL.SType (z,s)
         | DEpsilon e, OQ q -> FTAL.EMarker (e,q)
@@ -1380,18 +1364,18 @@ end = struct
 
   let instrs_sub delt os is =
     let subs = type_zip delt os in
-    List.rev (List.fold_left (fun acc i -> (List.fold_left (fun t' p -> instr_sub p i) i subs)::acc) [] is)
+    List.rev (List.fold_left ~f:(fun acc i -> (List.fold_left ~f:(fun t' p -> instr_sub p i) ~init:i subs)::acc) ~init:[] is)
 
   let reduce (c : mem * instr list) =
     match c with
     | ((hm,rm,sm), Iaop (op, rd, rs, u)::is) ->
-      ((hm, replace rm rd (delta op (List.assoc rs rm) (ru rm u)), sm), is)
+      ((hm, replace rm rd (delta op (List.Assoc.find_exn rm rs) (ru rm u)), sm), is)
     | ((hm,rm,sm), Ibnz (r,u)::is) ->
-      begin match List.assoc r rm with
+      begin match List.Assoc.find_exn rm r with
         | WInt 0 -> ((hm,rm,sm), is)
         | WInt _ ->
           let hc os l =
-            match List.assoc l hm with
+            match List.Assoc.find_exn hm l with
             | HCode (delt,ch,s,qr,is) ->
               instrs_sub delt os is
             | _ -> raise (Failure "branching to non-code")
@@ -1404,31 +1388,31 @@ end = struct
         | _ -> c
       end
     | ((hm,rm,sm), Ild (rd,rs,i)::is) ->
-      begin match List.assoc rs rm with
+      begin match List.Assoc.find_exn rm rs with
         | WLoc l ->
-          begin match List.assoc l hm with
+          begin match List.Assoc.find_exn hm l with
             | HTuple ws when List.length ws > i ->
-              ((hm, replace rm rd (List.nth ws i), sm), is)
+              ((hm, replace rm rd (List.nth_exn ws i), sm), is)
             | HTuple _ -> raise (Failure "ld: tuple index out of bounds")
             | _ -> raise (Failure "ld: trying to load from non-tuple")
           end
         | _ -> raise (Failure "ld: trying to load from non-location")
       end
     | ((hm,rm,sm), Ist (rd,i,rs)::is) ->
-      begin match List.assoc rd rm with
+      begin match List.Assoc.find_exn rm rd with
         | WLoc l ->
-          begin match List.assoc l hm with
+          begin match List.Assoc.find_exn hm l with
             | HTuple ws when List.length ws > i ->
-              (((replace hm l (HTuple (list_replace i ws (List.assoc rs rm)))), rm, sm), is)
+              (((replace hm l (HTuple (list_replace i ws (List.Assoc.find_exn rm rs)))), rm, sm), is)
             | HTuple _ -> raise (Failure "st: tuple index out of bounds")
             | _ -> raise (Failure "st: trying to store to non-tuple")
           end
         | _ -> raise (Failure "st: trying to store to non-location")
       end
     | ((hm,rm,sm), Iralloc (rd,n)::is) when List.length sm >= n ->
-      let l = FTAL.gen_sym () in (((l, HTuple (list_take n sm)) :: hm, replace rm rd (WLoc l), list_drop n sm), is)
+      let l = FTAL.gen_sym () in (((l, HTuple (List.take sm n)) :: hm, replace rm rd (WLoc l), List.drop sm n), is)
     | ((hm,rm,sm), Iballoc (rd,n)::is) when List.length sm >= n ->
-      let l = FTAL.gen_sym () in (((l, HTuple (list_take n sm)) :: hm, replace rm rd (WLoc l), list_drop n sm), is)
+      let l = FTAL.gen_sym () in (((l, HTuple (List.take sm n)) :: hm, replace rm rd (WLoc l), List.drop sm n), is)
     | ((hm,rm,sm), Imv (rd,u)::is) ->
       ((hm, replace rm rd (ru rm u), sm), is)
     | ((hm,rm,sm), Iunpack (a,rd,u)::is) ->
@@ -1442,16 +1426,16 @@ end = struct
         | _ -> raise (Failure "unfold: trying to unpack non-pack")
       end
     | ((hm,rm,sm), Isalloc n::is) ->
-      ((hm,rm,List.append (list_repeat n WUnit) sm), is)
+      ((hm,rm,List.append (List.init ~f:(fun _ -> WUnit) n) sm), is)
     | ((hm,rm,sm), Isfree n::is) when List.length sm >= n ->
-      ((hm,rm,list_drop n sm), is)
+      ((hm,rm,List.drop sm n), is)
     | ((hm,rm,sm), Isld (rd,i)::is) when List.length sm > i ->
-      ((hm, replace rm rd (List.nth sm i), sm), is)
+      ((hm, replace rm rd (List.nth_exn sm i), sm), is)
     | ((hm,rm,sm), Isst (i,rs)::is) when List.length sm > i ->
-      ((hm,rm,list_replace i sm (List.assoc rs rm)), is)
+      ((hm,rm,list_replace i sm (List.Assoc.find_exn rm rs)), is)
     | ((hm,rm,sm), Ijmp u::is) ->
       let hc os l =
-        match List.assoc l hm with
+        match List.Assoc.find_exn hm l with
         | HCode (delt,ch,s,qr,is) -> instrs_sub delt os is
         | _ -> raise (Failure "jumping to non-code")
       in
@@ -1462,7 +1446,7 @@ end = struct
       end
     | ((hm,rm,sm), Icall (u,s,q)::is) ->
       let hc os l =
-        match List.assoc l hm with
+        match List.Assoc.find_exn hm l with
         | HCode (delt,ch,s,qr,is) ->
           instrs_sub delt (List.append os [OS s; OQ q]) is
         | _ -> raise (Failure "calling to non-code")
@@ -1474,11 +1458,11 @@ end = struct
       end
     | ((hm,rm,sm), Iret (QR rloc,_)::is) ->
       let hc os l =
-        match List.assoc l hm with
+        match List.Assoc.find_exn hm l with
         | HCode (delt,ch,s,qr,is) -> instrs_sub delt os is
         | _ -> raise (Failure "returning to non-code")
       in
-      begin match List.assoc rloc rm with
+      begin match List.Assoc.find_exn rm rloc with
         | WLoc l -> ((hm,rm,sm), hc [] l)
         | WApp (WLoc l, os) -> ((hm,rm,sm), hc os l)
         | _ -> raise (Failure "ret: trying to return to non-location")
