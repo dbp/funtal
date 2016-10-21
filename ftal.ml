@@ -1,20 +1,3 @@
-(*
-SETUP:
-   - install opam, and ocaml 4.03
-   - opam install ppx_deriving ounit core_kernel
-
-RUN TESTS:
-   - make test
-
-DEBUG:
-   - `DEBUG=1 make test` will print out debug logging messages.
-
-TODO:
-   - do renaming for heap fragment loading
-   - implement type checker
-   ...
-*)
-
 open Core_kernel.Std
 
 let replace rm r w = (r, w) :: List.Assoc.remove rm r
