@@ -18,7 +18,7 @@ let test2 _ = assert_equal
     (F.stepn 10 (empty, F.EBoundary (F.TInt,
                                      TAL.([Imv ("r1", UW (WInt 1));
                                            Iaop (Add, "r1", "r1", UW (WInt 1));
-                                           Iret (QEnd (TInt, SConcrete []), "r1")], []))))
+                                           Ihalt (TInt, SConcrete [], "r1")], []))))
     (([], [("r1", TAL.WInt 2)], []), F.EInt 2)
 
 let test_f_app _ =
@@ -51,7 +51,7 @@ let test_closures _ =
                    EApp (EBoundary (TArrow ( [TInt], TInt),
                                     ([TAL.Iprotect ([], "z2");
                                       TAL.Iimport ("rf", TAL.SAbstract ([], "z2"), TArrow ([TInt], TInt), ELam ([("y", TInt)], EBinop (EVar "x", BMinus, EVar "y")));
-                                      TAL.Iret (TAL.QEnd (FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2")), "rf")], [])),
+                                      TAL.Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2"), "rf")], [])),
                          [EInt 1]))) in
   assert_equal
     (snd (F.stepn 40 (empty, F.EApp (f, [F.EInt 3]))))

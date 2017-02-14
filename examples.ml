@@ -28,7 +28,7 @@ let factorial_t =
                             [Isld ("rn", 0); Imv ("rr", UW (WInt 1));
                              Ibnz ("rn", UApp (UW (WLoc la), [OS (SAbstract ([], "z3"))]));
                              Isfree 1;
-                             Iret (QEnd (TInt, SAbstract ([], "z1")), "rr")])));
+                             Ihalt (TInt, SAbstract ([], "z1"), "rr")])));
            (la, TAL.(HCode ([DZeta "z4"],
                             [("rr", TInt); ("ri", TInt); ("rn", TInt)],
                             SAbstract ([TInt], "z3"),
@@ -37,10 +37,10 @@ let factorial_t =
                              Iaop (Sub, "rn", "rn", UW (WInt 1));
                              Ibnz ("rn", UApp (UW (WLoc la), [OS (SAbstract ([], "z1"))]));
                              Isfree 1;
-                             Iret (QEnd (TInt, SAbstract ([],  "z4")), "rr")])))] in
+                             Ihalt (TInt, SAbstract ([],  "z4"), "rr")])))] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt),
-                            ([TAL.(Imv ("r1", UW (WLoc lf))); TAL.(Iret (QEnd (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2")), "r1"))], h)),
+                            ([TAL.(Imv ("r1", UW (WLoc lf))); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h)),
                  [EVar "x"])))
 
 
@@ -56,10 +56,10 @@ let blocks_1 =
                         [Isld ("r1", 0);
                          Iaop (Add, "r1", "r1", UW (WInt 1));
                          Iaop (Add, "r1", "r1", UW (WInt 1));
-                         Iret (QR "ra", "r1")])))] in
+                         Iret ("ra", "r1")])))] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt),
-                            (TAL.([Imv ("r1", UW (WLoc l)); TAL.(Iret (QEnd (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2")), "r1"))], h))),
+                            (TAL.([Imv ("r1", UW (WLoc l)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h))),
                  [EVar "x"])))
 
 
@@ -82,11 +82,11 @@ let blocks_2 =
                         QR "ra",
                         [Isld ("r1", 0);
                          Iaop (Add, "r1", "r1", UW (WInt 1));
-                         Iret (QR "ra", "r1")])))
+                         Iret ("ra", "r1")])))
           ] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt),
-                            (TAL.([Imv ("r1", UW (WLoc l1)); TAL.(Iret (QEnd (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2")), "r1"))], h))),
+                            (TAL.([Imv ("r1", UW (WLoc l1)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h))),
                  [EVar "x"])))
 
 
@@ -113,7 +113,7 @@ let with_ref =
                       Isalloc 1;
                       Isst (0, "rc");
                       Imv ("r1", UW WUnit);
-                      Iret (QEnd (TUnit, SAbstract ([TTupleRef [TInt]], "z")), "r1")],
+                      Ihalt (TUnit, SAbstract ([TTupleRef [TInt]], "z"), "r1")],
                       [])));
                   EApp (EVar "k",
                         [ELamMod ([("x", TInt)],
@@ -127,19 +127,19 @@ let with_ref =
                                                              F.EVar "x");
                                                     Ist ("r1", 0, "r2");
                                                     Imv ("r1", UW WUnit);
-                                                    Iret (QEnd (TUnit, stack), "r1")], []))));
+                                                    Ihalt (TUnit, stack, "r1")], []))));
                          ELamMod ([],
                                   [TAL.(TTupleRef [TInt])],
                                   [TAL.(TTupleRef [TInt])],
                                   (EBoundary (TInt,
                                               TAL.([Isld ("r1", 0);
                                                     Ild ("r2", "r1", 0);
-                                                    Iret (QEnd (TInt, stack), "r2")], []))))]);
+                                                    Ihalt (TInt, stack, "r2")], []))))]);
                   EBoundary (TUnit, (TAL.([
                       Iprotect ([TTupleRef [TInt]], "z");
                       Isfree 1;
                       Imv ("r1", UW WUnit);
-                      Iret (QEnd (TUnit, SAbstract ([], "z")), "r1")],
+                      Ihalt (TUnit, SAbstract ([], "z"), "r1")],
                       []
                     )))])))
 

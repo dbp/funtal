@@ -131,7 +131,7 @@ end = struct
                    [("r1", tytrans t1)],
                    (TAL.SAbstract ([], z1)),
                    (TAL.QEnd (tytrans t1, TAL.SAbstract ([], z1))),
-                   [TAL.Iret (TAL.QEnd (tytrans t1, TAL.SAbstract ([], z1)), "r1")]) in
+                   [TAL.Ihalt (tytrans t1, TAL.SAbstract ([], z1), "r1")]) in
       let ps = List.map ~f:(fun t -> (gen_sym ~pref:"arg" (), t)) ts in
       let v = F.ELam
           (ps, F.EBoundary
@@ -155,7 +155,7 @@ end = struct
                    [("r1", tytrans t1)],
                    TAL.SAbstract (sin, z1),
                    (TAL.QEnd (tytrans t1, TAL.SAbstract (sout, z1))),
-                   [TAL.Iret (TAL.QEnd (tytrans t1, TAL.SAbstract (sout, z1)), "r1")]) in
+                   [TAL.Ihalt (tytrans t1, TAL.SAbstract (sout, z1), "r1")]) in
       let ps = List.map ~f:(fun t -> (gen_sym ~pref:"arg" (), t)) ts in
       let v = F.ELamMod
           (ps, sin, sout, F.EBoundary
@@ -201,14 +201,12 @@ end = struct
         F.EApp (F.ELam (ps,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', ([TAL.Isld ("r1", n-i);
-                                       TAL.Iret
-                                         (TAL.QEnd (tytrans t1, s),
-                                          "r1")], [])))
+                                       TAL.Ihalt (tytrans t1, s, "r1")], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra");
                          Iimport ("r1", SAbstract ([], z1), t1, body_wrapped);
-                         Isld ("ra",0); Isfree (List.length ts + 1); Iret (QR "ra", "r1")]) in
+                         Isld ("ra",0); Isfree (List.length ts + 1); Iret ("ra", "r1")]) in
       let h =
         TAL.(HCode
                ([DZeta z1; DEpsilon e],
@@ -234,13 +232,11 @@ end = struct
         F.EApp (F.ELamMod (ps,sin,sout,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', ([TAL.Isld ("r1", n-i);
-                                       TAL.Iret
-                                         (TAL.QEnd (tytrans t1, s),
-                                          "r1")], [])))
+                                       TAL.Ihalt (tytrans t1, s, "r1")], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", SAbstract ([], z1), t1, body_wrapped);
-                         Isld ("ra",0); Isfree (List.length ts + 1); Iret (QR "ra", "r1")]) in
+                         Isld ("ra",0); Isfree (List.length ts + 1); Iret ("ra", "r1")]) in
       let h =
         TAL.(HCode
                ([DZeta z1; DEpsilon e],
@@ -259,9 +255,6 @@ end = struct
 
   type t = FT of F.t | TT of TAL.t
   [@@deriving show]
-
-
-
 
 
   type substitution = FTerm of string * F.exp
@@ -597,9 +590,6 @@ end = struct
     | EPi (n, e1) -> EPi (n, sub p e1)
     | EBoundary (t,comp) -> EBoundary (type_sub p t, TAL.sub p comp)
 
-
-
-
   let step_prim (m, e) =
     match e with
     | EBinop (EInt n1, BPlus, EInt n2) -> (m, EInt (n1 + n2))
@@ -616,11 +606,10 @@ end = struct
     (* NOTE(dbp 2016-10-13): FTAL.tytrans t = t' should hold as well,
        but tytrans gen_syms so we need some sort of alpha equivalence (or
        to just fix how we do names). *)
-    | EBoundary (t, ([TAL.Iret (TAL.QEnd (t',s'),r)],[]))->
+    | EBoundary (t, ([TAL.Ihalt (t',s',r)],[]))->
       let (hm,rm,sm) = m in
       FTAL.ft t (List.Assoc.find_exn rm r) m
     | _ -> (m, e)
-
 
   let split_at f l =
     let rec split_at' f acc l =
@@ -708,7 +697,6 @@ end = struct
     | CPi (n, ctxt') -> EPi (n, plug ctxt' e)
     | CBoundary (t,talctxt) -> EBoundary (t, TAL.plug talctxt e)
 
-
   let step (m, e) =
     let (h,r,s) = m in
     match decomp e with
@@ -747,7 +735,6 @@ end = struct
 
 end
 and TAL : sig
-
 
   type reg = string
   type loc = string
@@ -842,7 +829,8 @@ and TAL : sig
     | Isst of int * reg
     | Ijmp of u
     | Icall of u * sigma * q
-    | Iret of q * reg
+    | Iret of reg * reg
+    | Ihalt of t * sigma * reg
     | Iprotect of sigma_prefix * string
     | Iimport of reg * sigma * F.t * F.exp
   val show_instr : instr -> string
@@ -998,7 +986,8 @@ end = struct
     | Isst of int * reg
     | Ijmp of u
     | Icall of u * sigma * q
-    | Iret of q * reg
+    | Iret of reg * reg
+    | Ihalt of t * sigma * reg
     | Iprotect of sigma_prefix * string
     | Iimport of reg * sigma * F.t * F.exp
   [@@deriving show]
@@ -1075,7 +1064,7 @@ end = struct
     | Iunfold (r,u) -> Iunfold (r, u_sub p u)
     | Ijmp u -> Ijmp (u_sub p u)
     | Icall (u,s,q) -> Icall (u_sub p u, stack_sub p s, retmarker_sub p q)
-    | Iret (q,r) -> Iret (retmarker_sub p q, r)
+    | Ihalt (t,s,r) -> Ihalt (type_sub p t, stack_sub p s, r)
     | Iimport (r,s,t,e) -> Iimport (r,s,t,F.sub p e)
     | _ -> i
 
@@ -1308,7 +1297,7 @@ end = struct
     | [] ->
       begin match is with
         | [] -> None
-        | Iret (QEnd _, _) :: _-> None
+        | Ihalt (_,_,_) :: _ -> None
         | Iimport (r,s,t,e) :: rest ->
           begin match F.decomp e with
             | None -> if F.value e then Some (CComponentEmpty CHoleI, F.TI is) else None
@@ -1439,7 +1428,7 @@ end = struct
         | WApp (WLoc l, os) -> ((hm,rm,sm), hc os l)
         | _ -> raise (Failure "call: trying to jump to non-location")
       end
-    | ((hm,rm,sm), Iret (QR rloc,_)::is) ->
+    | ((hm,rm,sm), Iret (rloc,_)::is) ->
       let hc os l =
         match List.Assoc.find_exn hm l with
         | HCode (delt,ch,s,qr,is) -> instrs_sub delt os is
