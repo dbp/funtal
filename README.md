@@ -1,6 +1,6 @@
 SETUP:
    - install opam, and ocaml 4.03
-   - opam install ppx_deriving ounit core_kernel
+   - opam install oasis ppx_deriving ounit core_kernel
 
 RUN TESTS:
    - make test
