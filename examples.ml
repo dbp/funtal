@@ -39,7 +39,7 @@ let factorial_t =
                              Isfree 1;
                              Ihalt (TInt, SAbstract ([],  "z4"), "rr")])))] in
   F.(ELam ([("x", TInt)],
-           EApp (EBoundary (TArrow ([TInt], TInt),
+           EApp (EBoundary (TArrow ([TInt], TInt), None,
                             ([TAL.(Imv ("r1", UW (WLoc lf))); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h)),
                  [EVar "x"])))
 
@@ -58,7 +58,7 @@ let blocks_1 =
                          Iaop (Add, "r1", "r1", UW (WInt 1));
                          Iret ("ra", "r1")])))] in
   F.(ELam ([("x", TInt)],
-           EApp (EBoundary (TArrow ([TInt], TInt),
+           EApp (EBoundary (TArrow ([TInt], TInt), None,
                             (TAL.([Imv ("r1", UW (WLoc l)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h))),
                  [EVar "x"])))
 
@@ -85,7 +85,7 @@ let blocks_2 =
                          Iret ("ra", "r1")])))
           ] in
   F.(ELam ([("x", TInt)],
-           EApp (EBoundary (TArrow ([TInt], TInt),
+           EApp (EBoundary (TArrow ([TInt], TInt), None,
                             (TAL.([Imv ("r1", UW (WLoc l1)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h))),
                  [EVar "x"])))
 
@@ -104,7 +104,7 @@ let with_ref =
                         ("res", TInt);
                         ("_", TUnit)],
                       EVar "res"),
-                 [EBoundary (TUnit, (TAL.([
+                 [EBoundary (TUnit, Some (TAL.(SAbstract ([TTupleRef [TInt]], "z"))), (TAL.([
                       Iprotect ([], "z");
                       Isalloc 1;
                       Iimport ("r1", SAbstract ([], "z"), F.TInt, EVar "init");
@@ -119,7 +119,7 @@ let with_ref =
                         [ELamMod ([("x", TInt)],
                                   [TAL.(TTupleRef [TInt])],
                                   [TAL.(TTupleRef [TInt])],
-                                  (EBoundary (TUnit,
+                                  (EBoundary (TUnit, Some stack,
                                               TAL.([Isld ("r1", 0);
                                                     Iimport ("r2",
                                                              stack,
@@ -131,11 +131,11 @@ let with_ref =
                          ELamMod ([],
                                   [TAL.(TTupleRef [TInt])],
                                   [TAL.(TTupleRef [TInt])],
-                                  (EBoundary (TInt,
+                                  (EBoundary (TInt, Some stack,
                                               TAL.([Isld ("r1", 0);
                                                     Ild ("r2", "r1", 0);
                                                     Ihalt (TInt, stack, "r2")], []))))]);
-                  EBoundary (TUnit, (TAL.([
+                  EBoundary (TUnit, Some TAL.(SAbstract ([], "z")), (TAL.([
                       Iprotect ([TTupleRef [TInt]], "z");
                       Isfree 1;
                       Imv ("r1", UW WUnit);

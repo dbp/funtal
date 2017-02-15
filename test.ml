@@ -15,7 +15,7 @@ let test1 _ = assert_equal
 (*     (FTAL.FT (F.TInt), TAL.SNil);; *)
 
 let test2 _ = assert_equal
-    (F.stepn 10 (empty, F.EBoundary (F.TInt,
+    (F.stepn 10 (empty, F.EBoundary (F.TInt, None,
                                      TAL.([Imv ("r1", UW (WInt 1));
                                            Iaop (Add, "r1", "r1", UW (WInt 1));
                                            Ihalt (TInt, SConcrete [], "r1")], []))))
@@ -48,7 +48,7 @@ let test_factorial_t _ =
 
 let test_closures _ =
   let f = F.(ELam ([("x", TInt)],
-                   EApp (EBoundary (TArrow ( [TInt], TInt),
+                   EApp (EBoundary (TArrow ( [TInt], TInt), None,
                                     ([TAL.Iprotect ([], "z2");
                                       TAL.Iimport ("rf", TAL.SAbstract ([], "z2"), TArrow ([TInt], TInt), ELam ([("y", TInt)], EBinop (EVar "x", BMinus, EVar "y")));
                                       TAL.Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2"), "rf")], [])),
