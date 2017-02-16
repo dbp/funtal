@@ -14,6 +14,19 @@ let test1 _ = assert_equal
 (*        (FTAL.FC (F.EBinop (F.EInt 1, F.BPlus, F.EInt 1)))) *)
 (*     (FTAL.FT (F.TInt), TAL.SNil);; *)
 
+let test_parse1 _ = assert_equal
+  (Parse.parse_string Parser.component_eof {|
+(
+     mv r1, 1;
+     add r1, r1, 1;
+     halt int, * {r1}
+;
+)
+|})
+  TAL.([Imv ("r1", UW (WInt 1));
+        Iaop (Add, "r1", "r1", UW (WInt 1));
+        Ihalt (TInt, SConcrete [], "r1")], [])
+
 let test2 _ = assert_equal
     (F.stepn 10 (empty, F.EBoundary (F.TInt,
                                      TAL.([Imv ("r1", UW (WInt 1));
@@ -86,6 +99,7 @@ let test_profiling1 _ =
 let suite = "FTAL evaluations" >:::
             [
               "F: 1 + 1 = 2" >:: test1;
+              "parse: 1 + 1 = 2" >:: test_parse1;
               (* "1 + 1 : int" >:: test1_ty; *)
               "TAL: 1 + 1 = 2" >:: test2;
               "F: (\\x -> x + x) 1 = 2" >:: test_f_app;
