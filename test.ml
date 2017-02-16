@@ -53,7 +53,7 @@ let test_import_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC TAL.([Iimport ("r1", SConcrete [], F.TInt, F.EInt 10); Ihalt (TInt, SConcrete [], "r1")], [])))
+       (FTAL.TC TAL.([Iimport ("r1", "z", SConcrete [], F.TInt, F.EInt 10); Ihalt (TInt, SConcrete [], "r1")], [])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_salloc_ty _ =
@@ -67,15 +67,17 @@ let test_import_stk_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
-       (FTAL.TC TAL.([Isalloc 2;
-                      Iimport ("r1", SConcrete [TUnit], F.TInt,
-                               F.EBoundary (F.TInt, Some (SConcrete [TUnit]),
+       (FTAL.TC TAL.([Isalloc 3;
+                      Iimport ("r1", "z'", SConcrete [TUnit], F.TInt,
+                               F.EBoundary (F.TInt,
+                                            Some (SAbstract ([TUnit],"z'")),
                                             (TAL.([Iprotect ([TUnit], "z");
                                                    Imv ("r1", UW (WInt 10));
                                                    Isfree 1;
                                                    Ihalt (TInt, SAbstract ([],"z"),
                                                           "r1")]),
                                              [])));
+                      Isfree 1;
                       Ihalt (TInt, SConcrete [TUnit], "r1")], [])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TUnit])
 
@@ -103,7 +105,7 @@ let test_closures _ =
   let f = F.(ELam ([("x", TInt)],
                    EApp (EBoundary (TArrow ( [TInt], TInt), None,
                                     ([TAL.Iprotect ([], "z2");
-                                      TAL.Iimport ("rf", TAL.SAbstract ([], "z2"), TArrow ([TInt], TInt), ELam ([("y", TInt)], EBinop (EVar "x", BMinus, EVar "y")));
+                                      TAL.Iimport ("rf", "_z", TAL.SAbstract ([], "z2"), TArrow ([TInt], TInt), ELam ([("y", TInt)], EBinop (EVar "x", BMinus, EVar "y")));
                                       TAL.Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2"), "rf")], [])),
                          [EInt 1]))) in
   assert_equal

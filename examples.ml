@@ -107,7 +107,7 @@ let with_ref =
                  [EBoundary (TUnit, Some (TAL.(SAbstract ([TTupleRef [TInt]], "z"))), (TAL.([
                       Iprotect ([], "z");
                       Isalloc 1;
-                      Iimport ("r1", SAbstract ([], "z"), F.TInt, EVar "init");
+                      Iimport ("r1", "_", SAbstract ([], "z"), F.TInt, EVar "init");
                       Isst (0, "r1");
                       Iralloc ("rc", 1);
                       Isalloc 1;
@@ -121,7 +121,7 @@ let with_ref =
                                   [TAL.(TTupleRef [TInt])],
                                   (EBoundary (TUnit, Some stack,
                                               TAL.([Isld ("r1", 0);
-                                                    Iimport ("r2",
+                                                    Iimport ("r2", "_",
                                                              stack,
                                                              F.TInt,
                                                              F.EVar "x");

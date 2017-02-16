@@ -126,6 +126,7 @@ end = struct
     | (F.TArrow (ts,t1), TAL.WLoc l) ->
       let z1 = gen_sym ~pref:"z" () in
       let z2 = gen_sym ~pref:"z" () in
+      let z3 = gen_sym ~pref:"z" () in
       let lend = gen_sym ~pref:"lend" () in
       let hend =
         TAL.HCode ([TAL.DZeta z1],
@@ -139,7 +140,7 @@ end = struct
              (t1, None, (TAL.(List.concat
                           [[Iprotect ([], z2)];
                            (List.concat (List.map ~f:(fun (x,xt) ->
-                                [Iimport ("r1", SAbstract ([], z2), xt, F.EVar x);
+                                [Iimport ("r1", z3, SAbstract ([], z2), xt, F.EVar x);
                                  Isalloc 1;
                                  Isst (0, "r1")]) ps));
                            [Imv ("ra", UApp (UW (WLoc lend), [OS (SAbstract ([], z2))]));
@@ -151,6 +152,7 @@ end = struct
       let lend = gen_sym ~pref:"lend" () in
       let z1 = gen_sym ~pref:"z" () in
       let z2 = gen_sym ~pref:"z" () in
+      let z3 = gen_sym ~pref:"z" () in
       let hend =
         TAL.HCode ([TAL.DZeta z1],
                    [("r1", tytrans t1)],
@@ -163,7 +165,7 @@ end = struct
              (t1, None, (TAL.(List.concat
                           [(List.concat (List.map ~f:(fun (x,xt) ->
                                [Iprotect (sin, z2);
-                                Iimport ("r1", SAbstract (sin, z2), xt, F.EVar x);
+                                Iimport ("r1", z3, SAbstract (sin, z2), xt, F.EVar x);
                                 Isalloc 1;
                                 Isst (0, "r1")]) ps));
                            [Imv ("ra", UApp (UW (WLoc lend),
@@ -193,6 +195,7 @@ end = struct
       let l = gen_sym ~pref:"lf" () in
       let e = gen_sym ~pref:"e" () in
       let z1 = gen_sym ~pref:"z" () in
+      let z2 = gen_sym ~pref:"z" () in
       let s' = TAL.SAbstract (List.map ~f:tytrans ts, z1) in
       let s = TAL.(SAbstract ((TBox (PBlock ([], [("r1", tytrans t1)],
                                              SAbstract ([], z1), QEpsilon e))) ::
@@ -206,7 +209,7 @@ end = struct
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra");
-                         Iimport ("r1", SAbstract ([], z1), t1, body_wrapped);
+                         Iimport ("r1", z2, SAbstract ([], z1), t1, body_wrapped);
                          Isld ("ra",0); Isfree (List.length ts + 1); Iret ("ra", "r1")]) in
       let h =
         TAL.(HCode
@@ -223,6 +226,7 @@ end = struct
       let l = gen_sym ~pref:"lf" () in
       let e = gen_sym ~pref:"e" () in
       let z1 = gen_sym ~pref:"z" () in
+      let z2 = gen_sym ~pref:"z" () in
       let s' = TAL.SAbstract (List.map ~f:tytrans ts, z1) in
       let s = TAL.(SAbstract ((TBox (PBlock ([], [("r1", tytrans t1)],
                                              SAbstract ([], z1), QEpsilon e))) ::
@@ -236,7 +240,7 @@ end = struct
                                                TAL.Ihalt (tytrans t1, s, "r1")], [])))
                   (List.map ~f:snd ps))
       in
-      let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", SAbstract ([], z1), t1, body_wrapped);
+      let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", z2, SAbstract ([], z1), t1, body_wrapped);
                          Isld ("ra",0); Isfree (List.length ts + 1); Iret ("ra", "r1")]) in
       let h =
         TAL.(HCode
@@ -414,14 +418,24 @@ end = struct
         raise (TypeError ("Imv writing to register that is current return marker", e))
       | Imv (rd,u)::is, _ ->
         tc (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) (TC (is,h))
-      | Iimport (rd,s,t,f)::is, QR r when rd = r ->
+      | Iimport (rd,z,s,t,f)::is, QR r when rd = r ->
         raise (TypeError ("Iimport writing to register that is current return marker", e))
-      | Iimport (rd,s,t,f)::is, _ ->
-        (* TODO(dbp 2017-02-16): Write test exploiting front of stack modification, possibly by double boundary? *)
-        (* TODO(dbp 2017-02-16): Need to hide tail. *)
-        if tc (set_ret context QOut) (FC f) = (FT t,s)
-        then tc (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) s) (TC (is,h))
-        else raise (TypeError ("Iimport given F expression of the wrong type", e))
+      | Iimport (rd,z,s,t,f)::is, _ when
+          stack_pref_length s > stack_pref_length (get_stack context) || stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) <> s ->
+        raise (TypeError ("Iimport protected suffix does not match current stack", e))
+      | Iimport (rd,z,s,t,f)::is, _ ->
+        let pref = stack_take (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in
+        let suf = stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in
+        begin match tc (set_stack (set_ret context QOut) (SAbstract (pref, z))) (FC f) with
+          | (FT t',s') when t <> t' ->
+            raise (TypeError ("Iimport given F expression of the wrong type", e))
+          | (FT t',SConcrete _)  ->
+            raise (TypeError ("Iimport given F expression that returns stack without abstract tail", e))
+          | (FT t',SAbstract (_, z')) when z <> z'  ->
+            raise (TypeError ("Iimport given F expression that returns stack with wrong abstract tail", e))
+          | (FT t',SAbstract (newpref, _)) -> tc (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) (stack_prepend newpref suf)) (TC (is,h))
+          | _  -> raise (TypeError ("Iimport without F expression within", e))
+        end
       | [Ihalt (t,s,r)], QEnd (t',s') when t' <> t ->
         raise (TypeError ("Halt instruction type doesn't match return marker: " ^ show t ^ " <> " ^ show t', e))
       | [Ihalt (t,s,r)], QEnd (t',s') when s <> s' ->
@@ -928,6 +942,7 @@ and TAL : sig
   val stack_take : sigma -> int -> sigma_prefix
   val stack_drop : sigma -> int -> sigma
   val stack_pref_length : sigma -> int
+  val stack_prepend : sigma_prefix -> sigma -> sigma
 
   val show : t -> string
   val pp : Format.formatter -> t -> unit
@@ -986,7 +1001,7 @@ and TAL : sig
     | Iret of reg * reg
     | Ihalt of t * sigma * reg
     | Iprotect of sigma_prefix * string
-    | Iimport of reg * sigma * F.t * F.exp
+    | Iimport of reg * string * sigma * F.t * F.exp
   val show_instr : instr -> string
   val pp_instr : Format.formatter -> instr -> unit
 
@@ -1018,7 +1033,7 @@ and TAL : sig
 
   and contextI =
       CHoleI
-    | CImportI of reg * sigma * F.t * F.context * instr list
+    | CImportI of reg * string * sigma * F.t * F.context * instr list
 
   and contextC =
       CHoleC
@@ -1147,7 +1162,7 @@ end = struct
     | Iret of reg * reg
     | Ihalt of t * sigma * reg
     | Iprotect of sigma_prefix * string
-    | Iimport of reg * sigma * F.t * F.exp
+    | Iimport of reg * string * sigma * F.t * F.exp
   [@@deriving show]
 
   type h =
@@ -1177,6 +1192,10 @@ end = struct
   let stack_pref_length s = match s with
     | SConcrete l | SAbstract (l,_) -> List.length l
 
+  let stack_prepend p s = match s with
+    | SConcrete l -> SConcrete (List.append p l)
+    | SAbstract (l,a) -> SAbstract (List.append p l, a)
+
   let load (h,r,s) h' =
     (* NOTE(dbp 2016-09-08): We should do renaming, but relying, for now, on the fact
        that we always gensym new location names, so not renaming should be safe. *)
@@ -1192,7 +1211,7 @@ end = struct
 
   and contextI =
       CHoleI
-    | CImportI of reg * sigma * F.t * F.context * instr list
+    | CImportI of reg * string * sigma * F.t * F.context * instr list
   [@@deriving show]
 
   and contextC =
@@ -1216,7 +1235,7 @@ end = struct
     | CComponentEmpty ctxt' ->
       begin match ctxt' with
         | CHoleI -> (un_ti e, [])
-        | CImportI (r,s,t,ctxt',is) -> (Iimport (r,s,t,F.plug ctxt' e)::is, [])
+        | CImportI (r,z,s,t,ctxt',is) -> (Iimport (r,z,s,t,F.plug ctxt' e)::is, [])
       end
     | CComponentHeap CHoleC -> un_tc e
 
@@ -1237,7 +1256,7 @@ end = struct
     | Ijmp u -> Ijmp (u_sub p u)
     | Icall (u,s,q) -> Icall (u_sub p u, stack_sub p s, retmarker_sub p q)
     | Ihalt (t,s,r) -> Ihalt (type_sub p t, stack_sub p s, r)
-    | Iimport (r,s,t,e) -> Iimport (r,s,t,F.sub p e)
+    | Iimport (r,z,s,t,e) -> Iimport (r,z,s,t,F.sub p e)
     | _ -> i
 
   and u_sub p u = match u with
@@ -1482,10 +1501,10 @@ end = struct
       begin match is with
         | [] -> None
         | Ihalt (_,_,_) :: _ -> None
-        | Iimport (r,s,t,e) :: rest ->
+        | Iimport (r,z,s,t,e) :: rest ->
           begin match F.decomp e with
             | None -> if F.value e then Some (CComponentEmpty CHoleI, F.TI is) else None
-            | Some (ctxt, e') -> Some (CComponentEmpty (CImportI (r, s, t, ctxt, rest)), e')
+            | Some (ctxt, e') -> Some (CComponentEmpty (CImportI (r, z, s, t, ctxt, rest)), e')
           end
         | _ -> Some (CComponentEmpty CHoleI, F.TI is)
       end
@@ -1623,7 +1642,7 @@ end = struct
         | WApp (WLoc l, os) -> ((hm,rm,sm), hc os l)
         | _ -> raise (Failure "ret: trying to return to non-location")
       end
-    | ((hm,rm,sm), Iimport (r,s,t,v)::is) ->
+    | ((hm,rm,sm), Iimport (r,z,s,t,v)::is) ->
       let (m, w) = FTAL.tf t v (hm,rm,sm) in
       (m, Imv (r, UW w)::is)
     | ((hm,rm,sm), Iprotect (_,_)::is) ->
