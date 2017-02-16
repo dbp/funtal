@@ -14,6 +14,19 @@ let test1_ty _ = assert_equal
        (FTAL.FC (F.EBinop (F.EInt 1, F.BPlus, F.EInt 1))))
     (FTAL.FT (F.TInt), TAL.SConcrete []);;
 
+let test_parse1 _ = assert_equal
+  (Parse.parse_string Parser.component_eof {|
+(
+     mv r1, 1;
+     add r1, r1, 1;
+     halt int, * {r1}
+;
+)
+|})
+  TAL.([Imv ("r1", UW (WInt 1));
+        Iaop (Add, "r1", "r1", UW (WInt 1));
+        Ihalt (TInt, SConcrete [], "r1")], [])
+
 let test2 _ = assert_equal
     (F.stepn 10 (empty, F.EBoundary (F.TInt, None,
                                      TAL.([Imv ("r1", UW (WInt 1));
@@ -143,7 +156,8 @@ let suite = "FTAL evaluations" >:::
               "F: 1 + 1 = 2" >:: test1;
               "F: 1 + 1 : int" >:: test1_ty;
               "F: 1 + 1 = 2" >:: test2;
-              "F: (\x -> x + x) 1 = 2" >:: test_f_app;
+              "F: (\\x -> x + x) 1 = 2" >:: test_f_app;
+              "parse: 1 + 1 = 2" >:: test_parse1;
               "F: fact 3 = 6" >:: test_factorial_f;
               "F: fact : int -> int" >:: test_factorial_f_ty;
               "TAL: mv r1,1;halt r1 : int" >:: test_mv_ty;
@@ -152,10 +166,10 @@ let suite = "FTAL evaluations" >:::
               "TAL: mv r1, 1; salloc 2; halt r1 : int" >:: test_salloc_ty;
               "TAL: import w/ stack mod : int" >:: test_import_stk_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;
-              "TAL: int -> int" >:: test_factorial_t_ty;
-              "FTAL: (\x -> FT(TF(\y -> x - y)) 1) 3 = 2" >:: test_closures;
-              "TAL(1block): (\x -> x + 2)3 = 5" >:: test_blocks1;
-              "TAL(2blocks): (\x -> x + 2)3 = 5" >:: test_blocks2;
+              (* "TAL: int -> int" >:: test_factorial_t_ty; *)
+              "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;
+              "TAL(1block): (\\x -> x + 2)3 = 5" >:: test_blocks1;
+              "TAL(2blocks): (\\x -> x + 2)3 = 5" >:: test_blocks2;
               "REF: r = ref 1; r := 20; !r = 20" >:: test_ref1;
               "REF: r = ref 1; r := 20; r := !r + 5; !r = 25" >:: test_ref2;
               "PROFILING_1 = 2" >:: test_profiling1;
