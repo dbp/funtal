@@ -88,13 +88,13 @@ let suite = "FTAL evaluations" >:::
               "F: 1 + 1 = 2" >:: test1;
               (* "1 + 1 : int" >:: test1_ty; *)
               "TAL: 1 + 1 = 2" >:: test2;
-              "F: (\x -> x + x) 1 = 2" >:: test_f_app;
+              "F: (\\x -> x + x) 1 = 2" >:: test_f_app;
               "F: fact 3 = 6" >:: test_factorial_f;
               (* "fact : int -> int" >:: test_factorial_f_ty; *)
               "TAL: fact 3 = 6" >:: test_factorial_t;
-              "FTAL: (\x -> FT(TF(\y -> x - y)) 1) 3 = 2" >:: test_closures;
-              "TAL(1block): (\x -> x + 2)3 = 5" >:: test_blocks1;
-              "TAL(2blocks): (\x -> x + 2)3 = 5" >:: test_blocks2;
+              "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;
+              "TAL(1block): (\\x -> x + 2)3 = 5" >:: test_blocks1;
+              "TAL(2blocks): (\\x -> x + 2)3 = 5" >:: test_blocks2;
               "REF: r = ref 1; r := 20; !r = 20" >:: test_ref1;
               "REF: r = ref 1; r := 20; r := !r + 5; !r = 25" >:: test_ref2;
               "PROFILING_1 = 2" >:: test_profiling1;
