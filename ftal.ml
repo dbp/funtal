@@ -46,7 +46,7 @@ module rec FTAL : sig
 
   exception TypeError of string * e
 
-  type context = TAL.psi list * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
+  type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
 
   val default_context : TAL.q -> context
 
@@ -269,8 +269,10 @@ end = struct
                  | EBinding of string * string
 
   exception TypeError of string * e
+  exception TypeErrorU of string * TAL.u
+  exception TypeErrorW of string * TAL.w
 
-  type context = TAL.psi list * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
+  type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
 
   let default_context q = ([],[],[],[],q,TAL.SConcrete [])
 
@@ -283,15 +285,22 @@ end = struct
   let get_stack (_,_,_,_,_,s) = s
   let set_stack (p,d,g,c,q,_) s = (p,d,g,c,q,s)
 
-  let rec tc context e = match e with
+  let get_reg (_,_,_,c,_,_) = c
+  let set_reg (p,d,g,_,q,s) c = (p,d,g,c,q,s)
+
+  let get_heap (p,_,_,_,_,_) = p
+  let set_heap (_,d,g,c,q,s) p = (p,d,g,c,q,s)
+
+
+  let rec tc (context:context) e = match e with
     | FC exp -> begin
         let tc' e = tc context (FC e) in
         let show_type = show in
         let open F in
         match exp, get_ret context with
         | EVar i, TAL.QOut -> begin match List.Assoc.find (get_env context) i with
-          | Some v -> (FT v, get_stack context)
-          | None -> raise (TypeError ("Variable not in scope", e))
+            | Some v -> (FT v, get_stack context)
+            | None -> raise (TypeError ("Variable not in scope", e))
           end
         | EUnit, TAL.QOut  -> (FT TUnit, get_stack context)
         | EInt _, TAL.QOut -> (FT TInt, get_stack context)
@@ -378,7 +387,99 @@ end = struct
           end
         | _ -> raise (TypeError ("F expression with invalid return marker", e))
       end
-    | TC (is,h) -> raise (Failure "Undefined")
+    | TC (instrs,h) ->
+      (* let tc' e = tc context (FC e) in *)
+      (* let show_type = show in *)
+      let open TAL in
+      match instrs, get_ret context with
+      | Iaop (op, rd, rs, u)::is, QR r when rd = r ->
+        raise (TypeError ("Iaop writing to register that is current return marker", e))
+      | Iaop (op, rd, rs, u)::is, _ ->
+        begin match List.Assoc.find (get_reg context) rs, tc_u context u with
+          | None, _ -> raise (TypeError ("Iaop with unbound source register", e))
+          | Some t, _ when t <> TInt -> raise (TypeError ("Iaop with non-integer as source", e))
+          | _, t when t <> TInt -> raise (TypeError ("Iaop with non-integer as target", e))
+          | _ ->
+            tc (set_reg context (List.Assoc.add (get_reg context) rd TInt)) (TC (is, h))
+        end
+      | Imv (rd,u)::is, QR r when rd = r ->
+        raise (TypeError ("Imv writing to register that is current return marker", e))
+      | Imv (rd,u)::is, _ ->
+        tc (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) (TC (is,h))
+      | [Ihalt (t,s,r)], QEnd (t',s') when t' <> t || s <> s' ->
+        raise (TypeError ("Halt instruction annotations don't match return marker", e))
+      | [Ihalt (t,s,r)], QEnd _ ->
+        if List.Assoc.find (get_reg context) r = Some t
+        then (TT t,s)
+        else raise (TypeError ("Halting with wrong type in return register", e))
+      | [Ihalt _], _ ->
+        raise (TypeError ("Halting without end return marker", e))
+      | _ -> raise (TypeError ("Don't know how to type-check", e))
+
+        (* | Ibnz of reg * u *)
+        (* | Ild of reg * reg * int *)
+        (* | Ist of reg * int * reg *)
+        (* | Iralloc of reg * int *)
+        (* | Iballoc of reg * int *)
+        (* | Imv of reg * u *)
+        (* | Iunpack of string * reg * u *)
+        (* | Iunfold of reg * u *)
+        (* | Isalloc of int *)
+        (* | Isfree of int *)
+        (* | Isld of reg * int *)
+        (* | Isst of int * reg *)
+        (* | Ijmp of u *)
+        (* | Icall of u * sigma * q *)
+        (* | Iret of reg * reg *)
+        (* | Ihalt of t * sigma * reg *)
+        (* | Iprotect of sigma_prefix * string *)
+        (* | Iimport of reg * sigma * F.t * F.exp *)
+
+  and tc_u context u = let open TAL in match u with
+    | UW w -> tc_w context w
+    | UR r -> begin match List.Assoc.find (get_reg context) r with
+        | None -> raise (TypeErrorU ("Unbound register", u))
+        | Some t -> t
+      end
+    | UPack (t, u, s, t') ->
+      if tc_u context u = type_sub (TType (s,t')) t
+      then TExists (s,t')
+      else raise (TypeErrorU ("Ill-typed existential", u))
+    | UFold (s,t,u) ->
+      if tc_u context u = type_sub (TType (s, TRec (s, t))) t
+      then TRec (s,t)
+      else raise (TypeErrorU ("Ill-typed fold", u))
+    | UApp (u, os) ->
+      begin match tc_u context u with
+        | TBox (PBlock (d,c,s,q)) ->
+          let (ds,dr) = List.split_n d (List.length os) in
+          List.fold_left ~f:(fun t' p -> type_sub p t') ~init:(TBox (PBlock (dr,c,s,q))) (type_zip ds os)
+        | _ -> raise (TypeErrorU ("Can't apply non-block to types", u))
+      end
+
+  and tc_w context w = let open TAL in match w with
+    | WUnit -> TUnit
+    | WInt _ -> TInt
+    | WLoc l ->
+      begin match List.Assoc.find (get_heap context) l with
+        | None -> raise (TypeErrorW ("Unbound location", w))
+        | Some t -> TBox t
+      end
+    | WPack (t, w, s, t') ->
+      if tc_w context w = type_sub (TType (s,t')) t
+      then TExists (s,t')
+      else raise (TypeErrorW ("Ill-typed existential", w))
+    | WFold (s,t,w) ->
+      if tc_w context w = type_sub (TType (s, TRec (s, t))) t
+      then TAL.TRec (s,t)
+      else raise (TypeErrorW ("Ill-typed fold", w))
+    | WApp (w, os) ->
+      begin match tc_w context w with
+        | TBox (PBlock (d,c,s,q)) ->
+          let (ds,dr) = List.split_n d (List.length os) in
+          List.fold_left ~f:(fun t' p -> type_sub p t') ~init:(TBox (PBlock (dr,c,s,q))) (type_zip ds os)
+        | _ -> raise (TypeErrorW ("Can't apply non-block to types", w))
+      end
 
 end
 and F : sig
@@ -756,7 +857,7 @@ and TAL : sig
     | TExists of string * t
     | TRec of string * t
     | TTupleRef of t list
-    | TBox of psi
+    | TBox of psi_elem
 
   and sigma =
       SAbstract of sigma_prefix * string
@@ -771,9 +872,11 @@ and TAL : sig
     | QEnd of t * sigma
     | QOut
 
-  and psi =
+  and psi_elem =
       PBlock of delta * chi * sigma * q
     | PTuple of t list
+
+  and psi = (loc * psi_elem) list
 
   and chi = (reg * t) list
 
@@ -888,6 +991,8 @@ and TAL : sig
 
   val type_rebind : FTAL.rebinding -> t -> t
 
+  val type_zip : delta -> omega list -> FTAL.substitution list
+
   val plug : context -> F.ft -> component
 
   val reduce : mem * instr list -> mem * instr list
@@ -917,7 +1022,7 @@ end = struct
     | TExists of string * t
     | TRec of string * t
     | TTupleRef of t list
-    | TBox of psi
+    | TBox of psi_elem
   [@@deriving show]
 
   and sigma =
@@ -936,10 +1041,12 @@ end = struct
     | QOut
   [@@deriving show]
 
-  and psi =
+  and psi_elem =
       PBlock of delta * chi * sigma * q
     | PTuple of t list
   [@@deriving show]
+
+  and psi = (loc * psi_elem) list
 
   and chi = (reg * t) list
 

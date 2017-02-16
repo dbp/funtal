@@ -8,11 +8,11 @@ let test1 _ = assert_equal
     (F.stepn 10 (empty, F.EBinop (F.EInt 1, F.BPlus, F.EInt 1)))
     (empty, F.EInt 2);;
 
-(* let test1_ty _ = assert_equal *)
-(*     (FTAL.tc *)
-(*        (FTAL.default_context TAL.QOut) *)
-(*        (FTAL.FC (F.EBinop (F.EInt 1, F.BPlus, F.EInt 1)))) *)
-(*     (FTAL.FT (F.TInt), TAL.SNil);; *)
+let test1_ty _ = assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC (F.EBinop (F.EInt 1, F.BPlus, F.EInt 1))))
+    (FTAL.FT (F.TInt), TAL.SConcrete []);;
 
 let test2 _ = assert_equal
     (F.stepn 10 (empty, F.EBoundary (F.TInt, None,
@@ -34,17 +34,38 @@ let test_factorial_f _ =
     (snd (F.stepn 100 (empty, F.EApp (factorial_f, [F.EInt 3]))))
     (F.EInt 6)
 
-(* let test_factorial_f_ty _ = *)
+
+let test_mv_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Ihalt (TInt, SConcrete [], "r1")],[])))
+    (FTAL.TT TAL.TInt, TAL.SConcrete [])
+
+(* let test_aop_ty _ = *)
 (*   assert_equal *)
 (*     (FTAL.tc *)
-(*        (FTAL.default_context TAL.QOut) *)
-(*        (FTAL.FC factorial_f)) *)
-(*     (FTAL.FT (F.TArrow ("z4", [F.TInt], F.TInt)), TAL.SNil);; *)
+(*        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [])))) *)
+(*        (FTAL.TC TAL.(Iaop (Add,"r1", ,[]) *)
+
+let test_factorial_f_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC factorial_f))
+    (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 
 let test_factorial_t _ =
   assert_equal
     (snd (F.stepn 30 (empty, F.EApp (factorial_t, [F.EInt 3]))))
     (F.EInt 6)
+
+let test_factorial_t_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC factorial_t))
+    (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 
 let test_closures _ =
   let f = F.(ELam ([("x", TInt)],
@@ -86,12 +107,15 @@ let test_profiling1 _ =
 let suite = "FTAL evaluations" >:::
             [
               "F: 1 + 1 = 2" >:: test1;
-              (* "1 + 1 : int" >:: test1_ty; *)
-              "TAL: 1 + 1 = 2" >:: test2;
+              "F: 1 + 1 : int" >:: test1_ty;
+              "F: 1 + 1 = 2" >:: test2;
               "F: (\x -> x + x) 1 = 2" >:: test_f_app;
               "F: fact 3 = 6" >:: test_factorial_f;
-              (* "fact : int -> int" >:: test_factorial_f_ty; *)
+              "F: fact : int -> int" >:: test_factorial_f_ty;
+              "TAL: mv r1,1;halt r1 : int" >:: test_mv_ty;
+              (* "TAL: mv r1,1; + r1,r1,1;halt r1 : int" >:: test_aop_ty; *)
               "TAL: fact 3 = 6" >:: test_factorial_t;
+              "TAL: int -> int" >:: test_factorial_t_ty;
               "FTAL: (\x -> FT(TF(\y -> x - y)) 1) 3 = 2" >:: test_closures;
               "TAL(1block): (\x -> x + 2)3 = 5" >:: test_blocks1;
               "TAL(2blocks): (\x -> x + 2)3 = 5" >:: test_blocks2;
@@ -99,8 +123,7 @@ let suite = "FTAL evaluations" >:::
               "REF: r = ref 1; r := 20; r := !r + 5; !r = 25" >:: test_ref2;
               "PROFILING_1 = 2" >:: test_profiling1;
             ]
-;;
+
 
 let () =
   run_test_tt_main suite
-;;
