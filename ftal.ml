@@ -57,6 +57,7 @@ module rec FTAL : sig
                     | TType of string * TAL.t
                     | SType of string * TAL.sigma
                     | EMarker of string * TAL.q
+                    | SAbs of TAL.sigma * string
 
   type rebinding = SBinding of string * string
                  | FBinding of string * string
@@ -262,6 +263,9 @@ end = struct
                     | TType of string * TAL.t
                     | SType of string * TAL.sigma
                     | EMarker of string * TAL.q
+                    | SAbs of TAL.sigma * string
+  [@@deriving show]
+
 
   type rebinding = SBinding of string * string
                  | FBinding of string * string
@@ -275,6 +279,9 @@ end = struct
   type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
 
   let default_context q = ([],[],[],[],q,TAL.SConcrete [])
+
+  let get_tyenv (_,d,_,_,_,_) = d
+  let set_tyenv (p,_,g,c,q,s) d = (p,d,g,c,q,s)
 
   let get_env (_,_,g,_,_,_) = g
   let set_env (p,d,_,c,q,s) g = (p,d,g,c,q,s)
@@ -383,7 +390,8 @@ end = struct
           let s' = Option.value ~default:(get_stack context) s in
           begin match tc (set_ret context (TAL.QEnd (tytrans t, s'))) (TC c) with
             | TT t0, s0 when TAL.t_eq t0 (tytrans t) && s0 = s' -> (FT t, s0)
-            | _ -> raise (TypeError ("Boundary with contents not matching type", e))
+            | TT t0, s0 -> raise (TypeError ("Boundary with contents not matching type: " ^ TAL.show (tytrans t) ^ " <> " ^ TAL.show t0 ^ " OR " ^ TAL.show_sigma s' ^ " <> " ^ TAL.show_sigma s0, e))
+            | _ -> raise (TypeError ("Boundary with non-TAL inside", e))
           end
         | _ -> raise (TypeError ("F expression with invalid return marker", e))
       end
@@ -409,41 +417,67 @@ end = struct
       | Iimport (rd,s,t,f)::is, QR r when rd = r ->
         raise (TypeError ("Iimport writing to register that is current return marker", e))
       | Iimport (rd,s,t,f)::is, _ ->
+        (* TODO(dbp 2017-02-16): Write test exploiting front of stack modification, possibly by double boundary? *)
         (* TODO(dbp 2017-02-16): Need to hide tail. *)
         if tc (set_ret context QOut) (FC f) = (FT t,s)
         then tc (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) s) (TC (is,h))
         else raise (TypeError ("Iimport given F expression of the wrong type", e))
-      | [Ihalt (t,s,r)], QEnd (t',s') when t' <> t || s <> s' ->
-        raise (TypeError ("Halt instruction annotations don't match return marker", e))
+      | [Ihalt (t,s,r)], QEnd (t',s') when t' <> t ->
+        raise (TypeError ("Halt instruction type doesn't match return marker: " ^ show t ^ " <> " ^ show t', e))
+      | [Ihalt (t,s,r)], QEnd (t',s') when s <> s' ->
+        raise (TypeError ("Halt instruction stack doesn't match return marker: " ^ show_sigma s ^ " <> " ^ show_sigma s', e))
       | [Ihalt (t,s,r)], QEnd _ when s <> get_stack context ->
-        raise (TypeError ("Halt instruction annotations don't match current stack", e))
+        raise (TypeError ("Halt instruction annotations don't match current stack: " ^ show_sigma s ^ " <> " ^ show_sigma (get_stack context), e))
       | [Ihalt (t,s,r)], QEnd _ ->
         if List.Assoc.find (get_reg context) r = Some t
         then (TT t,s)
         else raise (TypeError ("Halting with wrong type in return register", e))
       | [Ihalt _], _ ->
         raise (TypeError ("Halting without end return marker", e))
-      | Isalloc n ::is, _ ->
+      | Isalloc n :: is, _ ->
         tc (set_stack context (List.fold_left ~f:(fun s _ -> stack_cons TUnit s) ~init:(get_stack context) (List.init ~f:(fun x -> x) n))) (TC (is,h))
+      | Isfree n :: is, QI n' when n > n' ->
+        raise (TypeError ("Can't free stack position where return marker points to", e))
+      | Isfree n :: is, _ when stack_pref_length (get_stack context) < n ->
+        raise (TypeError ("Can't free more stack than exposed", e))
+      | Isfree n :: is, QI n' ->
+        tc (set_ret (set_stack context (stack_drop (get_stack context) n ))
+              (QI (n' - n)))
+          (TC (is, h))
+      | Isfree n :: is, _ ->
+        tc (set_stack context (stack_drop (get_stack context) n ))
+          (TC (is, h))
+      | Iprotect (pref, v)::is, QI n when n > List.length pref ->
+        raise (TypeError ("Can't protect part of stack that contains return marker", e))
+      | Iprotect (pref, v)::is, _ when stack_take (get_stack context) (List.length pref) <> pref ->
+        raise (TypeError ("Protect prefix doesn't match current stack", e))
+      | Iprotect (pref, v)::is, _ ->
+        let stail = stack_drop (get_stack context) (List.length pref) in
+        let new_q = retmarker_sub (SAbs (stail, v)) (get_ret context) in
+        begin match tc (set_ret (set_stack (set_tyenv context (List.append (get_tyenv context) [DZeta v])) (SAbstract (pref, v))) new_q) (TC (is, h)) with
+          | TT t, s' -> let sub = SType (v, stail) in
+            (TT (type_sub sub t), stack_sub sub s')
+          | _ -> raise (Failure "Impossible")
+        end
 
 
       | _ -> raise (TypeError ("Don't know how to type-check", e))
 
-        (* | Ibnz of reg * u *)
-        (* | Ild of reg * reg * int *)
-        (* | Ist of reg * int * reg *)
-        (* | Iralloc of reg * int *)
-        (* | Iballoc of reg * int *)
-        (* | Iunpack of string * reg * u *)
-        (* | Iunfold of reg * u *)
-        (* | Isfree of int *)
-        (* | Isld of reg * int *)
-        (* | Isst of int * reg *)
-        (* | Ijmp of u *)
-        (* | Icall of u * sigma * q *)
-        (* | Iret of reg * reg *)
-        (* | Iprotect of sigma_prefix * string *)
-        (* | Iimport of reg * sigma * F.t * F.exp *)
+  (* | Ibnz of reg * u *)
+  (* | Ild of reg * reg * int *)
+  (* | Ist of reg * int * reg *)
+  (* | Iralloc of reg * int *)
+  (* | Iballoc of reg * int *)
+  (* | Iunpack of string * reg * u *)
+  (* | Iunfold of reg * u *)
+  (* | Isfree of int *)
+  (* | Isld of reg * int *)
+  (* | Isst of int * reg *)
+  (* | Ijmp of u *)
+  (* | Icall of u * sigma * q *)
+  (* | Iret of reg * reg *)
+  (* | Iprotect of sigma_prefix * string *)
+  (* | Iimport of reg * sigma * F.t * F.exp *)
 
   and tc_u context u = let open TAL in match u with
     | UW w -> tc_w context w
@@ -891,6 +925,9 @@ and TAL : sig
   and chi = (reg * t) list
 
   val stack_cons : t -> sigma -> sigma
+  val stack_take : sigma -> int -> sigma_prefix
+  val stack_drop : sigma -> int -> sigma
+  val stack_pref_length : sigma -> int
 
   val show : t -> string
   val pp : Format.formatter -> t -> unit
@@ -1130,6 +1167,16 @@ end = struct
     | SConcrete l -> SConcrete (t::l)
     | SAbstract (l,a) -> SAbstract (t::l,a)
 
+  let stack_take s n = match s with
+    | SConcrete l | SAbstract (l,_) -> List.take l n
+
+  let stack_drop s n = match s with
+    | SConcrete l -> SConcrete (List.drop l n)
+    | SAbstract (l,a) -> SAbstract (List.drop l n, a)
+
+  let stack_pref_length s = match s with
+    | SConcrete l | SAbstract (l,_) -> List.length l
+
   let load (h,r,s) h' =
     (* NOTE(dbp 2016-09-08): We should do renaming, but relying, for now, on the fact
        that we always gensym new location names, so not renaming should be safe. *)
@@ -1235,7 +1282,19 @@ end = struct
         | FTAL.EMarker (a', q) when a = a' -> q
         | _ -> t
       end
-    | QEnd (t',s) -> QEnd (type_sub p t', stack_sub p s)
+    | QEnd (t',s) -> begin match p with
+        | FTAL.SAbs (s', a) ->
+          let news = match s, s' with
+            | SAbstract (lold, z), SAbstract (lhide, z') when
+                z = z' && List.length lold >= List.length lhide && (List.drop lold (List.length lold - List.length lhide)) = lhide ->
+              SAbstract (List.take lold (List.length lold - List.length lhide), a)
+            | SConcrete lold, SConcrete lhide when
+                List.length lold >= List.length lhide && (List.drop lold (List.length lold - List.length lhide)) = lhide ->
+              SAbstract (List.take lold (List.length lold - List.length lhide), a)
+            | _ -> stack_sub p s in
+          QEnd (type_sub p t', news)
+        | _ -> QEnd (type_sub p t', stack_sub p s)
+      end
     | _ -> t
 
   and type_sub p t = match t with
