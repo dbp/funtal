@@ -473,8 +473,17 @@ end = struct
             (TT (type_sub sub t), stack_sub sub s')
           | _ -> raise (Failure "Impossible")
         end
-
-
+      | Isst(n,r):: is, _ when stack_pref_length (get_stack context) < n ->
+        raise (TypeError ("Can't store past exposed stack", e))
+      | Isst(n,r):: is, QI n' when n = n' ->
+        raise (TypeError ("Can't overwrite return marker on stack", e))
+      | Isst(n,r):: is, _ ->
+        begin match List.Assoc.find (get_reg context) r with
+          | None -> raise (TypeError ("Isst trying to store from empty register", e))
+          | Some t ->
+            tc (set_stack context (stack_prepend (stack_take (get_stack context) n) (stack_cons t (stack_drop (get_stack context) (n+1)))))
+              (TC (is, h))
+        end
       | _ -> raise (TypeError ("Don't know how to type-check", e))
 
   (* | Ibnz of reg * u *)
@@ -484,14 +493,11 @@ end = struct
   (* | Iballoc of reg * int *)
   (* | Iunpack of string * reg * u *)
   (* | Iunfold of reg * u *)
-  (* | Isfree of int *)
   (* | Isld of reg * int *)
   (* | Isst of int * reg *)
   (* | Ijmp of u *)
   (* | Icall of u * sigma * q *)
   (* | Iret of reg * reg *)
-  (* | Iprotect of sigma_prefix * string *)
-  (* | Iimport of reg * sigma * F.t * F.exp *)
 
   and tc_u context u = let open TAL in match u with
     | UW w -> tc_w context w
