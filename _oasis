@@ -11,6 +11,13 @@ Library "ftal"
   Modules: Ftal, Examples, Parser, Lexer
   BuildDepends: ppx_deriving.show,str,core_kernel
 
+Executable "driver"
+  Path: .
+  MainIs: driver.ml
+  CompiledObject:best
+  Install: true
+  BuildDepends: ftal
+
 Executable "test_ftal"
   Path: .
   MainIs: test.ml
