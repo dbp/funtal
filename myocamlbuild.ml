@@ -1,3 +1,7 @@
 (* OASIS_START *)
 (* OASIS_STOP *)
-Ocamlbuild_plugin.dispatch dispatch_default;;
+open Ocamlbuild_plugin
+
+let () = flag ["menhir"; "parser"; "trace"] (A"--trace")
+
+let () = dispatch dispatch_default
