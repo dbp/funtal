@@ -406,14 +406,27 @@ end = struct
         raise (TypeError ("Imv writing to register that is current return marker", e))
       | Imv (rd,u)::is, _ ->
         tc (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) (TC (is,h))
+      | Iimport (rd,s,t,f)::is, QR r when rd = r ->
+        raise (TypeError ("Iimport writing to register that is current return marker", e))
+      | Iimport (rd,s,t,f)::is, _ ->
+        (* TODO(dbp 2017-02-16): Need to hide tail. *)
+        if tc (set_ret context QOut) (FC f) = (FT t,s)
+        then tc (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) s) (TC (is,h))
+        else raise (TypeError ("Iimport given F expression of the wrong type", e))
       | [Ihalt (t,s,r)], QEnd (t',s') when t' <> t || s <> s' ->
         raise (TypeError ("Halt instruction annotations don't match return marker", e))
+      | [Ihalt (t,s,r)], QEnd _ when s <> get_stack context ->
+        raise (TypeError ("Halt instruction annotations don't match current stack", e))
       | [Ihalt (t,s,r)], QEnd _ ->
         if List.Assoc.find (get_reg context) r = Some t
         then (TT t,s)
         else raise (TypeError ("Halting with wrong type in return register", e))
       | [Ihalt _], _ ->
         raise (TypeError ("Halting without end return marker", e))
+      | Isalloc n ::is, _ ->
+        tc (set_stack context (List.fold_left ~f:(fun s _ -> stack_cons TUnit s) ~init:(get_stack context) (List.init ~f:(fun x -> x) n))) (TC (is,h))
+
+
       | _ -> raise (TypeError ("Don't know how to type-check", e))
 
         (* | Ibnz of reg * u *)
@@ -421,17 +434,14 @@ end = struct
         (* | Ist of reg * int * reg *)
         (* | Iralloc of reg * int *)
         (* | Iballoc of reg * int *)
-        (* | Imv of reg * u *)
         (* | Iunpack of string * reg * u *)
         (* | Iunfold of reg * u *)
-        (* | Isalloc of int *)
         (* | Isfree of int *)
         (* | Isld of reg * int *)
         (* | Isst of int * reg *)
         (* | Ijmp of u *)
         (* | Icall of u * sigma * q *)
         (* | Iret of reg * reg *)
-        (* | Ihalt of t * sigma * reg *)
         (* | Iprotect of sigma_prefix * string *)
         (* | Iimport of reg * sigma * F.t * F.exp *)
 
@@ -880,6 +890,8 @@ and TAL : sig
 
   and chi = (reg * t) list
 
+  val stack_cons : t -> sigma -> sigma
+
   val show : t -> string
   val pp : Format.formatter -> t -> unit
   val t_eq : t -> t -> bool
@@ -1113,6 +1125,10 @@ end = struct
   type stackm = w list
   [@@deriving show]
   type mem = heapm * regm * stackm
+
+  let stack_cons t s = match s with
+    | SConcrete l -> SConcrete (t::l)
+    | SAbstract (l,a) -> SAbstract (t::l,a)
 
   let load (h,r,s) h' =
     (* NOTE(dbp 2016-09-08): We should do renaming, but relying, for now, on the fact

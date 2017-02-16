@@ -42,11 +42,26 @@ let test_mv_ty _ =
        (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Ihalt (TInt, SConcrete [], "r1")],[])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
-(* let test_aop_ty _ = *)
-(*   assert_equal *)
-(*     (FTAL.tc *)
-(*        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [])))) *)
-(*        (FTAL.TC TAL.(Iaop (Add,"r1", ,[]) *)
+let test_aop_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Iaop (Add,"r2","r1", UW (WInt 2)); Ihalt (TInt, SConcrete [], "r2")], [])))
+    (FTAL.TT TAL.TInt, TAL.SConcrete [])
+
+let test_import_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Iimport ("r1", SConcrete [], F.TInt, F.EInt 10); Ihalt (TInt, SConcrete [], "r1")], [])))
+    (FTAL.TT TAL.TInt, TAL.SConcrete [])
+
+let test_salloc_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit; TUnit]))))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Isalloc 2; Ihalt (TInt, SConcrete [TUnit; TUnit], "r1")], [])))
+    (FTAL.TT TAL.TInt, TAL.(SConcrete [TUnit; TUnit]))
 
 let test_factorial_f_ty _ =
   assert_equal
@@ -113,7 +128,9 @@ let suite = "FTAL evaluations" >:::
               "F: fact 3 = 6" >:: test_factorial_f;
               "F: fact : int -> int" >:: test_factorial_f_ty;
               "TAL: mv r1,1;halt r1 : int" >:: test_mv_ty;
-              (* "TAL: mv r1,1; + r1,r1,1;halt r1 : int" >:: test_aop_ty; *)
+              "TAL: mv r1,1; + r1,r1,1;halt r1 : int" >:: test_aop_ty;
+              "TAL: import r1,1; halt r1 : int" >:: test_import_ty;
+              "TAL: mv r1, 1; salloc 2; halt r1 : int" >:: test_salloc_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;
               "TAL: int -> int" >:: test_factorial_t_ty;
               "FTAL: (\x -> FT(TF(\y -> x - y)) 1) 3 = 2" >:: test_closures;
