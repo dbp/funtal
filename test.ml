@@ -417,9 +417,9 @@ let suite = "FTAL evaluations" >:::
               "TAL: unfold" >:: test_unfold_ty;
               "TAL: unfold exc" >:: test_unfold_ty_exc;
               "TAL: fact 3 = 6" >:: test_factorial_t;
-              (* "TAL: int -> int" >:: test_factorial_t_ty; *)
+              "TAL: int -> int" >:: test_factorial_t_ty;
               "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;
-              (* "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 : int" >:: test_closures_ty; *)
+              "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 : int" >:: test_closures_ty;
               "TAL(1block): (\\x -> x + 2)3 = 5" >:: test_blocks1;
               "TAL(1block): (\\x -> x + 2)3 : int" >:: test_blocks1_ty;
               "TAL(2blocks): (\\x -> x + 2)3 = 5" >:: test_blocks2;

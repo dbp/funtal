@@ -469,7 +469,8 @@ end = struct
     | [Ihalt (t,s,r)], QEnd _ ->
       begin match List.Assoc.find (get_reg context) r with
         | Some t' when t_eq t t' -> ()
-        | _ -> raise (TypeError ("Halting with wrong type in return register", e))
+        | Some t' -> raise (TypeError ("Halting with wrong type in return register. Expected " ^ show t ^ " but got " ^ show t', e))
+        | None -> raise (TypeError ("Halting with nothing in the return register", e))
       end
     | [Ihalt _], _ ->
       raise (TypeError ("Halting without end return marker", e))
@@ -612,11 +613,29 @@ end = struct
         | TBox (PBlock ([], c, s, q')) -> ()
         | _ -> raise (TypeError ("Ijmp: can't jump to non-block", e))
       end
+    | Ibnz(rt,u)::is, _ when List.Assoc.find (get_reg context) rt = None ->
+      raise (TypeError ("Ibnz: test register empty ", e))
+    | Ibnz(rt,u)::is, _ when List.Assoc.find (get_reg context) rt <> Some TInt ->
+      raise (TypeError ("Ibnz: test register does not contain an integer", e))
+    | Ibnz(rt,u)::is, q -> begin match tc_u context u with
+        | TBox (PBlock ([], c, s, q')) when not (q_eq q q') ->
+          raise (TypeError ("Ibnz: must jump to a block with the same return marker", e))
+        | TBox (PBlock ([], c, s, q')) when not (s_eq s (get_stack context)) ->
+          raise (TypeError ("Ibnz: must jump to a block expecting the current stack", e))
+        | TBox (PBlock ([], c, s, q')) when not (String.Set.(subset (of_list (List.map ~f:fst c)) (of_list (List.map ~f:fst (get_reg context))))) ->
+          let _ = print_endline (String.concat ~sep:"; " (List.map ~f:fst c)) in
+          let _ = print_endline (String.concat ~sep:"; " (List.map ~f:fst (get_reg context))) in
+          raise (TypeError ("Ibnz: can't jump to a block expecting more registers set", e))
+        | TBox (PBlock ([], c, s, q')) when not (List.for_all c ~f:(fun (r,t) -> t_eq t (List.Assoc.find_exn (get_reg context) r))) ->
+          raise (TypeError ("Ibnz: current registers not compatible with block", e))
+        | TBox (PBlock ([], c, s, q')) -> ()
+        | _ -> raise (TypeError ("Ibnz: can't jump to non-block", e))
+      end
+
 
     | _ -> raise (TypeError ("Don't know how to type-check", e))
 
   (* | Ibnz of reg * u *)
-  (* | Ijmp of u *)
   (* | Icall of u * sigma * q *)
 
   and tc_u context u = let open TAL in match u with
