@@ -65,8 +65,8 @@ word_value:
     { let (alpha,tau') = goal in (tau, v, alpha, tau') }
 
   app(value):
-  | v=value LBRACKET omega=type_instantiation RBRACKET
-    { (v, [omega]) }
+  | v=value LBRACKET omegas=separated_list(COMMA,type_instantiation) RBRACKET
+    { (v, omegas) }
 
 register:
 | r=REGISTER { r }
