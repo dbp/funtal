@@ -59,14 +59,26 @@ let blocks_1 =
                         [Isld ("r1", 0);
                          Iaop (Add, "r1", "r1", UW (WInt 1));
                          Iaop (Add, "r1", "r1", UW (WInt 1));
+                         Isfree 1;
                          Iret ("ra", "r1")])))] in
+  let ht = [(l, TAL.(Box, PBlock ([DZeta "z3"; DEpsilon "e"],
+                                  [("ra", TBox (PBlock ([],
+                                                        [("r1", TInt)],
+                                                        SAbstract ([], "z3"),
+                                                        QEpsilon "e")))],
+                                  SAbstract ([TInt], "z3"),
+                                  QR "ra")))] in
   F.(ELam ([("x", TInt)],
-           EApp (EBoundary (TArrow ([TInt], TInt), None,
-                            (TAL.([Imv ("r1", UW (WLoc l)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, [(l, TAL.(Box, PBlock ([DZeta "z3"; DEpsilon "e"],
-                        [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z3"), QEpsilon "e")))],
-                        SAbstract ([TInt], "z3"),
-                        QR "ra")))]))),
-                 [EVar "x"])))
+           EApp (EBoundary
+                   (TArrow ([TInt], TInt),
+                    None,
+                    (TAL.([Iprotect ([], "z2");
+                           Imv ("r1", UW (WLoc l));
+                           Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)),
+                                  SAbstract ([], "z2"),
+                                  "r1")],
+                          h, ht))),
+[EVar "x"])))
 
 
 let blocks_2 =

@@ -54,6 +54,8 @@ module rec FTAL : sig
   exception TypeErrorH of string * TAL.mut * TAL.h
 
   type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
+  val get_reg : context -> TAL.chi
+  val get_stack : context -> TAL.sigma
 
   val default_context : TAL.q -> context
 
@@ -178,7 +180,7 @@ end = struct
                                                OQ (QEnd (tytrans t1, SAbstract (sout, z2)))]))]],
                         [], []))))
       in (((lend, hend)::hm,rm,sm), v)
-    | _ -> raise (Failure "ft: can't convert")
+    | _ -> raise (Failure ("ft: can't convert at type " ^ F.show t ^ " value " ^ TAL.show_w w))
 
   let rec tf t v m =
     let (hm,rm,sm) = m in
@@ -585,9 +587,31 @@ end = struct
               (TC (is, [], []))
           | _ -> raise (TypeError ("Iunfold: given non-fold", e))
         end
-
+      | [Iret (rt, rv)], QR r when r = rt ->
+        begin match List.Assoc.find (get_reg context) rt,
+                    List.Assoc.find (get_reg context) rv with
+        | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta when ra <> rv ->
+          raise (TypeError ("Iret: return location with wrong register: " ^ ra ^ " <> " ^ rv, e))
+        | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta when not (t_eq ta t) ->
+          raise (TypeError ("Iret: return location with wrong argument type: " ^ show ta ^ " <> " ^ show t, e))
+        | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta when not (s_eq s (get_stack context)) ->
+          raise (TypeError ("Iret: return location with wrong stack type expected: " ^ show_sigma s ^ " but got " ^ show_sigma (get_stack context), e))
+        | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta ->
+          begin match TAL.ret_type context q with
+            | None -> raise (TypeError ("Iret: ill-formed return marker on return continuation: " ^ show_q q, e))
+            | Some (t,s) -> (t,s)
+          end
+        | Some (TBox (PBlock ([], [(ra,t)], s, q))), None ->
+          raise (TypeError ("Iret: return without value in register", e))
+        | _ -> raise (TypeError ("Iret: returning to empty register", e))
+        end
+      | [Iret (rt, rv)], QR r  ->
+        raise (TypeError ("Iret: not returning to return marker", e))
+      | [Iret (rt, rv)], _  ->
+        raise (TypeError ("Iret: can't use if return marker isn't in register", e))
 
       | _ -> raise (TypeError ("Don't know how to type-check", e))
+
 
   (* | Ibnz of reg * u *)
   (* | Ijmp of u *)
@@ -854,10 +878,7 @@ end = struct
       (m, List.fold_left ~f:(fun e p -> sub p e) ~init:body (List.map2_exn ~f:(fun (x,_) e -> FTAL.FTerm (x,e)) ps eargs))
     | EUnfold (EFold (_,_,eb)) -> (m, eb)
     | EPi (n, (ETuple vs)) when List.length vs > n -> (m, List.nth_exn vs n)
-    (* NOTE(dbp 2016-10-13): FTAL.tytrans t = t' should hold as well,
-       but tytrans gen_syms so we need some sort of alpha equivalence (or
-       to just fix how we do names). *)
-    | EBoundary (t, s, ([TAL.Ihalt (t',s',r)],[],[]))->
+    | EBoundary (t, s, ([TAL.Ihalt (t',s',r)],[],[])) when TAL.t_eq (FTAL.tytrans t) t' ->
       let (hm,rm,sm) = m in
       FTAL.ft t (List.Assoc.find_exn rm r) m
     | _ -> (m, e)
@@ -1030,11 +1051,14 @@ and TAL : sig
 
   and chi = (reg * t) list
 
+  val ret_type : FTAL.context -> q -> (FTAL.t * sigma) option
+
   val stack_cons : t -> sigma -> sigma
   val stack_take : sigma -> int -> sigma_prefix
   val stack_drop : sigma -> int -> sigma
   val stack_pref_length : sigma -> int
   val stack_prepend : sigma_prefix -> sigma -> sigma
+  val stack_nth : sigma -> int -> t option
 
   val show : t -> string
   val pp : Format.formatter -> t -> unit
@@ -1209,6 +1233,20 @@ end = struct
 
   and chi = (reg * t) list
 
+
+  let ret_type context q = match q with
+    | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
+        | Some (TBox (PBlock ([], [(r,t)], s, _))) -> Some (FTAL.TT t, s)
+        | _ -> None
+      end
+    | QI i -> begin match TAL.stack_nth (FTAL.get_stack context) i with
+        | Some (TBox (PBlock ([], [(r,t)], s, _))) -> Some (FTAL.TT t, s)
+        | _ -> None
+      end
+    | QEpsilon _ -> None
+    | QEnd (t, s) -> Some (FTAL.TT t, s)
+    | QOut -> None
+
   type omega =
       OT of t
     | OS of sigma
@@ -1290,6 +1328,9 @@ end = struct
   let stack_prepend p s = match s with
     | SConcrete l -> SConcrete (List.append p l)
     | SAbstract (l,a) -> SAbstract (List.append p l, a)
+
+  let stack_nth s n = match s with
+    | SConcrete l | SAbstract (l,_) -> List.nth l n
 
   let load (h,r,s) h' =
     (* NOTE(dbp 2016-09-08): We should do renaming, but relying, for now, on the fact
