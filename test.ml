@@ -232,10 +232,10 @@ let test_balloc_ty_exc _ =
 
 
 
-(* NOTE(dbp 2017-02-17): Writing a "small" example using unpack is
-   actually quite hard, because we really need large values &
-   functions in order to do anything useful with existentials, which
-   then involves jumps, calls, etc... So this is a dumb test, but... bleh. *)
+(* NOTE(dbp 2017-02-17): Writing a "small" example using unpack
+   is actually quite hard, because we really need large values &
+   functions in order to do anything useful, which then involves
+   jumps, calls, etc... So these are dumb tests, but... bleh. *)
 
 let test_unpack_ty _ =
   assert_equal
@@ -258,6 +258,28 @@ let test_unpack_ty_exc _ =
                        Ihalt (TUnit, SConcrete [], "r1")],
                       [],
                       [])))
+
+
+(* NOTE(dbp 2017-02-17): Like unpack, non-trivial unfold really needs
+   large values. But we can do trivial ones easily! *)
+let test_unfold_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Iunfold ("r1", UW (WFold ("a", TInt, WInt 1)));
+                      Ihalt (TInt, SConcrete [], "r1")],
+                     [],
+                     [])))
+    (FTAL.TT TAL.TInt, TAL.SConcrete [])
+
+let test_unfold_ty_exc _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Iunfold ("r1", UW (WInt 1));
+                      Ihalt (TInt, SConcrete [], "r1")],
+                     [],
+                     [])))
 
 
 let test_factorial_f_ty _ =
@@ -345,6 +367,8 @@ let suite = "FTAL evaluations" >:::
               "TAL: balloc exc" >:: test_balloc_ty_exc;
               "TAL: unpack" >:: test_unpack_ty;
               "TAL: unpack exc" >:: test_unpack_ty_exc;
+              "TAL: unfold" >:: test_unfold_ty;
+              "TAL: unfold exc" >:: test_unfold_ty_exc;
               "TAL: fact 3 = 6" >:: test_factorial_t;
               (* "TAL: int -> int" >:: test_factorial_t_ty; *)
               "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;

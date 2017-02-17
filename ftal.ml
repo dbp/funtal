@@ -579,12 +579,21 @@ end = struct
               (TC (is, [], []))
           | _ -> raise (TypeError ("Iunpack: given non-existential", e))
         end
+      | Iunfold (rd, u)::is, QR r when rd = r ->
+        raise (TypeError ("Iunfold: can't overwrite return marker in register", e))
+      | Iunfold (rd, u)::is, _ ->
+        begin match tc_u context u with
+          | TRec (a, t) ->
+            let t' = type_sub (TType (a, TRec (a,t))) t in
+            tc (set_reg context (List.Assoc.add (get_reg context) rd t'))
+              (TC (is, [], []))
+          | _ -> raise (TypeError ("Iunfold: given non-fold", e))
+        end
 
 
       | _ -> raise (TypeError ("Don't know how to type-check", e))
 
   (* | Ibnz of reg * u *)
-  (* | Iunpack of string * reg * u *)
   (* | Iunfold of reg * u *)
   (* | Ijmp of u *)
   (* | Icall of u * sigma * q *)
