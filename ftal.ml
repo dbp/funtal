@@ -17,6 +17,10 @@ let list_index l x =
     | _::xs -> f (i+1) xs
   in f 0 l
 
+let list_for_all2 ~f l1 l2 =
+  try List.for_all2_exn ~f l1 l2
+  with _ -> false
+
 module Debug = struct
 
   let log cls msg =
@@ -62,10 +66,7 @@ module rec FTAL : sig
                     | EMarker of string * TAL.q
                     | SAbs of TAL.sigma * string
 
-  type rebinding = SBinding of string * string
-                 | FBinding of string * string
-                 | TBinding of string * string
-                 | EBinding of string * string
+  val show_substitution : substitution -> string
 
   val gen_sym : ?pref:string -> unit -> string
 
@@ -273,12 +274,6 @@ end = struct
                     | SAbs of TAL.sigma * string
   [@@deriving show]
 
-
-  type rebinding = SBinding of string * string
-                 | FBinding of string * string
-                 | TBinding of string * string
-                 | EBinding of string * string
-
   exception TypeError of string * e
   exception TypeErrorU of string * TAL.u
   exception TypeErrorW of string * TAL.w
@@ -334,7 +329,7 @@ end = struct
               begin match tc (set_stack context s1) (FC e1) with
                 | FT t1, s2 ->
                   begin match tc (set_stack context s2) (FC e2) with
-                    | FT t2, s3 -> if t_eq t1 t2 && s2 = s3 then (FT t1, s2) else
+                    | FT t2, s3 -> if t_eq t1 t2 && TAL.s_eq s2 s3 then (FT t1, s2) else
                         raise (TypeError ("If branches not same type", e))
                     | _ -> raise (TypeError ("If else branch not F expression", e))
                   end
@@ -400,7 +395,7 @@ end = struct
         | EBoundary (t,s,c), TAL.QOut ->
           let s' = Option.value ~default:(get_stack context) s in
           begin match tc (set_ret context (TAL.QEnd (tytrans t, s'))) (TC c) with
-            | TT t0, s0 when TAL.t_eq t0 (tytrans t) && s0 = s' -> (FT t, s0)
+            | TT t0, s0 when TAL.t_eq t0 (tytrans t) && TAL.s_eq s0 s' -> (FT t, s0)
             | TT t0, s0 -> raise (TypeError ("Boundary with contents not matching type: " ^ TAL.show (tytrans t) ^ " <> " ^ TAL.show t0 ^ " OR " ^ TAL.show_sigma s' ^ " <> " ^ TAL.show_sigma s0, e))
             | _ -> raise (TypeError ("Boundary with non-TAL inside", e))
           end
@@ -422,7 +417,7 @@ end = struct
           match List.Assoc.find (get_heap context) l with
           | None -> raise (TypeError ("Component missing heap annotation for location " ^ l, e))
           | Some (m,p) ->
-            if not (tc_h context m v = (m,p)) then raise (TypeError ("Component heap typing does not match heap fragment at location " ^ l, e)) else ()) h in
+            if not (psi_elem_eq (tc_h context m v) p) then raise (TypeError ("Component heap typing does not match heap fragment at location " ^ l, e)) else ()) h in
       match instrs, get_ret context with
       | Iaop (op, rd, rs, u)::is, QR r when rd = r ->
         raise (TypeError ("Iaop writing to register that is current return marker", e))
@@ -441,13 +436,13 @@ end = struct
       | Iimport (rd,z,s,t,f)::is, QR r when rd = r ->
         raise (TypeError ("Iimport writing to register that is current return marker", e))
       | Iimport (rd,z,s,t,f)::is, _ when
-          stack_pref_length s > stack_pref_length (get_stack context) || stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) <> s ->
+          stack_pref_length s > stack_pref_length (get_stack context) || not (s_eq (stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s)) s) ->
         raise (TypeError ("Iimport protected suffix does not match current stack", e))
       | Iimport (rd,z,s,t,f)::is, _ ->
         let pref = stack_take (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in
         let suf = stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in
         begin match tc (set_stack (set_ret context QOut) (SAbstract (pref, z))) (FC f) with
-          | (FT t',s') when t <> t' ->
+          | (FT t',s') when not (F.t_eq t t') ->
             raise (TypeError ("Iimport given F expression of the wrong type", e))
           | (FT t',SConcrete _)  ->
             raise (TypeError ("Iimport given F expression that returns stack without abstract tail", e))
@@ -456,16 +451,17 @@ end = struct
           | (FT t',SAbstract (newpref, _)) -> tc (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) (stack_prepend newpref suf)) (TC (is,[],[]))
           | _  -> raise (TypeError ("Iimport without F expression within", e))
         end
-      | [Ihalt (t,s,r)], QEnd (t',s') when t' <> t ->
+      | [Ihalt (t,s,r)], QEnd (t',s') when not (t_eq t' t) ->
         raise (TypeError ("Halt instruction type doesn't match return marker: " ^ show t ^ " <> " ^ show t', e))
-      | [Ihalt (t,s,r)], QEnd (t',s') when s <> s' ->
+      | [Ihalt (t,s,r)], QEnd (t',s') when not (s_eq s s') ->
         raise (TypeError ("Halt instruction stack doesn't match return marker: " ^ show_sigma s ^ " <> " ^ show_sigma s', e))
-      | [Ihalt (t,s,r)], QEnd _ when s <> get_stack context ->
+      | [Ihalt (t,s,r)], QEnd _ when not (s_eq s (get_stack context)) ->
         raise (TypeError ("Halt instruction annotations don't match current stack: " ^ show_sigma s ^ " <> " ^ show_sigma (get_stack context), e))
       | [Ihalt (t,s,r)], QEnd _ ->
-        if List.Assoc.find (get_reg context) r = Some t
-        then (TT t,s)
-        else raise (TypeError ("Halting with wrong type in return register", e))
+        begin match List.Assoc.find (get_reg context) r with
+          | Some t' when t_eq t t' -> (TT t,s)
+          | _ -> raise (TypeError ("Halting with wrong type in return register", e))
+        end
       | [Ihalt _], _ ->
         raise (TypeError ("Halting without end return marker", e))
       | Isalloc n :: is, _ ->
@@ -483,7 +479,7 @@ end = struct
           (TC (is, h, ht))
       | Iprotect (pref, v)::is, QI n when n > List.length pref ->
         raise (TypeError ("Can't protect part of stack that contains return marker", e))
-      | Iprotect (pref, v)::is, _ when stack_take (get_stack context) (List.length pref) <> pref ->
+      | Iprotect (pref, v)::is, _ when not (s_pref_eq (stack_take (get_stack context) (List.length pref)) pref) ->
         raise (TypeError ("Protect prefix doesn't match current stack", e))
       | Iprotect (pref, v)::is, _ ->
         let stail = stack_drop (get_stack context) (List.length pref) in
@@ -574,7 +570,7 @@ end = struct
       | Iunpack (a, rd, u)::is, _ ->
         begin match tc_u context u with
           | TExists (a', t) ->
-            let newt = type_rebind (TBinding (a, a')) t in
+            let newt = type_sub (TType (a, TVar a')) t in
             tc (set_reg context (List.Assoc.add (get_reg context) rd newt))
               (TC (is, [], []))
           | _ -> raise (TypeError ("Iunpack: given non-existential", e))
@@ -594,7 +590,6 @@ end = struct
       | _ -> raise (TypeError ("Don't know how to type-check", e))
 
   (* | Ibnz of reg * u *)
-  (* | Iunfold of reg * u *)
   (* | Ijmp of u *)
   (* | Icall of u * sigma * q *)
   (* | Iret of reg * reg *)
@@ -650,8 +645,8 @@ end = struct
   and tc_h context mut h = match mut, h with
     | TAL.Box, TAL.HCode (d,c,s,q,is) ->
       let _ = tc (set_ret (set_stack (set_reg (set_tyenv context d) c) s) q) (TC (is,[],[])) in
-      (TAL.Box, TAL.PBlock (d,c,s,q))
-    | _, TAL.HTuple ws -> (mut, TAL.PTuple (List.map ~f:(tc_w context) ws))
+      TAL.PBlock (d,c,s,q)
+    | _, TAL.HTuple ws -> TAL.PTuple (List.map ~f:(tc_w context) ws)
     | _ -> raise (TypeErrorH ("Can't have mutable code pointers",mut,h))
 
 end
@@ -796,26 +791,6 @@ end = struct
     | TTuple ts -> TTuple (List.map ~f:(type_sub p) ts)
     | _ -> typ
 
-  let rec type_rebind bind t = match t with
-    | TArrow (params,ret) -> TArrow (List.map ~f:(type_rebind bind) params, type_rebind bind ret)
-    | TArrowMod (params,sin,sout,ret) ->
-      TArrowMod (List.map ~f:(type_rebind bind) params,
-                 List.map ~f:(TAL.type_rebind bind) sin,
-                 List.map ~f:(TAL.type_rebind bind) sout,
-                 type_rebind bind ret)
-    | TRec (a, t) -> begin match bind with
-        | FTAL.FBinding (a1, a2) when a = a1 ->
-          TRec (a2, type_sub (FTAL.FType (a, F.TVar a2)) t)
-        | _ -> TRec (a, type_rebind bind t)
-      end
-    | TTuple ts -> TTuple (List.map ~f:(type_rebind bind) ts)
-    | TVar a -> begin match bind with
-        | FTAL.FBinding (a1,a2) when a = a1 -> TVar a2
-        | _ -> t
-      end
-    | _ -> t
-
-
   let rec t_eq t1 t2 = match t1, t2 with
     | TVar v1, TVar v2 -> v1 = v2
     | TUnit, TUnit -> true
@@ -829,7 +804,7 @@ end = struct
       List.for_all2_exn ~f:TAL.t_eq sout1 sout2 &&
       t_eq r1 r2
     | TRec (s1, b1), TRec (s2, b2) ->
-      t_eq b1 (type_rebind (FTAL.FBinding (s2, s1)) b2)
+      t_eq b1 (type_sub (FTAL.FType (s2, TVar s1)) b2)
     | TTuple ts, TTuple ts1 -> List.for_all2_exn ~f:t_eq ts ts1
     | _ -> false
 
@@ -1068,10 +1043,13 @@ and TAL : sig
   val pp_sigma : Format.formatter -> sigma -> unit
   val show_sigma_prefix : sigma_prefix -> string
   val pp_sigma_prefix : Format.formatter -> sigma_prefix -> unit
+  val s_eq : sigma -> sigma -> bool
+  val s_pref_eq : sigma_prefix -> sigma_prefix -> bool
   val show_q : q -> string
   val pp_q : Format.formatter -> q -> unit
   val show_psi : psi -> string
   val pp_psi : Format.formatter -> psi -> unit
+  val psi_elem_eq : psi_elem -> psi_elem -> bool
 
   type omega =
       OT of t
@@ -1169,8 +1147,6 @@ and TAL : sig
   val omega_sub : FTAL.substitution -> omega -> omega
 
   val retmarker_sub : FTAL.substitution -> q -> q
-
-  val type_rebind : FTAL.rebinding -> t -> t
 
   val type_zip : delta -> omega list -> FTAL.substitution list
 
@@ -1471,78 +1447,6 @@ end = struct
     | OQ q -> OQ (retmarker_sub p q)
 
 
-  let rec type_rebind bind t = match t with
-    | TVar a -> begin match bind with
-        | FTAL.TBinding (a1,a2) when a = a1 -> TVar a2
-        | _ -> t
-      end
-    | TExists (a, b) -> begin match bind with
-        | FTAL.TBinding (a1,a2) when a = a1 ->
-          TExists (a2, type_sub (FTAL.TType (a1, TAL.TVar a2)) b)
-        | _ -> TExists (a, type_rebind bind b)
-      end
-    | TRec (a, b) -> begin match bind with
-        | FTAL.TBinding (a1,a2) when a = a1 ->
-          TRec (a2, type_sub (FTAL.TType (a1, TAL.TVar a2)) b)
-        | _ -> TRec (a, type_rebind bind b)
-      end
-    | TTupleRef ts ->
-      TTupleRef (List.map ~f:(type_rebind bind) ts)
-    | TBox (PBlock (d1, c1, s1, q1)) ->
-      let (d2, s) = begin match bind with
-        | FTAL.TBinding (a1, a2) ->
-          begin match list_index d1 (DAlpha a1) with
-            | None -> (d1, None)
-            | Some idx ->
-              (list_replace idx d1 (DAlpha a2), Some (FTAL.TType (a1, TVar a2)))
-          end
-        | FTAL.SBinding (z1, z2) ->
-          begin match list_index d1 (DZeta z1) with
-            | None -> (d1, None)
-            | Some idx ->
-              (list_replace idx d1 (DZeta z2), Some (FTAL.SType (z1, SAbstract ([], z2))))
-          end
-        | FTAL.EBinding (e1, e2) ->
-          begin match list_index d1 (DEpsilon e1) with
-            | None -> (d1, None)
-            | Some idx ->
-              (list_replace idx d1 (DEpsilon e2), Some (FTAL.EMarker (e1, QEpsilon e2)))
-          end
-        | _ -> (d1, None)
-      end in
-      begin match s with
-        | None -> t
-        | Some s ->
-          TBox (PBlock (d2,
-                        List.map ~f:(fun (r, t) ->
-                            (r, type_sub s t))
-                          c1,
-                        stack_sub s s1,
-                        retmarker_sub s q1))
-      end
-    | TBox (PTuple ts) ->
-      TBox (PTuple (List.map ~f:(type_rebind bind) ts))
-    | _ -> t
-
-  and stack_rebind bind s = match s with
-    | SAbstract (pref, z) -> begin match bind with
-        | FTAL.SBinding (z1,z2) when z1 = z -> SAbstract (pref, z2)
-        | _ -> s
-      end
-    | SConcrete ts -> SConcrete (List.map ~f:(type_rebind bind) ts)
-
-
-  and retmarker_rebind bind q = match q with
-    | QEpsilon e -> begin match bind with
-        | FTAL.EBinding (e1,e2) when e = e1 ->
-          QEpsilon e2
-        | _ -> q
-      end
-    | QEnd (t,s) -> QEnd (type_rebind bind t,
-                          stack_rebind bind s)
-    | _ -> q
-
-
   let option_cons o1 o2 = match o1,o2 with
     | None, _ -> None
     | _, None -> None
@@ -1553,17 +1457,17 @@ end = struct
     | DAlpha a1::d1', DAlpha a2::d2' ->
       option_cons
         (if a1 = a2 then None
-         else Some (FTAL.TBinding (a1,a2)))
+         else Some (FTAL.TType (a1,TVar a2)))
         (delta_rebindings d1' d2')
     | DZeta a1::d1', DZeta a2::d2'->
       option_cons
         (if a1 = a2 then None
-         else Some (FTAL.SBinding (a1,a2)))
+         else Some (FTAL.SType (a1,SAbstract ([], a2))))
         (delta_rebindings d1' d2')
     | DEpsilon a1::d1', DEpsilon a2::d2' when a1 <> a2 ->
       option_cons
         (if a1 = a2 then None
-         else Some (FTAL.EBinding (a1,a2)))
+         else Some (FTAL.EMarker (a1,QEpsilon a2)))
         (delta_rebindings d1' d2')
     | [], [] -> Some []
     | _ -> None
@@ -1574,34 +1478,38 @@ end = struct
     | TUnit, TUnit -> true
     | TInt, TInt -> true
     | TExists (a1, b1), TExists (a2, b2) ->
-      t_eq b1 (type_rebind (FTAL.TBinding (a2, a1)) b2)
+      t_eq b1 (type_sub (FTAL.TType (a2, TVar a1)) b2)
     | TRec (a1, b1), TRec (a2, b2) ->
-      t_eq b1 (type_rebind (FTAL.TBinding (a2, a1)) b2)
+      t_eq b1 (type_sub (FTAL.TType (a2, TVar a1)) b2)
     | TTupleRef ts1, TTupleRef ts2 ->
       List.for_all2_exn ~f:t_eq ts1 ts2
     | TBox (PBlock (d1, c1, s1, q1)), TBox (PBlock (d2, c2, s2, q2)) ->
-      begin match delta_rebindings d1 d2 with
+      begin match delta_rebindings d2 d1 with
         | None -> false
         | Some binds ->
           let c1 = List.sort (fun (a,_) (b,_) -> compare a b) c1 in
           let c2 = List.sort (fun (a,_) (b,_) -> compare a b) c2 in
+          let s2' = List.fold_left ~f:(fun s b -> stack_sub b s) ~init:s2 binds in
+          let q2' = List.fold_left ~f:(fun q b -> retmarker_sub b q) ~init:q2 binds in
           List.length c1 = List.length c2 &&
           List.for_all2_exn ~f:(fun (r1, t1) (r2, t2) ->
-              r1 = r2 && t_eq t1 (List.fold_left
-                                    ~f:(fun t' b -> type_rebind b t')
-                                    ~init:t2 binds)) c1 c2 &&
-          s_eq s1 (List.fold_left ~f:(fun s b -> stack_rebind b s) ~init:s2 binds) &&
-          q_eq q1 (List.fold_left ~f:(fun q b -> retmarker_rebind b q) ~init:q2 binds)
+              let t2' = List.fold_left
+                  ~f:(fun t' b -> type_sub b t')
+                  ~init:t2 binds in
+              r1 = r2 && t_eq t1 t2') c1 c2 &&
+          s_eq s1 s2' &&
+          q_eq q1 q2'
       end
     | TBox (PTuple ts1), TBox (PTuple ts2) ->
       List.for_all2_exn ~f:t_eq ts1 ts2
     | _ -> false
 
   and s_eq s1 s2 = match s1,s2 with
-    | SAbstract (pr1, z1), SAbstract (pr2, z2) -> List.for_all2_exn ~f: t_eq pr1 pr2 && z1 = z2
-    | SConcrete ts1, SConcrete ts2 ->
-      List.for_all2_exn ~f: t_eq ts1 ts2
+    | SAbstract (pr1, z1), SAbstract (pr2, z2) -> list_for_all2 ~f:t_eq pr1 pr2 && z1 = z2
+    | SConcrete ts1, SConcrete ts2 -> list_for_all2 ~f:t_eq ts1 ts2
     | _ -> false
+
+  and s_pref_eq s1 s2 = list_for_all2 ~f:t_eq s1 s2
 
   and q_eq q1 q2 = match q1, q2 with
     | QR r1, QR r2 -> r1 = r2
@@ -1612,6 +1520,11 @@ end = struct
     | QOut, QOut -> true
     | _ -> false
 
+  and psi_elem_eq p1 p2 = t_eq (TBox p1) (TBox p2)
+
+  and chi_eq c1 c2 =
+    let s = List.sort ~cmp:(fun (a1,_) (a2,_) -> compare a1 a2) in
+    list_for_all2 ~f:(fun (r1,t1) (r2,t2) -> r1 = r1 && t_eq t1 t2) (s c1) (s c2)
 
 
 

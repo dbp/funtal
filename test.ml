@@ -301,16 +301,25 @@ let test_factorial_t_ty _ =
        (FTAL.FC factorial_t))
     (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 
-let test_closures _ =
-  let f = F.(ELam ([("x", TInt)],
+let f_closures =
+  F.(ELam ([("x", TInt)],
                    EApp (EBoundary (TArrow ( [TInt], TInt), None,
                                     ([TAL.Iprotect ([], "z2");
                                       TAL.Iimport ("rf", "_z", TAL.SAbstract ([], "z2"), TArrow ([TInt], TInt), ELam ([("y", TInt)], EBinop (EVar "x", BMinus, EVar "y")));
                                       TAL.Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2"), "rf")], [], [])),
-                         [EInt 1]))) in
+                         [EInt 1])))
+
+let test_closures _ =
   assert_equal
-    (snd (F.stepn 40 (empty, F.EApp (f, [F.EInt 3]))))
+    (snd (F.stepn 40 (empty, F.EApp (f_closures, [F.EInt 3]))))
     (F.EInt 2)
+
+let test_closures_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC (F.EApp (f_closures, [F.EInt 3]))))
+    (FTAL.FT F.TInt, TAL.SConcrete [])
 
 let test_blocks1 _ =
   assert_equal
@@ -370,8 +379,9 @@ let suite = "FTAL evaluations" >:::
               "TAL: unfold" >:: test_unfold_ty;
               "TAL: unfold exc" >:: test_unfold_ty_exc;
               "TAL: fact 3 = 6" >:: test_factorial_t;
-              (* "TAL: int -> int" >:: test_factorial_t_ty; *)
+              "TAL: int -> int" >:: test_factorial_t_ty;
               "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;
+              "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 : int" >:: test_closures_ty;
               "TAL(1block): (\\x -> x + 2)3 = 5" >:: test_blocks1;
               "TAL(2blocks): (\\x -> x + 2)3 = 5" >:: test_blocks2;
               "REF: r = ref 1; r := 20; !r = 20" >:: test_ref1;
