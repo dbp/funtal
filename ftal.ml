@@ -45,6 +45,9 @@ module rec FTAL : sig
   val show : t -> string
 
   exception TypeError of string * e
+  exception TypeErrorU of string * TAL.u
+  exception TypeErrorW of string * TAL.w
+  exception TypeErrorH of string * TAL.mut * TAL.h
 
   type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
 
@@ -279,6 +282,7 @@ end = struct
   exception TypeError of string * e
   exception TypeErrorU of string * TAL.u
   exception TypeErrorW of string * TAL.w
+  exception TypeErrorH of string * TAL.mut * TAL.h
 
   type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
 
@@ -414,7 +418,11 @@ end = struct
         then raise (TypeError ("Component with heap fragment referencing same locations as global heap", e))
         else () in
       let context = set_heap context (List.append (get_heap context) ht) in
-      let _ = List.iter ~f:(fun (l,v) -> if not (List.mem (get_heap context) (l, tc_h context v)) then raise (TypeError ("Component heap typing does not match heap fragment at location " ^ l, e)) else ()) in
+      let _ = List.iter ~f:(fun (l,v) ->
+          match List.Assoc.find (get_heap context) l with
+          | None -> raise (TypeError ("Component missing heap annotation for location " ^ l, e))
+          | Some (m,p) ->
+            if not (tc_h context m v = (m,p)) then raise (TypeError ("Component heap typing does not match heap fragment at location " ^ l, e)) else ()) h in
       match instrs, get_ret context with
       | Iaop (op, rd, rs, u)::is, QR r when rd = r ->
         raise (TypeError ("Iaop writing to register that is current return marker", e))
@@ -507,9 +515,9 @@ end = struct
       | Ild(rd,rs,n)::is, _ ->
         begin match List.Assoc.find (get_reg context) rs with
           | None -> raise (TypeError ("Ild: trying to load from empty reg", e))
-          | Some (TBox (PTuple ps)) when n >= List.length ps ->
+          | Some (TBox (PTuple ps)) | Some (TTupleRef ps) when n >= List.length ps ->
             raise (TypeError ("Ild: trying to load from index past end of tuple", e))
-          | Some (TBox (PTuple ps)) ->
+          | Some (TBox (PTuple ps)) | Some (TTupleRef ps) ->
             let t = List.nth_exn ps n in
             tc (set_reg context (List.Assoc.add (get_reg context) rd t))
               (TC (is, [], []))
@@ -524,13 +532,15 @@ end = struct
           | Some t ->
             begin match List.Assoc.find (get_reg context) rd with
               | None -> raise (TypeError ("Ist: trying to store to empty reg", e))
-              | Some (TBox (PTuple ps)) when n >= List.length ps ->
+              | Some (TTupleRef ps) when n >= List.length ps ->
                 raise (TypeError ("Ist: trying to store past end of tuple", e))
-              | Some (TBox (PTuple ps)) ->
+              | Some (TTupleRef ps) ->
                 let t' = List.nth_exn ps n in
                 if not (TAL.t_eq t t') then
                   raise (TypeError ("Ist: trying to store value of wrong type", e))
                 else tc context (TC (is, [], []))
+              | Some (TBox (PTuple _)) ->
+                raise (TypeError ("Ist: trying to store to non-ref tuple", e))
               | Some _ ->
                 raise (TypeError ("Ist: trying to store to non-tuple", e))
             end
@@ -539,7 +549,6 @@ end = struct
       | _ -> raise (TypeError ("Don't know how to type-check", e))
 
   (* | Ibnz of reg * u *)
-  (* | Ist of reg * int * reg *)
   (* | Iralloc of reg * int *)
   (* | Iballoc of reg * int *)
   (* | Iunpack of string * reg * u *)
@@ -576,7 +585,9 @@ end = struct
     | WLoc l ->
       begin match List.Assoc.find (get_heap context) l with
         | None -> raise (TypeErrorW ("Unbound location", w))
-        | Some t -> TBox t
+        | Some (Box, t) -> TBox t
+        | Some (Ref, PTuple ts) -> TTupleRef ts
+        | _ -> raise (Failure "Impossible")
       end
     | WPack (t, w, s, t') ->
       if tc_w context w = type_sub (TType (s,t')) t
@@ -594,11 +605,12 @@ end = struct
         | _ -> raise (TypeErrorW ("Can't apply non-block to types", w))
       end
 
-  and tc_h context h = match h with
-    | TAL.HCode (d,c,s,q,is) ->
+  and tc_h context mut h = match mut, h with
+    | TAL.Box, TAL.HCode (d,c,s,q,is) ->
       let _ = tc (set_ret (set_stack (set_reg (set_tyenv context d) c) s) q) (TC (is,[],[])) in
-      TAL.PBlock (d,c,s,q)
-    | TAL.HTuple ws -> TAL.PTuple (List.map ~f:(tc_w context) ws)
+      (TAL.Box, TAL.PBlock (d,c,s,q))
+    | _, TAL.HTuple ws -> (mut, TAL.PTuple (List.map ~f:(tc_w context) ws))
+    | _ -> raise (TypeErrorH ("Can't have mutable code pointers",mut,h))
 
 end
 and F : sig
@@ -995,7 +1007,9 @@ and TAL : sig
       PBlock of delta * chi * sigma * q
     | PTuple of t list
 
-  and psi = (loc * psi_elem) list
+  and mut = Ref | Box
+
+  and psi = (loc * (mut * psi_elem)) list
 
   and chi = (reg * t) list
 
@@ -1171,7 +1185,9 @@ end = struct
     | PTuple of t list
   [@@deriving show]
 
-  and psi = (loc * psi_elem) list
+  and mut = Ref | Box
+
+  and psi = (loc * (mut * psi_elem)) list
 
   and chi = (reg * t) list
 
@@ -1300,14 +1316,14 @@ end = struct
       end
     | CComponentHeap CHoleC -> un_tc e
 
-  let rec sub p (is, hm, ht) =
+  let rec sub p ((is, hm, ht) : component) : component =
     (List.map ~f:(instr_sub p) is,
      List.map ~f:(fun (l,h) ->
          match h with
          | HCode (d,c,s,q,is) -> (l, HCode (d,c,s,q, List.map ~f:(instr_sub p) is))
          | _ -> (l,h)
        ) hm,
-    List.map ~f:(fun (l,t) -> (l, psi_sub p t)) ht)
+    List.map ~f:(fun (l,(m,t)) -> (l, (m,psi_sub p t))) ht)
 
   and instr_sub p i = match i with
     | Iaop (op, r1, r2, u) -> Iaop (op, r1, r2, u_sub p u)

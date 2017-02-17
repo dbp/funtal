@@ -117,7 +117,19 @@ let test_ld_ty _ =
                       Ild ("r1", "r2", 0);
                       Ihalt (TInt, SConcrete [], "r1")],
                      [("l", HTuple [WInt 1])],
-                     [("l", PTuple [TInt])])))
+                     [("l", (Box, PTuple [TInt]))])))
+    (FTAL.TT TAL.TInt, TAL.SConcrete [])
+
+
+let test_ld2_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Imv ("r2", UW (WLoc "l"));
+                      Ild ("r1", "r2", 0);
+                      Ihalt (TInt, SConcrete [], "r1")],
+                     [("l", HTuple [WInt 1])],
+                     [("l", (Ref, PTuple [TInt]))])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_st_ty _ =
@@ -129,7 +141,7 @@ let test_st_ty _ =
                       Ist ("r1", 0, "r2");
                       Ihalt (TInt, SConcrete [], "r2")],
                      [("l", HTuple [WInt 1])],
-                     [("l", PTuple [TInt])])))
+                     [("l", (Ref, PTuple [TInt]))])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_factorial_f_ty _ =
@@ -205,6 +217,7 @@ let suite = "FTAL evaluations" >:::
               "TAL: sst" >:: test_sst_ty;
               "TAL: sld" >:: test_sld_ty;
               "TAL: ld" >:: test_ld_ty;
+              "TAL: ld" >:: test_ld2_ty;
               "TAL: st" >:: test_st_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;
               (* "TAL: int -> int" >:: test_factorial_t_ty; *)

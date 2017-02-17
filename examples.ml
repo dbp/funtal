@@ -40,10 +40,10 @@ let factorial_t =
                              Ihalt (TInt, SAbstract ([],  "z4"), "rr")])))] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt), None,
-                            ([TAL.(Imv ("r1", UW (WLoc lf))); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, TAL.([(lf, PBlock ([DZeta "z3"; DEpsilon "e"], [], SAbstract ([TInt], "z3"), QEnd (TInt, SAbstract ([], "z3")))); (la, PBlock ([DZeta "z4"],
+                            ([TAL.(Imv ("r1", UW (WLoc lf))); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, TAL.([(lf, (Box, PBlock ([DZeta "z3"; DEpsilon "e"], [], SAbstract ([TInt], "z3"), QEnd (TInt, SAbstract ([], "z3"))))); (la, (Box, PBlock ([DZeta "z4"],
                             [("rr", TInt); ("ri", TInt); ("rn", TInt)],
                             SAbstract ([TInt], "z3"),
-                            QEnd (TInt, SAbstract ([], "z3"))))]))),
+                            QEnd (TInt, SAbstract ([], "z3")))))]))),
                  [EVar "x"])))
 
 
@@ -62,7 +62,7 @@ let blocks_1 =
                          Iret ("ra", "r1")])))] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt), None,
-                            (TAL.([Imv ("r1", UW (WLoc l)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, [(l, TAL.(PBlock ([DZeta "z3"; DEpsilon "e"],
+                            (TAL.([Imv ("r1", UW (WLoc l)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, [(l, TAL.(Box, PBlock ([DZeta "z3"; DEpsilon "e"],
                         [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z3"), QEpsilon "e")))],
                         SAbstract ([TInt], "z3"),
                         QR "ra")))]))),
@@ -92,13 +92,13 @@ let blocks_2 =
           ] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt), None,
-                            (TAL.([Imv ("r1", UW (WLoc l1)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, TAL.([(l1, PBlock ([DZeta "z3"; DEpsilon "e1"],
+                            (TAL.([Imv ("r1", UW (WLoc l1)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, TAL.([(l1, (Box, PBlock ([DZeta "z3"; DEpsilon "e1"],
                         [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z3"), QEpsilon "e1")))],
                         SAbstract ([TInt], "z3"),
-                        QR "ra"));(l2, PBlock ([DZeta "z4"; DEpsilon "e2"],
+                        QR "ra")));(l2, (Box, PBlock ([DZeta "z4"; DEpsilon "e2"],
                         [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z4"), QEpsilon "e2")))],
                         SAbstract ([TInt], "z4"),
-                        QR "ra"))])))),
+                        QR "ra")))])))),
                  [EVar "x"])))
 
 
