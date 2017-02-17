@@ -40,7 +40,10 @@ let factorial_t =
                              Ihalt (TInt, SAbstract ([],  "z4"), "rr")])))] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt), None,
-                            ([TAL.(Imv ("r1", UW (WLoc lf))); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h)),
+                            ([TAL.(Imv ("r1", UW (WLoc lf))); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, TAL.([(lf, PBlock ([DZeta "z3"; DEpsilon "e"], [], SAbstract ([TInt], "z3"), QEnd (TInt, SAbstract ([], "z3")))); (la, PBlock ([DZeta "z4"],
+                            [("rr", TInt); ("ri", TInt); ("rn", TInt)],
+                            SAbstract ([TInt], "z3"),
+                            QEnd (TInt, SAbstract ([], "z3"))))]))),
                  [EVar "x"])))
 
 
@@ -59,7 +62,10 @@ let blocks_1 =
                          Iret ("ra", "r1")])))] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt), None,
-                            (TAL.([Imv ("r1", UW (WLoc l)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h))),
+                            (TAL.([Imv ("r1", UW (WLoc l)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, [(l, TAL.(PBlock ([DZeta "z3"; DEpsilon "e"],
+                        [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z3"), QEpsilon "e")))],
+                        SAbstract ([TInt], "z3"),
+                        QR "ra")))]))),
                  [EVar "x"])))
 
 
@@ -86,7 +92,13 @@ let blocks_2 =
           ] in
   F.(ELam ([("x", TInt)],
            EApp (EBoundary (TArrow ([TInt], TInt), None,
-                            (TAL.([Imv ("r1", UW (WLoc l1)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h))),
+                            (TAL.([Imv ("r1", UW (WLoc l1)); TAL.(Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), SAbstract ([], "z2"), "r1"))], h, TAL.([(l1, PBlock ([DZeta "z3"; DEpsilon "e1"],
+                        [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z3"), QEpsilon "e1")))],
+                        SAbstract ([TInt], "z3"),
+                        QR "ra"));(l2, PBlock ([DZeta "z4"; DEpsilon "e2"],
+                        [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z4"), QEpsilon "e2")))],
+                        SAbstract ([TInt], "z4"),
+                        QR "ra"))])))),
                  [EVar "x"])))
 
 
@@ -114,7 +126,7 @@ let with_ref =
                       Isst (0, "rc");
                       Imv ("r1", UW WUnit);
                       Ihalt (TUnit, SAbstract ([TTupleRef [TInt]], "z"), "r1")],
-                      [])));
+                      [], [])));
                   EApp (EVar "k",
                         [ELamMod ([("x", TInt)],
                                   [TAL.(TTupleRef [TInt])],
@@ -127,20 +139,20 @@ let with_ref =
                                                              F.EVar "x");
                                                     Ist ("r1", 0, "r2");
                                                     Imv ("r1", UW WUnit);
-                                                    Ihalt (TUnit, stack, "r1")], []))));
+                                                    Ihalt (TUnit, stack, "r1")], [], []))));
                          ELamMod ([],
                                   [TAL.(TTupleRef [TInt])],
                                   [TAL.(TTupleRef [TInt])],
                                   (EBoundary (TInt, Some stack,
                                               TAL.([Isld ("r1", 0);
                                                     Ild ("r2", "r1", 0);
-                                                    Ihalt (TInt, stack, "r2")], []))))]);
+                                                    Ihalt (TInt, stack, "r2")], [], []))))]);
                   EBoundary (TUnit, Some TAL.(SAbstract ([], "z")), (TAL.([
                       Iprotect ([TTupleRef [TInt]], "z");
                       Isfree 1;
                       Imv ("r1", UW WUnit);
                       Ihalt (TUnit, SAbstract ([], "z"), "r1")],
-                      []
+                      [], []
                     )))])))
 
 

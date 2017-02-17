@@ -25,13 +25,13 @@ let test_parse1 _ = assert_equal
 |})
   TAL.([Imv ("r1", UW (WInt 1));
         Iaop (Add, "r1", "r1", UW (WInt 1));
-        Ihalt (TInt, SConcrete [], "r1")], [])
+        Ihalt (TInt, SConcrete [], "r1")], [], [])
 
 let test2 _ = assert_equal
     (F.stepn 10 (empty, F.EBoundary (F.TInt, None,
                                      TAL.([Imv ("r1", UW (WInt 1));
                                            Iaop (Add, "r1", "r1", UW (WInt 1));
-                                           Ihalt (TInt, SConcrete [], "r1")], []))))
+                                           Ihalt (TInt, SConcrete [], "r1")], [], []))))
     (([], [("r1", TAL.WInt 2)], []), F.EInt 2)
 
 let test_f_app _ =
@@ -52,28 +52,28 @@ let test_mv_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Ihalt (TInt, SConcrete [], "r1")],[])))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Ihalt (TInt, SConcrete [], "r1")],[], [])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_aop_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Iaop (Add,"r2","r1", UW (WInt 2)); Ihalt (TInt, SConcrete [], "r2")], [])))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Iaop (Add,"r2","r1", UW (WInt 2)); Ihalt (TInt, SConcrete [], "r2")], [], [])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_import_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC TAL.([Iimport ("r1", "z", SConcrete [], F.TInt, F.EInt 10); Ihalt (TInt, SConcrete [], "r1")], [])))
+       (FTAL.TC TAL.([Iimport ("r1", "z", SConcrete [], F.TInt, F.EInt 10); Ihalt (TInt, SConcrete [], "r1")], [], [])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_salloc_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit; TUnit]))))
-       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Isalloc 2; Ihalt (TInt, SConcrete [TUnit; TUnit], "r1")], [])))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Isalloc 2; Ihalt (TInt, SConcrete [TUnit; TUnit], "r1")], [], [])))
     (FTAL.TT TAL.TInt, TAL.(SConcrete [TUnit; TUnit]))
 
 let test_import_stk_ty _ =
@@ -89,16 +89,16 @@ let test_import_stk_ty _ =
                                                    Isfree 1;
                                                    Ihalt (TInt, SAbstract ([],"z"),
                                                           "r1")]),
-                                             [])));
+                                             [], [])));
                       Isfree 1;
-                      Ihalt (TInt, SConcrete [TUnit], "r1")], [])))
+                      Ihalt (TInt, SConcrete [TUnit], "r1")], [], [])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TUnit])
 
 let test_sst_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TInt]))))
-       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Isalloc 1; Isst (0,"r1"); Ihalt (TInt, SConcrete [TInt], "r1")], [])))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Isalloc 1; Isst (0,"r1"); Ihalt (TInt, SConcrete [TInt], "r1")], [],[])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TInt])
 
 
@@ -106,9 +106,15 @@ let test_sld_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete [TUnit]))))
-       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Isalloc 1; Isld ("r2", 0); Ihalt (TUnit, SConcrete [TUnit], "r2")], [])))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Isalloc 1; Isld ("r2", 0); Ihalt (TUnit, SConcrete [TUnit], "r2")], [], [])))
     (FTAL.TT TAL.TUnit, TAL.SConcrete [TAL.TUnit])
 
+let test_ld_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Imv ("r2", UW (WLoc "l")); Ild ("r1", "r2", 0); Ihalt (TInt, SConcrete [], "r1")], [("l", HTuple [WInt 1])], [("l", PTuple [TInt])])))
+    (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_factorial_f_ty _ =
   assert_equal
@@ -134,7 +140,7 @@ let test_closures _ =
                    EApp (EBoundary (TArrow ( [TInt], TInt), None,
                                     ([TAL.Iprotect ([], "z2");
                                       TAL.Iimport ("rf", "_z", TAL.SAbstract ([], "z2"), TArrow ([TInt], TInt), ELam ([("y", TInt)], EBinop (EVar "x", BMinus, EVar "y")));
-                                      TAL.Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2"), "rf")], [])),
+                                      TAL.Ihalt (FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2"), "rf")], [], [])),
                          [EInt 1]))) in
   assert_equal
     (snd (F.stepn 40 (empty, F.EApp (f, [F.EInt 3]))))
@@ -182,6 +188,7 @@ let suite = "FTAL evaluations" >:::
               "TAL: import w/ stack mod : int" >:: test_import_stk_ty;
               "TAL: sst" >:: test_sst_ty;
               "TAL: sld" >:: test_sld_ty;
+              "TAL: ld" >:: test_ld_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;
               (* "TAL: int -> int" >:: test_factorial_t_ty; *)
               "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;

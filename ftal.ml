@@ -146,7 +146,7 @@ end = struct
                            [Imv ("ra", UApp (UW (WLoc lend), [OS (SAbstract ([], z2))]));
                             Ijmp (UApp (UW w, [OS (SAbstract ([], z2));
                                                OQ (QEnd (tytrans t1, SAbstract ([], z2)))]))]],
-                        []))))
+                        [], []))))
       in (((lend, hend)::hm,rm,sm), v)
     | (F.TArrowMod (ts,sin,sout,t1), TAL.WLoc l) ->
       let lend = gen_sym ~pref:"lend" () in
@@ -172,7 +172,7 @@ end = struct
                                              [OS (SAbstract (sout, z2))]));
                             Ijmp (UApp (UW w, [OS (SAbstract (sin, z2));
                                                OQ (QEnd (tytrans t1, SAbstract (sout, z2)))]))]],
-                        []))))
+                        [], []))))
       in (((lend, hend)::hm,rm,sm), v)
     | _ -> raise (Failure "ft: can't convert")
 
@@ -205,7 +205,7 @@ end = struct
         F.EApp (F.ELam (ps,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', Some s, ([TAL.Isld ("r1", n-i);
-                                               TAL.Ihalt (tytrans t1, s, "r1")], [])))
+                                               TAL.Ihalt (tytrans t1, s, "r1")], [], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra");
@@ -237,7 +237,7 @@ end = struct
         F.EApp (F.ELamMod (ps,sin,sout,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', Some s, ([TAL.Isld ("r1", n-i);
-                                               TAL.Ihalt (tytrans t1, s, "r1")], [])))
+                                               TAL.Ihalt (tytrans t1, s, "r1")], [], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", z2, SAbstract ([], z1), t1, body_wrapped);
@@ -302,14 +302,14 @@ end = struct
   let get_heap (p,_,_,_,_,_) = p
   let set_heap (_,d,g,c,q,s) p = (p,d,g,c,q,s)
 
-
   let rec tc (context:context) e = match e with
     | FC exp -> begin
         let tc' e = tc context (FC e) in
         let show_type = show in
         let open F in
         match exp, get_ret context with
-        | EVar i, TAL.QOut -> begin match List.Assoc.find (get_env context) i with
+        | EVar i, TAL.QOut ->
+          begin match List.Assoc.find (get_env context) i with
             | Some v -> (FT v, get_stack context)
             | None -> raise (TypeError ("Variable not in scope", e))
           end
@@ -317,7 +317,8 @@ end = struct
         | EInt _, TAL.QOut -> (FT TInt, get_stack context)
         | EBinop (e1,_,e2), TAL.QOut ->
           begin match tc' e1 with
-            | (FT TInt, s1) -> begin match tc (set_stack context s1) (FC e2) with
+            | (FT TInt, s1) ->
+              begin match tc (set_stack context s1) (FC e2) with
                 | (FT TInt, s2) -> (FT TInt, s2)
                 | _ -> raise (TypeError ("Second argument to binop not integer", e))
               end
@@ -325,8 +326,10 @@ end = struct
           end
         | EIf0 (c,e1,e2), TAL.QOut ->
           begin match tc' c with
-            | FT TInt, s1 -> begin match tc (set_stack context s1) (FC e1) with
-                | FT t1, s2 -> begin match tc (set_stack context s2) (FC e2) with
+            | FT TInt, s1 ->
+              begin match tc (set_stack context s1) (FC e1) with
+                | FT t1, s2 ->
+                  begin match tc (set_stack context s2) (FC e2) with
                     | FT t2, s3 -> if t_eq t1 t2 && s2 = s3 then (FT t1, s2) else
                         raise (TypeError ("If branches not same type", e))
                     | _ -> raise (TypeError ("If else branch not F expression", e))
@@ -399,10 +402,19 @@ end = struct
           end
         | _ -> raise (TypeError ("F expression with invalid return marker", e))
       end
-    | TC (instrs,h) ->
+    | TC (instrs,h,ht) ->
       (* let tc' e = tc context (FC e) in *)
       (* let show_type = show in *)
       let open TAL in
+      let _ = if String.Set.(not (is_empty
+                               (inter
+                                  (of_list (List.map ~f:fst ht))
+                                  (of_list (List.map ~f:fst (get_heap context)))
+                               )))
+        then raise (TypeError ("Component with heap fragment referencing same locations as global heap", e))
+        else () in
+      let context = set_heap context (List.append (get_heap context) ht) in
+      let _ = List.iter ~f:(fun (l,v) -> if not (List.mem (get_heap context) (l, tc_h context v)) then raise (TypeError ("Component heap typing does not match heap fragment at location " ^ l, e)) else ()) in
       match instrs, get_ret context with
       | Iaop (op, rd, rs, u)::is, QR r when rd = r ->
         raise (TypeError ("Iaop writing to register that is current return marker", e))
@@ -412,12 +424,12 @@ end = struct
           | Some t, _ when t <> TInt -> raise (TypeError ("Iaop with non-integer as source", e))
           | _, t when t <> TInt -> raise (TypeError ("Iaop with non-integer as target", e))
           | _ ->
-            tc (set_reg context (List.Assoc.add (get_reg context) rd TInt)) (TC (is, h))
+            tc (set_reg context (List.Assoc.add (get_reg context) rd TInt)) (TC (is, h, ht))
         end
       | Imv (rd,u)::is, QR r when rd = r ->
         raise (TypeError ("Imv writing to register that is current return marker", e))
       | Imv (rd,u)::is, _ ->
-        tc (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) (TC (is,h))
+        tc (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) (TC (is,[],[]))
       | Iimport (rd,z,s,t,f)::is, QR r when rd = r ->
         raise (TypeError ("Iimport writing to register that is current return marker", e))
       | Iimport (rd,z,s,t,f)::is, _ when
@@ -433,7 +445,7 @@ end = struct
             raise (TypeError ("Iimport given F expression that returns stack without abstract tail", e))
           | (FT t',SAbstract (_, z')) when z <> z'  ->
             raise (TypeError ("Iimport given F expression that returns stack with wrong abstract tail", e))
-          | (FT t',SAbstract (newpref, _)) -> tc (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) (stack_prepend newpref suf)) (TC (is,h))
+          | (FT t',SAbstract (newpref, _)) -> tc (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) (stack_prepend newpref suf)) (TC (is,[],[]))
           | _  -> raise (TypeError ("Iimport without F expression within", e))
         end
       | [Ihalt (t,s,r)], QEnd (t',s') when t' <> t ->
@@ -449,7 +461,7 @@ end = struct
       | [Ihalt _], _ ->
         raise (TypeError ("Halting without end return marker", e))
       | Isalloc n :: is, _ ->
-        tc (set_stack context (List.fold_left ~f:(fun s _ -> stack_cons TUnit s) ~init:(get_stack context) (List.init ~f:(fun x -> x) n))) (TC (is,h))
+        tc (set_stack context (List.fold_left ~f:(fun s _ -> stack_cons TUnit s) ~init:(get_stack context) (List.init ~f:(fun x -> x) n))) (TC (is,[],[]))
       | Isfree n :: is, QI n' when n > n' ->
         raise (TypeError ("Can't free stack position where return marker points to", e))
       | Isfree n :: is, _ when stack_pref_length (get_stack context) < n ->
@@ -457,10 +469,10 @@ end = struct
       | Isfree n :: is, QI n' ->
         tc (set_ret (set_stack context (stack_drop (get_stack context) n ))
               (QI (n' - n)))
-          (TC (is, h))
+          (TC (is, h, ht))
       | Isfree n :: is, _ ->
         tc (set_stack context (stack_drop (get_stack context) n ))
-          (TC (is, h))
+          (TC (is, h, ht))
       | Iprotect (pref, v)::is, QI n when n > List.length pref ->
         raise (TypeError ("Can't protect part of stack that contains return marker", e))
       | Iprotect (pref, v)::is, _ when stack_take (get_stack context) (List.length pref) <> pref ->
@@ -468,7 +480,7 @@ end = struct
       | Iprotect (pref, v)::is, _ ->
         let stail = stack_drop (get_stack context) (List.length pref) in
         let new_q = retmarker_sub (SAbs (stail, v)) (get_ret context) in
-        begin match tc (set_ret (set_stack (set_tyenv context (List.append (get_tyenv context) [DZeta v])) (SAbstract (pref, v))) new_q) (TC (is, h)) with
+        begin match tc (set_ret (set_stack (set_tyenv context (List.append (get_tyenv context) [DZeta v])) (SAbstract (pref, v))) new_q) (TC (is, h, ht)) with
           | TT t, s' -> let sub = SType (v, stail) in
             (TT (type_sub sub t), stack_sub sub s')
           | _ -> raise (Failure "Impossible")
@@ -482,15 +494,28 @@ end = struct
           | None -> raise (TypeError ("Isst trying to store from empty register", e))
           | Some t ->
             tc (set_stack context (stack_prepend (stack_take (get_stack context) n) (stack_cons t (stack_drop (get_stack context) (n+1)))))
-              (TC (is, h))
+              (TC (is, h, ht))
         end
       | Isld(rd,n)::is, QR r when r = rd ->
         raise (TypeError ("Isld: Can't overwrite return marker in register", e))
       | Isld(rd,n)::is, _ when stack_pref_length (get_stack context) <= n ->
         raise (TypeError ("Isld: Can't load from past exposed stack", e))
       | Isld(rd,n)::is, _ ->
-        tc (set_reg context (List.Assoc.add (get_reg context) rd (List.last_exn (stack_take (get_stack context) (n+1))))) (TC (is,h))
-
+        tc (set_reg context (List.Assoc.add (get_reg context) rd (List.last_exn (stack_take (get_stack context) (n+1))))) (TC (is,h, ht))
+      | Ild(rd,rs,n)::is, QR r when r = rd ->
+        raise (TypeError ("Ild: Can't overwrite return marker in register", e))
+      | Ild(rd,rs,n)::is, _ ->
+        begin match List.Assoc.find (get_reg context) rs with
+          | None -> raise (TypeError ("Ild: trying to load from empty reg", e))
+          | Some (TBox (PTuple ps)) when n >= List.length ps ->
+            raise (TypeError ("Ild: trying to load from index past end of tuple", e))
+          | Some (TBox (PTuple ps)) ->
+            let t = List.nth_exn ps n in
+            tc (set_reg context (List.Assoc.add (get_reg context) rd t))
+              (TC (is, [], []))
+          | Some _ ->
+            raise (TypeError ("Ild: trying to load from non-tuple", e))
+        end
       | _ -> raise (TypeError ("Don't know how to type-check", e))
 
   (* | Ibnz of reg * u *)
@@ -500,8 +525,6 @@ end = struct
   (* | Iballoc of reg * int *)
   (* | Iunpack of string * reg * u *)
   (* | Iunfold of reg * u *)
-  (* | Isld of reg * int *)
-  (* | Isst of int * reg *)
   (* | Ijmp of u *)
   (* | Icall of u * sigma * q *)
   (* | Iret of reg * reg *)
@@ -551,6 +574,12 @@ end = struct
           List.fold_left ~f:(fun t' p -> type_sub p t') ~init:(TBox (PBlock (dr,c,s,q))) (type_zip ds os)
         | _ -> raise (TypeErrorW ("Can't apply non-block to types", w))
       end
+
+  and tc_h context h = match h with
+    | TAL.HCode (d,c,s,q,is) ->
+      let _ = tc (set_ret (set_stack (set_reg (set_tyenv context d) c) s) q) (TC (is,[],[])) in
+      TAL.PBlock (d,c,s,q)
+    | TAL.HTuple ws -> TAL.PTuple (List.map ~f:(tc_w context) ws)
 
 end
 and F : sig
@@ -780,7 +809,7 @@ end = struct
     (* NOTE(dbp 2016-10-13): FTAL.tytrans t = t' should hold as well,
        but tytrans gen_syms so we need some sort of alpha equivalence (or
        to just fix how we do names). *)
-    | EBoundary (t, s, ([TAL.Ihalt (t',s',r)],[]))->
+    | EBoundary (t, s, ([TAL.Ihalt (t',s',r)],[],[]))->
       let (hm,rm,sm) = m in
       FTAL.ft t (List.Assoc.find_exn rm r) m
     | _ -> (m, e)
@@ -892,9 +921,9 @@ end = struct
       let _ = Debug.log "stepped TI stack" (TAL.show_stackm s') in
       let _ = Debug.log "stepped TI heap" (TAL.show_heapm h') in
       (m', plug ctxt (TI is'))
-    | Some (ctxt, TC (is,h)) ->
+    | Some (ctxt, TC (is,h,_)) ->
       let m' = TAL.load m h in
-      (m', plug ctxt (TC (is, [])))
+      (m', plug ctxt (TC (is, [], [])))
     | None -> (m, e)
 
   let rec stepn n e =
@@ -1036,7 +1065,7 @@ and TAL : sig
 
   val load : mem -> heapm -> mem
 
-  type component = instr list * heapm
+  type component = instr list * heapm * psi
   val show_component : component -> string
   val pp_component : Format.formatter -> component -> unit
 
@@ -1214,7 +1243,7 @@ end = struct
        that we always gensym new location names, so not renaming should be safe. *)
     (List.append h' h, r, s)
 
-  type component = instr list * heapm
+  type component = instr list * heapm * psi
   [@@deriving show]
 
   type context =
@@ -1247,18 +1276,19 @@ end = struct
     match ctxt with
     | CComponentEmpty ctxt' ->
       begin match ctxt' with
-        | CHoleI -> (un_ti e, [])
-        | CImportI (r,z,s,t,ctxt',is) -> (Iimport (r,z,s,t,F.plug ctxt' e)::is, [])
+        | CHoleI -> (un_ti e, [], [])
+        | CImportI (r,z,s,t,ctxt',is) -> (Iimport (r,z,s,t,F.plug ctxt' e)::is, [], [])
       end
     | CComponentHeap CHoleC -> un_tc e
 
-  let rec sub p (is, hm) =
+  let rec sub p (is, hm, ht) =
     (List.map ~f:(instr_sub p) is,
      List.map ~f:(fun (l,h) ->
          match h with
          | HCode (d,c,s,q,is) -> (l, HCode (d,c,s,q, List.map ~f:(instr_sub p) is))
          | _ -> (l,h)
-       ) hm)
+       ) hm,
+    List.map ~f:(fun (l,t) -> (l, psi_sub p t)) ht)
 
   and instr_sub p i = match i with
     | Iaop (op, r1, r2, u) -> Iaop (op, r1, r2, u_sub p u)
@@ -1508,7 +1538,7 @@ end = struct
 
 
 
-  let decomp (is, m) =
+  let decomp (is, m, mt) =
     match m with
     | [] ->
       begin match is with
@@ -1521,7 +1551,7 @@ end = struct
           end
         | _ -> Some (CComponentEmpty CHoleI, F.TI is)
       end
-    | _ -> Some (CComponentHeap CHoleC, F.TC (is, m))
+    | _ -> Some (CComponentHeap CHoleC, F.TC (is, m, mt))
 
   let rec ru r = function
     | UApp (u, o) -> WApp (ru r u, o)
