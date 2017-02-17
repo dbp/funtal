@@ -336,7 +336,7 @@ let test_blocks1_ty _ =
 
 let test_blocks2 _ =
   assert_equal
-    (snd (F.stepn 20 (empty, F.EApp (blocks_2, [F.EInt 3]))))
+    (snd (F.stepn 30 (empty, F.EApp (blocks_2, [F.EInt 3]))))
     (F.EInt 5)
 
 let test_blocks2_ty _ =
@@ -423,7 +423,7 @@ let suite = "FTAL evaluations" >:::
               "TAL(1block): (\\x -> x + 2)3 = 5" >:: test_blocks1;
               "TAL(1block): (\\x -> x + 2)3 : int" >:: test_blocks1_ty;
               "TAL(2blocks): (\\x -> x + 2)3 = 5" >:: test_blocks2;
-              (* "TAL(2blocks): (\\x -> x + 2)3 : int" >:: test_blocks2_ty; *)
+              "TAL(2blocks): (\\x -> x + 2)3 : int" >:: test_blocks2_ty;
               "REF: r = ref 1; r := 20; !r = 20" >:: test_ref1;
               (* "REF: r = ref 1; r := 20; !r : int" >:: test_ref1_ty; *)
               "REF: r = ref 1; r := 20; r := !r + 5; !r = 25" >:: test_ref2;

@@ -600,12 +600,24 @@ end = struct
       raise (TypeError ("Iret: not returning to return marker", e))
     | [Iret (rt, rv)], _  ->
       raise (TypeError ("Iret: can't use if return marker isn't in register", e))
+    | [Ijmp u], q -> begin match tc_u context u with
+        | TBox (PBlock ([], c, s, q')) when not (q_eq q q') ->
+          raise (TypeError ("Ijmp: must jump to a block with the same return marker", e))
+        | TBox (PBlock ([], c, s, q')) when not (s_eq s (get_stack context)) ->
+          raise (TypeError ("Ijmp: must jump to a block expecting the current stack", e))
+        | TBox (PBlock ([], c, s, q')) when not (String.Set.(subset (of_list (List.map ~f:fst c)) (of_list (List.map ~f:fst (get_reg context))))) ->
+          raise (TypeError ("Ijmp: can't jump to a block expecting more registers set", e))
+        | TBox (PBlock ([], c, s, q')) when not (List.for_all c ~f:(fun (r,t) -> t_eq t (List.Assoc.find_exn (get_reg context) r))) ->
+          raise (TypeError ("Ijmp: current registers not compatible with block", e))
+        | TBox (PBlock ([], c, s, q')) -> ()
+        | _ -> raise (TypeError ("Ijmp: can't jump to non-block", e))
+      end
+
     | _ -> raise (TypeError ("Don't know how to type-check", e))
 
   (* | Ibnz of reg * u *)
   (* | Ijmp of u *)
   (* | Icall of u * sigma * q *)
-  (* | Iret of reg * reg *)
 
   and tc_u context u = let open TAL in match u with
     | UW w -> tc_w context w
@@ -1060,6 +1072,7 @@ and TAL : sig
   val s_pref_eq : sigma_prefix -> sigma_prefix -> bool
   val show_q : q -> string
   val pp_q : Format.formatter -> q -> unit
+  val q_eq : q -> q -> bool
   val show_psi : psi -> string
   val pp_psi : Format.formatter -> psi -> unit
   val psi_elem_eq : psi_elem -> psi_elem -> bool
