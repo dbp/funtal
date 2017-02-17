@@ -412,7 +412,8 @@ end = struct
           match List.Assoc.find (get_heap context) l with
           | None -> raise (TypeError ("Component missing heap annotation for location " ^ l, e))
           | Some (m,p) ->
-            if not (TAL.psi_elem_eq (tc_h context m v) p) then raise (TypeError ("Component heap typing does not match heap fragment at location " ^ l, e)) else ()) h in
+            let p' = tc_h context m v in
+            if not (TAL.psi_elem_eq p' p) then raise (TypeError ("Component heap typing does not match heap fragment at location " ^ l ^ "; got " ^ TAL.show_psi_elem p' ^ " but expected " ^ TAL.show_psi_elem p, e)) else ()) h in
       begin
         tc_is context instrs;
         match TAL.ret_type context (get_ret context) with
@@ -1062,6 +1063,7 @@ and TAL : sig
   val show_psi : psi -> string
   val pp_psi : Format.formatter -> psi -> unit
   val psi_elem_eq : psi_elem -> psi_elem -> bool
+  val show_psi_elem : psi_elem -> string
 
   type omega =
       OT of t
@@ -1477,8 +1479,8 @@ end = struct
 
 
   let option_cons o1 o2 = match o1,o2 with
-    | None, _ -> None
     | _, None -> None
+    | None, Some xs -> Some xs
     | Some x, Some xs -> Some (x::xs)
 
   let rec delta_rebindings d1 d2 =
@@ -1493,7 +1495,7 @@ end = struct
         (if a1 = a2 then None
          else Some (FTAL.SType (a1,SAbstract ([], a2))))
         (delta_rebindings d1' d2')
-    | DEpsilon a1::d1', DEpsilon a2::d2' when a1 <> a2 ->
+    | DEpsilon a1::d1', DEpsilon a2::d2' ->
       option_cons
         (if a1 = a2 then None
          else Some (FTAL.EMarker (a1,QEpsilon a2)))
