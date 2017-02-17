@@ -446,7 +446,8 @@ end = struct
       raise (TypeError ("Iimport writing to register that is current return marker", e))
     | Iimport (rd,z,s,t,f)::is, _ when
         stack_pref_length s > stack_pref_length (get_stack context) || not (s_eq (stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s)) s) ->
-      raise (TypeError ("Iimport protected suffix does not match current stack", e))
+
+      raise (TypeError ("Iimport protected suffix does not match current stack. Suffix: " ^ show_sigma s ^ " but current stack is " ^ show_sigma (get_stack context), e))
     | Iimport (rd,z,s,t,f)::is, _ ->
       let pref = stack_take (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in
       let suf = stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in

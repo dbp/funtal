@@ -159,6 +159,97 @@ let blocks_2 =
                  [EVar "x"])))
 
 
+let higher_order =
+  let tau = F.(TArrow([TArrow([TInt],TInt)], TInt)) in
+  let g = F.(ELam ([("h", TArrow ([TInt], TInt))], EApp (EVar "h", [EInt 1]))) in
+  let h = TAL.([
+      ("l", HCode ([DZeta "z1"; DEpsilon "e1"],
+                   [("ra", TBox (PBlock ([],
+                                         [("r1", TInt)],
+                                         SAbstract ([], "z1"),
+                                         QEpsilon "e1")))],
+                   SAbstract ([FTAL.tytrans tau], "z1"),
+                   QR "ra",
+                   [Isld ("r1",0);
+                    Isalloc 1;
+                    Imv ("r2", UW (WLoc "lh"));
+                    Isst (0, "r2");
+                    Isst (1, "ra");
+                    Imv ("ra", UApp (UW (WLoc "lgret"), [OS (SAbstract ([], "z1"))]));
+                    Icall (UR "r1",
+                           SAbstract ([TBox
+                                         (PBlock ([],
+                                                  [("r1", TInt)],
+                                                  SAbstract ([], "z3"),
+                                                  QEpsilon "e1"))],
+                                      "z3"),
+                           QI 0)]));
+      ("lh", HCode ([DZeta "z2"; DEpsilon "e2"],
+                    [("ra", TBox (PBlock ([],
+                                          [("r1", TInt)],
+                                          SAbstract ([], "z2"),
+                                          QEpsilon "e2")))],
+                    SAbstract ([TInt], "z2"),
+                    QR "ra",
+                    [Isld ("r1",0);
+                     Isfree 1;
+                     Iaop (Mult, "r1", "r1", UW (WInt 2));
+                     Iret ("ra", "r1")]));
+      ("lgret", HCode ([DZeta "z3"; DEpsilon "e3"],
+                       [("ra", TBox (PBlock ([],
+                                             [("r1", TInt)],
+                                             SAbstract ([], "z3"),
+                                             QEpsilon "e3")))],
+                       SAbstract ([TBox
+                                     (PBlock ([],
+                                              [("r1", TInt)],
+                                              SAbstract ([], "z3"),
+                                              QEnd (TInt, SAbstract ([], "z3"))))],
+                                  "z3"),
+                       QI 0,
+                       [Isld ("ra", 0);
+                        Isfree 1;
+                        Iret ("ra", "r1")]))]) in
+  let ht = TAL.([
+      ("l", (Box, PBlock ([DZeta "z1"; DEpsilon "e1"],
+                          [("ra", TBox (PBlock ([],
+                                                [("r1", TInt)],
+                                                SAbstract ([], "z1"),
+                                                QEpsilon "e1")))],
+                          SAbstract ([FTAL.tytrans tau], "z1"),
+                          QR "ra")));
+      ("lh", (Box, PBlock ([DZeta "z2"; DEpsilon "e2"],
+                           [("ra", TBox (PBlock ([],
+                                                 [("r1", TInt)],
+                                                 SAbstract ([], "z2"),
+                                                 QEpsilon "e2")))],
+                           SAbstract ([TInt], "z2"),
+                           QR "ra")));
+      ("lgret", (Box, PBlock ([DZeta "z3"; DEpsilon "e3"],
+                              [("ra", TBox (PBlock ([],
+                                                    [("r1", TInt)],
+                                                    SAbstract ([], "z3"),
+                                                    QEpsilon "e3"
+                                                   )))],
+                              SAbstract ([TBox
+                                            (PBlock ([],
+                                                     [("r1", TInt)],
+                                                     SAbstract ([], "z3"),
+                                                     QEnd (TInt, SAbstract ([], "z3"))))],
+                                         "z3"),
+                              QI 0)));
+    ]) in
+  F.(EApp (EBoundary (TInt,
+                      None,
+                      TAL.([Imv("r1", UW (WLoc "l"));
+                            Ihalt(FTAL.tytrans tau,
+                                  SConcrete [],
+                                  "r1")],
+                           h,
+                           ht)),
+           [g]))
+
+
 
 let ref_settyp = F.(TArrowMod ([TInt], [TAL.(TTupleRef [TInt])], [TAL.(TTupleRef [TInt])], TUnit))
 let ref_gettyp = F.(TArrowMod ([], [TAL.(TTupleRef [TInt])], [TAL.(TTupleRef [TInt])], TInt))

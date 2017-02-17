@@ -301,6 +301,22 @@ let test_factorial_t_ty _ =
        (FTAL.FC factorial_t))
     (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 
+
+let test_higher_order _ =
+  assert_equal
+    (snd (F.stepn 60 (empty, higher_order)))
+    (F.EInt 2)
+
+
+
+let test_higher_order_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC higher_order))
+    (FTAL.FT F.TInt, TAL.SConcrete [])
+
+
 let f_closures =
   F.(ELam ([("x", TInt)],
                    EApp (EBoundary (TArrow ( [TInt], TInt), None,
@@ -418,6 +434,8 @@ let suite = "FTAL evaluations" >:::
               "TAL: unfold exc" >:: test_unfold_ty_exc;
               "TAL: fact 3 = 6" >:: test_factorial_t;
               "TAL: int -> int" >:: test_factorial_t_ty;
+              "TAL: higher order = 2" >:: test_higher_order;
+              "TAL: higher order : int" >:: test_higher_order_ty;
               "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;
               "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 : int" >:: test_closures_ty;
               "TAL(1block): (\\x -> x + 2)3 = 5" >:: test_blocks1;
