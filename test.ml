@@ -144,6 +144,37 @@ let test_st_ty _ =
                      [("l", (Ref, PTuple [TInt]))])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
+let test_ralloc_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1));
+                      Isalloc 1;
+                      Isst (0, "r1");
+                      Iralloc ("r2", 1);
+                      Imv ("r1", UW (WInt 10));
+                      Ist ("r2", 0, "r1");
+                      Ild ("r3", "r2", 0);
+                      Ihalt (TInt, SConcrete [], "r3")],
+                     [],
+                     [])))
+    (FTAL.TT TAL.TInt, TAL.SConcrete [])
+
+let test_balloc_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
+       (FTAL.TC TAL.([Imv ("r1", UW (WInt 1));
+                      Isalloc 2;
+                      Isst (0, "r1");
+                      Iballoc ("r2", 1);
+                      Ild ("r3", "r2", 0);
+                      Ihalt (TInt, SConcrete [TUnit], "r3")],
+                     [],
+                     [])))
+    (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TUnit])
+
+
 let test_factorial_f_ty _ =
   assert_equal
     (FTAL.tc
@@ -219,6 +250,8 @@ let suite = "FTAL evaluations" >:::
               "TAL: ld" >:: test_ld_ty;
               "TAL: ld" >:: test_ld2_ty;
               "TAL: st" >:: test_st_ty;
+              "TAL: ralloc" >:: test_ralloc_ty;
+              "TAL: balloc" >:: test_balloc_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;
               (* "TAL: int -> int" >:: test_factorial_t_ty; *)
               "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;

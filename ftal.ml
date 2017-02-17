@@ -411,10 +411,10 @@ end = struct
       (* let show_type = show in *)
       let open TAL in
       let _ = if String.Set.(not (is_empty
-                               (inter
-                                  (of_list (List.map ~f:fst ht))
-                                  (of_list (List.map ~f:fst (get_heap context)))
-                               )))
+                                    (inter
+                                       (of_list (List.map ~f:fst ht))
+                                       (of_list (List.map ~f:fst (get_heap context)))
+                                    )))
         then raise (TypeError ("Component with heap fragment referencing same locations as global heap", e))
         else () in
       let context = set_heap context (List.append (get_heap context) ht) in
@@ -545,12 +545,35 @@ end = struct
                 raise (TypeError ("Ist: trying to store to non-tuple", e))
             end
         end
+      | Iralloc (rd, n)::is, _ when stack_pref_length (get_stack context) < n ->
+        raise (TypeError ("Iralloc: trying to allocate more than is visible on stack", e))
+      | Iralloc (rd,n)::is, QR r when rd = r ->
+        raise (TypeError ("Iralloc: can't overwrite return marker in register", e))
+      | Iralloc (rd,n)::is, QI n' when n' + 1 <= n ->
+        raise (TypeError ("Iralloc: can't move the stack return marker", e))
+      | Iralloc (rd,n)::is, q ->
+        let q' = match q with
+          | QI n' -> QI (n' - n)
+          | _ -> q in
+        tc (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TTupleRef (stack_take (get_stack context) n)))) (stack_drop (get_stack context) n)) q')
+          (TC (is, [], []))
+      | Iballoc (rd, n)::is, _ when stack_pref_length (get_stack context) < n ->
+        raise (TypeError ("Iballoc: trying to allocate more than is visible on stack", e))
+      | Iballoc (rd,n)::is, QR r when rd = r ->
+        raise (TypeError ("Iballoc: can't overwrite return marker in register", e))
+      | Iballoc (rd,n)::is, QI n' when n' + 1 <= n ->
+        raise (TypeError ("Iballoc: can't move the stack return marker", e))
+      | Iballoc (rd,n)::is, q ->
+        let q' = match q with
+          | QI n' -> QI (n' - n)
+          | _ -> q in
+        tc (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TBox (PTuple (stack_take (get_stack context) n))))) (stack_drop (get_stack context) n)) q')
+          (TC (is, [], []))
+
 
       | _ -> raise (TypeError ("Don't know how to type-check", e))
 
   (* | Ibnz of reg * u *)
-  (* | Iralloc of reg * int *)
-  (* | Iballoc of reg * int *)
   (* | Iunpack of string * reg * u *)
   (* | Iunfold of reg * u *)
   (* | Ijmp of u *)
