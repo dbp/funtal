@@ -5,7 +5,7 @@
 %token FORALL EXISTS MU
 %token UNIT INT REF BOX
 %token LANGLE RANGLE LBRACKET RBRACKET LBRACE RBRACE LPAREN RPAREN
-%token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW
+%token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW EMPTY
 %token<string> IDENTIFIER
 %token<int> INTEGER
 %token<string> REGISTER
@@ -100,7 +100,7 @@ heap_value:
   { HCode (delta, chi, sigma, q, i) }
 | ws=tuple(word_value) { HTuple ws }
 
-register_typing: elems=separated_list(COMMA, register_typing_elem) { elems }
+register_typing: elems=left_empty_list(register_typing_elem) { elems }
 
   register_typing_elem: r=register COLON tau=value_type { (r, tau) }
 
@@ -122,7 +122,7 @@ return_marker:
   { QEnd (tau, sigma) }
 /* qout missing for now */
 
-type_env: elems=separated_list(COMMA, type_env_elem) { elems }
+type_env: elems=left_empty_list(type_env_elem) { elems }
 
   type_env_elem:
   | alpha=type_variable { DAlpha alpha }
@@ -134,11 +134,11 @@ memory:
   { (h, r, s) }
 
 heap_fragment:
-| h=separated_list(COMMA, binding(location,heap_value))
+| h=left_empty_list(binding(location,heap_value))
   { h }
 
 register_file:
-| h=separated_list(COMMA, binding(register, word_value))
+| h=left_empty_list(binding(register, word_value))
   { h }
 
   binding(variable, value):
@@ -214,3 +214,7 @@ component:
 
   tuple(elem):
   | LANGLE elems=separated_list(COMMA, elem) RANGLE { elems }
+
+  left_empty_list(elem):
+  | EMPTY { [] }
+  | EMPTY COMMA elems=separated_list(COMMA, elem) { elems }

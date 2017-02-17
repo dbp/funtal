@@ -66,6 +66,7 @@ rule token = parse
   | "unpack" { UNPACK }
   | "unfold" { UNFOLD }
   | "*" { BIGDOT }
+  | "[]" { EMPTY }
   | identifier { IDENTIFIER (Lexing.lexeme lexbuf) }
   | eof { EOF }
   | _ { lexing_error lexbuf }

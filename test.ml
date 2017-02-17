@@ -21,6 +21,7 @@ let test_parse1 _ = assert_equal
      add r1, r1, 1;
      halt int, * {r1}
 ;
+     []
 )
 |})
   TAL.([Imv ("r1", UW (WInt 1));
