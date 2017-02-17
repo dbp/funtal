@@ -516,10 +516,29 @@ end = struct
           | Some _ ->
             raise (TypeError ("Ild: trying to load from non-tuple", e))
         end
+      | Ist(rd, n, rs)::is, QR r when r = rd ->
+        raise (TypeError ("Ild: Can't overwrite return marker in register", e))
+      | Ist(rd, n, rs)::is, _ ->
+        begin match List.Assoc.find (get_reg context) rs with
+          | None -> raise (TypeError ("Ist: trying to load from empty reg", e))
+          | Some t ->
+            begin match List.Assoc.find (get_reg context) rd with
+              | None -> raise (TypeError ("Ist: trying to store to empty reg", e))
+              | Some (TBox (PTuple ps)) when n >= List.length ps ->
+                raise (TypeError ("Ist: trying to store past end of tuple", e))
+              | Some (TBox (PTuple ps)) ->
+                let t' = List.nth_exn ps n in
+                if not (TAL.t_eq t t') then
+                  raise (TypeError ("Ist: trying to store value of wrong type", e))
+                else tc context (TC (is, [], []))
+              | Some _ ->
+                raise (TypeError ("Ist: trying to store to non-tuple", e))
+            end
+        end
+
       | _ -> raise (TypeError ("Don't know how to type-check", e))
 
   (* | Ibnz of reg * u *)
-  (* | Ild of reg * reg * int *)
   (* | Ist of reg * int * reg *)
   (* | Iralloc of reg * int *)
   (* | Iballoc of reg * int *)
