@@ -62,12 +62,54 @@ let test_aop_ty _ =
        (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Iaop (Add,"r2","r1", UW (WInt 2)); Ihalt (TInt, SConcrete [], "r2")], [], [])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
+let assert_raises_typeerror (f : unit -> 'a) : unit =
+  FTAL.(try (f (); assert_failure "didn't raise an exception")
+        with TypeError _ | TypeErrorW _ | TypeErrorH _ | TypeErrorU _  -> ())
+
+let test_aop_ty_exc _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+        (FTAL.TC TAL.([Imv ("r1", UW WUnit); Iaop (Add,"r2","r1", UW (WInt 2)); Ihalt (TInt, SConcrete [], "r2")], [], [])))
+
+let test_aop_ty_exc2 _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+        (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Iaop (Add,"r2","r1", UW WUnit); Ihalt (TInt, SConcrete [], "r2")], [], [])))
+
+let test_aop_ty_exc3 _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+        (FTAL.default_context (TAL.QR "r2"))
+        (FTAL.TC TAL.([Imv ("r1", UW (WInt 1)); Iaop (Add,"r2","r1", UW (WInt 1)); Ihalt (TInt, SConcrete [], "r2")], [], [])))
+
+
 let test_import_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC TAL.([Iimport ("r1", "z", SConcrete [], F.TInt, F.EInt 10); Ihalt (TInt, SConcrete [], "r1")], [], [])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
+
+
+let test_import_ty_exc _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Iimport ("r1", "z", SConcrete [], F.TInt, F.EUnit); Ihalt (TInt, SConcrete [], "r1")], [], [])))
+
+let test_import_ty_exc2 _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Iimport ("r1", "z", SConcrete [], F.TUnit, F.EInt 1); Ihalt (TInt, SConcrete [], "r1")], [], [])))
+
+let test_import_ty_exc3 _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+       (FTAL.TC TAL.([Iimport ("r1", "z", SConcrete [TUnit], F.TInt, F.EInt 1); Ihalt (TInt, SConcrete [], "r1")], [], [])))
 
 let test_salloc_ty _ =
   assert_equal
@@ -174,6 +216,49 @@ let test_balloc_ty _ =
                      [])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TUnit])
 
+let test_balloc_ty_exc _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
+        (FTAL.TC TAL.([Imv ("r1", UW (WInt 1));
+                       Isalloc 2;
+                       Isst (0, "r1");
+                       Iballoc ("r2", 1);
+                       Ist ("r2", 0, "r1");
+                       Ild ("r3", "r2", 0);
+                       Ihalt (TInt, SConcrete [TUnit], "r3")],
+                      [],
+                      [])))
+
+
+
+(* NOTE(dbp 2017-02-17): Writing a "small" example using unpack is
+   actually quite hard, because we really need large values &
+   functions in order to do anything useful with existentials, which
+   then involves jumps, calls, etc... So this is a dumb test, but... bleh. *)
+
+let test_unpack_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
+       (FTAL.TC TAL.([Iunpack ("b", "r2", UW (WPack (TInt, WInt 1, "a", TVar "a")));
+                      Imv ("r1", UW WUnit);
+                      Ihalt (TUnit, SConcrete [], "r1")],
+                     [],
+                     [])))
+    (FTAL.TT TAL.TUnit, TAL.SConcrete [])
+
+
+let test_unpack_ty_exc _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+        (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
+        (FTAL.TC TAL.([Iunpack ("b", "r2", UW (WInt 10));
+                       Imv ("r1", UW WUnit);
+                       Ihalt (TUnit, SConcrete [], "r1")],
+                      [],
+                      [])))
+
 
 let test_factorial_f_ty _ =
   assert_equal
@@ -230,7 +315,6 @@ let test_profiling1 _ =
     (snd (F.stepn 70 (empty, profiling_1)))
     (F.EInt 2)
 
-
 let suite = "FTAL evaluations" >:::
             [
               "F: 1 + 1 = 2" >:: test1;
@@ -242,7 +326,13 @@ let suite = "FTAL evaluations" >:::
               "F: fact : int -> int" >:: test_factorial_f_ty;
               "TAL: mv r1,1;halt r1 : int" >:: test_mv_ty;
               "TAL: mv r1,1; + r1,r1,1;halt r1 : int" >:: test_aop_ty;
+              "TAL: aop exc : int" >:: test_aop_ty_exc;
+              "TAL: aop exc : int" >:: test_aop_ty_exc2;
+              "TAL: aop exc : int" >:: test_aop_ty_exc3;
               "TAL: import r1,1; halt r1 : int" >:: test_import_ty;
+              "TAL: import exc" >:: test_import_ty_exc;
+              "TAL: import exc" >:: test_import_ty_exc2;
+              "TAL: import exc" >:: test_import_ty_exc3;
               "TAL: mv r1, 1; salloc 2; halt r1 : int" >:: test_salloc_ty;
               "TAL: import w/ stack mod : int" >:: test_import_stk_ty;
               "TAL: sst" >:: test_sst_ty;
@@ -252,6 +342,9 @@ let suite = "FTAL evaluations" >:::
               "TAL: st" >:: test_st_ty;
               "TAL: ralloc" >:: test_ralloc_ty;
               "TAL: balloc" >:: test_balloc_ty;
+              "TAL: balloc exc" >:: test_balloc_ty_exc;
+              "TAL: unpack" >:: test_unpack_ty;
+              "TAL: unpack exc" >:: test_unpack_ty_exc;
               "TAL: fact 3 = 6" >:: test_factorial_t;
               (* "TAL: int -> int" >:: test_factorial_t_ty; *)
               "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;

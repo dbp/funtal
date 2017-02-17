@@ -569,6 +569,16 @@ end = struct
           | _ -> q in
         tc (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TBox (PTuple (stack_take (get_stack context) n))))) (stack_drop (get_stack context) n)) q')
           (TC (is, [], []))
+      | Iunpack (a, rd, u)::is, QR r when rd = r ->
+        raise (TypeError ("Iunpack: can't overwrite return marker in register", e))
+      | Iunpack (a, rd, u)::is, _ ->
+        begin match tc_u context u with
+          | TExists (a', t) ->
+            let newt = type_rebind (TBinding (a, a')) t in
+            tc (set_reg context (List.Assoc.add (get_reg context) rd newt))
+              (TC (is, [], []))
+          | _ -> raise (TypeError ("Iunpack: given non-existential", e))
+        end
 
 
       | _ -> raise (TypeError ("Don't know how to type-check", e))
