@@ -109,7 +109,8 @@ let test_import_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC TAL.([Iimport ("r1", "z", SConcrete [], F.TInt, F.EInt 10); Ihalt (TInt, SConcrete [], "r1")], [])))
+       (FTAL.TC
+          (tal_comp "(import r1, 'z as *, int TF{10}; halt int, * {r1}; [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 
@@ -117,7 +118,8 @@ let test_import_ty_exc _ =
   assert_raises_typeerror
     (fun _ -> FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC TAL.([Iimport ("r1", "z", SConcrete [], F.TInt, F.EUnit); Ihalt (TInt, SConcrete [], "r1")], [])))
+       (FTAL.TC
+          (tal_comp "(import r1, 'z as *, int TF{()}; halt int, * {r1}; [])")))
 
 let test_import_ty_exc2 _ =
   assert_raises_typeerror
@@ -142,18 +144,20 @@ let test_import_stk_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
-       (FTAL.TC TAL.([Isalloc 3;
-                      Iimport ("r1", "z'", SConcrete [TUnit], F.TInt,
-                               F.EBoundary (F.TInt,
-                                            Some (SAbstract ([TUnit],"z'")),
-                                            (TAL.([Iprotect ([TUnit], "z");
-                                                   Imv ("r1", UW (WInt 10));
-                                                   Isfree 1;
-                                                   Ihalt (TInt, SAbstract ([],"z"),
-                                                          "r1")]),
-                                             [])));
-                      Isfree 1;
-                      Ihalt (TInt, SConcrete [TUnit], "r1")], [])))
+       (FTAL.TC (tal_comp "( salloc 3;
+                             import r1, 'zz as unit::*, int TF{
+                               FT [int, unit::'zz] (
+                                 protect unit, 'z;
+                                 mv r1, 10;
+                                 sfree 1;
+                                 halt int, 'z {r1}
+                               ;
+                                 []
+                               )
+                             };
+                             sfree 1;
+                             halt int, unit::* {r1}
+                           ; [] )")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TUnit])
 
 let test_sst_ty _ =

@@ -64,6 +64,7 @@ rule token = parse
   | "::" { DOUBLECOLON }
   | "end" { END }
   | "nil" { NIL }
+  | "out" { OUT }
   | "jmp" { JMP }
   | "call" { CALL }
   | "ret" { RET }
@@ -92,6 +93,11 @@ rule token = parse
   | "*" { TIMES }
   | "\\"  { LAMBDA }
   | "->" { ARROW }
+  | "?" { QUESTION }
+  | "FT" { FT }
+  | "TF" { TF }
+  | "import" { IMPORT }
+  | "protect" { PROTECT }
   | identifier { IDENTIFIER (Lexing.lexeme lexbuf) }
   | "'" identifier { classify_type_variable lexbuf }
   | eof { EOF }

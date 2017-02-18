@@ -1,13 +1,16 @@
 %token JMP CALL RET HALT
-%token BNZ LD ST RALLOC BALLOC MV SALLOC SFREE SLD SST PACK AS UNPACK FOLD UNFOLD
-%token CODE END NIL
+%token BNZ LD ST RALLOC BALLOC MV SALLOC SFREE SLD SST
+%token PACK AS UNPACK FOLD UNFOLD
+%token IMPORT PROTECT
+%token CODE END NIL OUT
 %token ADD MUL SUB /* these are the assembly keywords */
 %token PLUS MINUS TIMES /* these are the binary symbols */
 %token FORALL EXISTS MU
 %token UNIT INT REF BOX
 %token LANGLE RANGLE LBRACKET RBRACKET LBRACE RBRACE LPAREN RPAREN
-%token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW EMPTY
+%token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW EMPTY QUESTION
 %token LAMBDA IF0 PI
+%token FT TF
 %token<string> IDENTIFIER
 %token<string> TYPE_VARIABLE RETURN_MARKER_VARIABLE STACK_TYPING_VARIABLE
 %token<int> INTEGER
@@ -52,6 +55,12 @@ f_type:
 | INT { F.TInt }
 | LPAREN taus=separated_list(COMMA,f_type) RPAREN ARROW tau=f_type
   { F.TArrow (taus, tau) }
+| LPAREN taus=separated_list(COMMA,f_type) RPAREN
+  LBRACKET sin=stack_prefix RBRACKET
+  ARROW
+  LBRACKET sout=stack_prefix RBRACKET
+  tau=f_type
+  { F.TArrowMod (taus, sin, sout, tau) }
 | mu=f_mu_type { let (alpha, tau) = mu in F.TRec (alpha, tau) }
 | taus=tuple(f_type) { F.TTuple taus }
 
@@ -65,6 +74,8 @@ f_simple_expression:
 | es=tuple(f_expression) { F.ETuple es }
 | PI n=int LPAREN e=f_expression RPAREN { F.EPi (n, e) }
 | LPAREN e=f_expression RPAREN { e }
+| FT LBRACKET tau=f_type COMMA sigma=stack_typing_annot RBRACKET c=component
+  { F.EBoundary (tau, sigma, c) }
 
 f_app_expression:
 | e=f_simple_expression { e }
@@ -78,10 +89,20 @@ f_expression:
 | e=f_arith_expression { e }
 | IF0 p=f_simple_expression e1=f_simple_expression e2=f_simple_expression
   { F.EIf0 (p, e1, e2) }
-| LAMBDA args=f_telescope DOT body=f_expression { F.ELam (args, body) }
+| LAMBDA args=f_telescope DOT body=f_expression
+  { F.ELam (args, body) }
+| LAMBDA
+  LBRACKET sin=stack_prefix RBRACKET
+  LBRACKET sout=stack_prefix RBRACKET
+  args=f_telescope DOT body=f_expression
+  { F.ELamMod (args, sin, sout, body) }
 | FOLD mu=f_mu_type e=f_expression
   { let (alpha, tau) = mu in F.EFold (alpha, tau, e) }
 | UNFOLD e=f_expression { F.EUnfold e }
+
+  stack_typing_annot:
+  | QUESTION { None }
+  | sigma=stack_typing { Some sigma }
 
   f_term_variable: x=IDENTIFIER { x }
 
@@ -176,6 +197,9 @@ heap_value:
 
 register_typing: elems=left_empty_list(decl(register, value_type)) { elems }
 
+stack_prefix:
+  | taus=separated_list(DOUBLECOLON, value_type) { taus }
+
 stack_typing:
 | prefix=list(tau=value_type DOUBLECOLON {tau}) finish=stack_typing_end
   { finish prefix }
@@ -192,7 +216,7 @@ return_marker:
 | epsilon=return_marker_variable { QEpsilon epsilon }
 | END LBRACE tau=value_type SEMICOLON sigma=stack_typing RBRACE
   { QEnd (tau, sigma) }
-/* qout missing for now */
+| OUT { QOut }
 
 type_env: elems=left_empty_list(type_env_elem) { elems }
 
@@ -259,6 +283,11 @@ single_instruction:
   { Iunpack (alpha, rd, u) }
 | UNFOLD rd=register COMMA u=small_value
   { Iunfold (rd, u) }
+| IMPORT r=register COMMA zeta=stack_typing_variable
+  AS sigma=stack_typing COMMA tau=f_type TF LBRACE e=f_expression RBRACE
+  { Iimport (r, zeta, sigma, tau, e) }
+| PROTECT phi=stack_prefix COMMA zeta=stack_typing_variable
+  { Iprotect (phi, zeta) }
 
   aop:
   | ADD { Add }
