@@ -1,16 +1,21 @@
 %token JMP CALL RET HALT
 %token BNZ LD ST RALLOC BALLOC MV SALLOC SFREE SLD SST PACK AS UNPACK FOLD UNFOLD
 %token CODE END NIL
-%token ADD MUL SUB
+%token ADD MUL SUB /* these are the assembly keywords */
+%token PLUS MINUS TIMES /* these are the binary symbols */
 %token FORALL EXISTS MU
 %token UNIT INT REF BOX
 %token LANGLE RANGLE LBRACKET RBRACKET LBRACE RBRACE LPAREN RPAREN
 %token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW EMPTY
+%token LAMBDA IF0 PI
 %token<string> IDENTIFIER
 %token<string> TYPE_VARIABLE RETURN_MARKER_VARIABLE STACK_TYPING_VARIABLE
 %token<int> INTEGER
 %token<string> REGISTER
 %token EOF
+
+%left PLUS MINUS
+%left TIMES
 
 %start<Ftal.TAL.component> component_eof
 %start<Ftal.TAL.mem> memory_eof
@@ -19,8 +24,11 @@
 %start<Ftal.TAL.u> small_value_eof
 %start<Ftal.TAL.delta> type_env_eof
 
-%{ open Ftal.TAL
+%start<Ftal.F.t> f_type_eof
+%start<Ftal.F.exp> f_expression_eof
 
+%{ open Ftal
+   open TAL
 %}
 
 
@@ -32,6 +40,57 @@ instruction_sequence_eof: i=instruction_sequence EOF { i }
 word_value_eof: w=word_value EOF { w }
 small_value_eof: u=small_value EOF { u }
 type_env_eof: delta=type_env EOF { delta }
+
+f_type_eof: tau=f_type EOF { tau }
+f_expression_eof: e=f_expression EOF { e }
+
+f_type:
+| alpha=f_type_variable { F.TVar alpha }
+| UNIT { F.TUnit }
+| INT { F.TInt }
+| LPAREN taus=separated_list(COMMA,f_type) RPAREN ARROW tau=f_type
+  { F.TArrow (taus, tau) }
+| mu=f_mu_type { let (alpha, tau) = mu in F.TRec (alpha, tau) }
+| taus=tuple(f_type) { F.TTuple taus }
+
+  f_type_variable: alpha=type_variable { alpha }
+  f_mu_type: MU alpha=f_type_variable DOT tau=f_type { (alpha, tau) }
+
+f_simple_expression:
+| x=f_term_variable { F.EVar x }
+| LPAREN RPAREN { F.EUnit }
+| n=int { F.EInt n }
+| es=tuple(f_expression) { F.ETuple es }
+| PI n=int LPAREN e=f_expression RPAREN { F.EPi (n, e) }
+| LPAREN e=f_expression RPAREN { e }
+
+f_app_expression:
+| e=f_simple_expression { e }
+| e=f_simple_expression args=nonempty_list(f_simple_expression) { F.EApp (e, args) }
+
+f_arith_expression:
+| e=f_app_expression { e }
+| e1=f_arith_expression op=infixop e2=f_arith_expression { F.EBinop (e1, op, e2) }
+
+f_expression:
+| e=f_arith_expression { e }
+| IF0 p=f_simple_expression e1=f_simple_expression e2=f_simple_expression
+  { F.EIf0 (p, e1, e2) }
+| LAMBDA args=f_telescope DOT body=f_expression { F.ELam (args, body) }
+| FOLD mu=f_mu_type e=f_expression
+  { let (alpha, tau) = mu in F.EFold (alpha, tau, e) }
+| UNFOLD e=f_expression { F.EUnfold e }
+
+  f_term_variable: x=IDENTIFIER { x }
+
+  f_telescope:
+  | LPAREN args=separated_list(COMMA, decl(f_term_variable, f_type)) RPAREN
+  { args }
+
+  %inline infixop:
+  | PLUS { F.BPlus }
+  | MINUS { F.BMinus }
+  | TIMES { F.BTimes }
 
 value_type:
 | alpha=type_variable { TVar alpha }
@@ -109,9 +168,7 @@ heap_value:
   { HCode (delta, chi, sigma, q, i) }
 | ws=tuple(word_value) { HTuple ws }
 
-register_typing: elems=left_empty_list(register_typing_elem) { elems }
-
-  register_typing_elem: r=register COLON tau=value_type { (r, tau) }
+register_typing: elems=left_empty_list(decl(register, value_type)) { elems }
 
 stack_typing:
 | prefix=list(tau=value_type DOUBLECOLON {tau}) finish=stack_typing_end
@@ -152,6 +209,9 @@ register_file:
 
   binding(variable, value):
   | x=variable ARROW v=value { (x, v) }
+
+  decl(variable,spec):
+  | x=variable COLON s=spec { (x, s) }
 
 stack: ws=list(w=word_value DOUBLECOLON {w}) NIL { ws }
 

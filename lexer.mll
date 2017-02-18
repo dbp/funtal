@@ -82,8 +82,14 @@ rule token = parse
   | "sst" { SST }
   | "unpack" { UNPACK }
   | "unfold" { UNFOLD }
+  | "if0" { IF0 }
+  | "pi" { PI }
   | "*" { BIGDOT }
   | "[]" { EMPTY }
+  | "+" { PLUS }
+  | "-" { MINUS }
+  | "*" { TIMES }
+  | "\\"  { LAMBDA }
   | identifier { IDENTIFIER (Lexing.lexeme lexbuf) }
   | "'" identifier { classify_type_variable lexbuf }
   | eof { EOF }
