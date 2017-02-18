@@ -480,7 +480,7 @@ let suite = "FTAL evaluations" >:::
               "TAL: sld" >:: test_sld_ty;
               "TAL: ld" >:: test_ld_ty;
               "TAL: ld" >:: test_ld2_ty;
-              (* "TAL: st" >:: test_st_ty; *)
+              "TAL: st" >:: test_st_ty;
               "TAL: ralloc" >:: test_ralloc_ty;
               "TAL: balloc" >:: test_balloc_ty;
               "TAL: balloc exc" >:: test_balloc_ty_exc;

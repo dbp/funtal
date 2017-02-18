@@ -413,7 +413,7 @@ end = struct
         | _ -> raise (TypeError ("F expression with invalid return marker", e))
       end
     | TC (instrs,h) ->
-      let ht = List.map ~f:(fun (l,(m, p)) -> (l, (TAL.Box, tc_h_shallow context m p))) h in
+      let ht = List.map ~f:(fun (l,(m, p)) -> (l, (m, tc_h_shallow context m p))) h in
       let context = set_heap context (List.append (get_heap context) ht) in
       let _ = List.iter ~f:(fun (l,(_, v)) ->
           match List.Assoc.find (get_heap context) l with
@@ -540,7 +540,7 @@ end = struct
           raise (TypeError ("Ild: trying to load from non-tuple", e))
       end
     | Ist(rd, n, rs)::is, QR r when r = rd ->
-      raise (TypeError ("Ild: Can't overwrite return marker in register", e))
+      raise (TypeError ("Ist: Can't overwrite return marker in register", e))
     | Ist(rd, n, rs)::is, _ ->
       begin match List.Assoc.find (get_reg context) rs with
         | None -> raise (TypeError ("Ist: trying to load from empty reg", e))
