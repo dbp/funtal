@@ -28,6 +28,17 @@ let test_parse1 _ = assert_equal
         Iaop (Add, "r1", "r1", UW (WInt 1));
         Ihalt (TInt, SConcrete [], "r1")], [])
 
+let test_parse2 _ = assert_equal
+  (Parse.parse_string Parser.f_expression_eof "1 + 1")
+  (F.EBinop (F.EInt 1, F.BPlus, F.EInt 1))
+
+let test_parse3 _ = assert_equal
+  (* using {|...|} instead of "..." allows to avoid backslash-escapes *)
+  (Parse.parse_string Parser.f_expression_eof {| (\(x:int). x + x) 1 |})
+  F.(EApp
+       (ELam ([("x", TInt)], EBinop (EVar "x", BPlus, EVar "x")),
+        [EInt 1]))
+
 let test_parse_variables_1 _ =
   let open TAL in
   assert_equal
@@ -462,6 +473,8 @@ let suite = "FTAL evaluations" >:::
               "F: 1 + 1 = 2" >:: test2;
               "F: (\\x -> x + x) 1 = 2" >:: test_f_app;
               "parse: 1 + 1 = 2" >:: test_parse1;
+              "parse (2)" >:: test_parse2;
+              "parse (3)" >:: test_parse3;
               "parse type-level variables" >:: test_parse_variables_1;
               "F: fact 3 = 6" >:: test_factorial_f;
               "F: fact : int -> int" >:: test_factorial_f_ty;
