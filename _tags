@@ -2,4 +2,4 @@
 # OASIS_STOP
 
 true: debug
-true: use_menhir
+true: use_menhir, explain

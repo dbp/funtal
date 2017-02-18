@@ -50,6 +50,7 @@ rule token = parse
   | "pack "{ PACK }
   | "as" { AS }
   | "fold" { FOLD }
+  | "code" { CODE }
   | "[" { LBRACKET }
   | "]" { RBRACKET }
   | "{" { LBRACE }
@@ -82,8 +83,15 @@ rule token = parse
   | "sst" { SST }
   | "unpack" { UNPACK }
   | "unfold" { UNFOLD }
+  | "if0" { IF0 }
+  | "pi" { PI }
   | "*" { BIGDOT }
   | "[]" { EMPTY }
+  | "+" { PLUS }
+  | "-" { MINUS }
+  | "*" { TIMES }
+  | "\\"  { LAMBDA }
+  | "->" { ARROW }
   | identifier { IDENTIFIER (Lexing.lexeme lexbuf) }
   | "'" identifier { classify_type_variable lexbuf }
   | eof { EOF }
