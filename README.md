@@ -1,6 +1,6 @@
 SETUP:
    - install opam, and ocaml 4.03
-   - opam install oasis menhir pprint ppx_deriving ounit core_kernel
+   - opam install oasis menhir pprint ppx_deriving ounit js_of_ocaml
 
 RUN TESTS:
    - make test
