@@ -90,6 +90,7 @@ rule token = parse
   | "-" { MINUS }
   | "*" { TIMES }
   | "\\"  { LAMBDA }
+  | "->" { ARROW }
   | identifier { IDENTIFIER (Lexing.lexeme lexbuf) }
   | "'" identifier { classify_type_variable lexbuf }
   | eof { EOF }

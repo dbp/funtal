@@ -176,12 +176,15 @@ let test_ld_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC TAL.([Imv ("r2", UW (WLoc "l"));
-                      Ild ("r1", "r2", 0);
-                      Ihalt (TInt, SConcrete [], "r1")],
-                     [("l", (Box, HTuple [WInt 1]))])))
+       (FTAL.TC (tal_comp
+                   "(
+                     mv r2, l;
+                     ld r1, r2[0];
+                     halt int, * {r1}
+                   ;
+                     [], l -> <1>
+                   )")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
-
 
 let test_ld2_ty _ =
   assert_equal

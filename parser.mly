@@ -20,6 +20,7 @@
 %start<Ftal.TAL.component> component_eof
 %start<Ftal.TAL.mem> memory_eof
 %start<Ftal.TAL.instr list> instruction_sequence_eof
+%start<Ftal.TAL.heapm> heap_fragment_eof
 %start<Ftal.TAL.w> word_value_eof
 %start<Ftal.TAL.u> small_value_eof
 %start<Ftal.TAL.delta> type_env_eof
@@ -37,6 +38,7 @@
 component_eof: c=component EOF { c }
 memory_eof: m=memory EOF { m }
 instruction_sequence_eof: i=instruction_sequence EOF { i }
+heap_fragment_eof: h=heap_fragment EOF { h }
 word_value_eof: w=word_value EOF { w }
 small_value_eof: u=small_value EOF { u }
 type_env_eof: delta=type_env EOF { delta }
