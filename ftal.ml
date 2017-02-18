@@ -412,7 +412,8 @@ end = struct
           end
         | _ -> raise (TypeError ("F expression with invalid return marker", e))
       end
-    | TC (instrs,h,ht) ->
+    | TC (instrs,h,_) ->
+      let ht = List.map ~f:(fun (l,p) -> (l, (TAL.Box, tc_h_shallow context TAL.Box p))) h in
       let context = set_heap context (List.append (get_heap context) ht) in
       let _ = List.iter ~f:(fun (l,v) ->
           match List.Assoc.find (get_heap context) l with
@@ -444,7 +445,10 @@ end = struct
       end
     | Imv (rd,u)::is, QR r when rd = r ->
       raise (TypeError ("Imv writing to register that is current return marker", e))
-    | Imv (rd,u)::is, _ ->
+    | Imv (rd,u)::is, q ->
+      let context = match q, u with
+        | QR r, UR r' when r = r' -> set_ret context (QR rd)
+        | _ -> context in
       tc_is (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) is
     | Iimport (rd,z,s,t,f)::is, QR r when rd = r ->
       raise (TypeError ("Iimport writing to register that is current return marker", e))
@@ -502,17 +506,25 @@ end = struct
       raise (TypeError ("Isst: Can't store past exposed stack", e))
     | Isst(n,r):: is, QI n' when n = n' ->
       raise (TypeError ("Isst: Can't overwrite return marker on stack", e))
-    | Isst(n,r):: is, _ ->
+    | Isst(n,r):: is, q ->
       begin match List.Assoc.find (get_reg context) r with
         | None -> raise (TypeError ("Isst trying to store from empty register", e))
         | Some t ->
+          let context = match q with
+            | QR r' when r = r' -> set_ret context (QI n)
+            | _ -> context
+          in
           tc_is (set_stack context (stack_prepend (stack_take (get_stack context) n) (stack_cons t (stack_drop (get_stack context) (n+1))))) is
       end
     | Isld(rd,n)::is, QR r when r = rd ->
       raise (TypeError ("Isld: Can't overwrite return marker in register", e))
     | Isld(rd,n)::is, _ when stack_pref_length (get_stack context) <= n ->
       raise (TypeError ("Isld: Can't load from past exposed stack", e))
-    | Isld(rd,n)::is, _ ->
+    | Isld(rd,n)::is, q ->
+      let context = match q with
+        | QI n' when n = n' -> set_ret context (QR rd)
+        | _ -> context
+      in
       tc_is (set_reg context (List.Assoc.add (get_reg context) rd (List.last_exn (stack_take (get_stack context) (n+1))))) is
     | Ild(rd,rs,n)::is, QR r when r = rd ->
       raise (TypeError ("Ild: Can't overwrite return marker in register", e))
@@ -636,11 +648,23 @@ end = struct
         | TBox (PBlock ([], c, s, q')) -> ()
         | _ -> raise (TypeError ("Ibnz: can't jump to non-block", e))
       end
-
+    | [Icall(u,s,QEnd(t',s'))], QEnd(t,s'') when t_eq t t' && s_eq s' s'' ->
+      begin match tc_u context u with
+        | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
+          (* TODO(dbp 2017-02-17): Add other constraints *)
+          ()
+        | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", e))
+      end
+    | [Icall(u,s,QI i')], QI i ->
+      begin match tc_u context u with
+        | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
+          (* TODO(dbp 2017-02-17): Add other constraints *)
+          ()
+        | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", e))
+      end
 
     | _ -> raise (TypeError ("Don't know how to type-check", e))
 
-  (* | Ibnz of reg * u *)
   (* | Icall of u * sigma * q *)
 
   and tc_u context u = let open TAL in match u with
@@ -1025,11 +1049,15 @@ end = struct
       (m', plug ctxt (TC (is, [], [])))
     | None -> (m, e)
 
-  let rec stepn n e =
-    let () = Debug.log "step" (string_of_int n) in
-    match n with
-    | 0 -> e
-    | n -> stepn (n - 1) (step e)
+
+  let stepn n e =
+    let rec stepn' n l e =
+      let () = Debug.log "step" (string_of_int n) in
+      match l, n with
+      |_, 0 -> e
+      | Some e', _ when e = e' -> e
+      | _ -> stepn' (n - 1) (Some e) (step e)
+    in stepn' n None e
 
 
   type gamma = (string * F.t) list
@@ -1425,7 +1453,7 @@ end = struct
     | Ijmp u -> Ijmp (u_sub p u)
     | Icall (u,s,q) -> Icall (u_sub p u, stack_sub p s, retmarker_sub p q)
     | Ihalt (t,s,r) -> Ihalt (type_sub p t, stack_sub p s, r)
-    | Iimport (r,z,s,t,e) -> Iimport (r,z,s,t,F.sub p e)
+    | Iimport (r,z,s,t,e) -> Iimport (r,z,stack_sub p s,F.type_sub p t,F.sub p e)
     | _ -> i
 
   and u_sub p u = match u with
@@ -1510,7 +1538,7 @@ end = struct
             | SAbstract (some, var) ->
               SAbstract (List.append (List.map ~f:(type_sub p) pref) some, var)
           end
-        | _ -> s
+        | _ -> SAbstract (List.map ~f:(type_sub p) pref, z)
       end
     | SConcrete ts -> SConcrete (List.map ~f:(type_sub p) ts)
 
@@ -1645,7 +1673,7 @@ end = struct
 
   let instrs_sub delt os is =
     let subs = type_zip delt os in
-    List.rev (List.fold_left ~f:(fun acc i -> (List.fold_left ~f:(fun t' p -> instr_sub p i) ~init:i subs)::acc) ~init:[] is)
+    List.rev (List.fold_left ~f:(fun acc i -> (List.fold_left ~f:(fun i' p -> instr_sub p i') ~init:i subs)::acc) ~init:[] is)
 
   let reduce (c : mem * instr list) =
     match c with
