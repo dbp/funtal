@@ -34,21 +34,9 @@ button {
   margin: 15px;
   border: 1px solid #000;
   box-shadow: 5px 2px 5px #666;
-  display: inline-block;
-  vertical-align: top;
 }
 
-.program {
-  width: 300px;
-  min-height: 400px;
-}
-
-.program textarea {
+textarea {
   width: 100%;
-  min-height: 350px;
-}
-
-.machine {
-  width: 450px;
-  min-height: 400px;
+  height: 350px;
 }
