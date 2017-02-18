@@ -1,0 +1,54 @@
+html,body {
+  margin: 0;
+  padding: 0;
+  font-family: sans;
+}
+
+h1 {
+  text-align: center;
+}
+
+h2 {
+  font-weight: normal;
+  margin: 0;
+  padding: 0;
+  text-transform: uppercase;
+  color: #666;
+}
+
+hr {
+  border: 1px solid #ccc;
+}
+
+button {
+  font-size: 2em;
+}
+
+.holder {
+  margin: 0 auto;
+  width: 900px;
+}
+
+.box {
+  padding: 10px;
+  margin: 15px;
+  border: 1px solid #000;
+  box-shadow: 5px 2px 5px #666;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.program {
+  width: 300px;
+  min-height: 400px;
+}
+
+.program textarea {
+  width: 100%;
+  min-height: 350px;
+}
+
+.machine {
+  width: 450px;
+  min-height: 400px;
+}

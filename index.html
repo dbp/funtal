@@ -3,12 +3,37 @@
   <head>
     <meta charset="UTF-8">
     <title>FunTAL</title>
-    <script type="text/javascript" src="nat.js"></script>
+    <script type="text/javascript" src="runtime.js"></script>
     <script type="text/javascript" src="_build/web.js"></script>
-    <!-- <link rel="stylesheet" type="text/css" href="style.css"> -->
+    <link rel="stylesheet" type="text/css" href="style.css">
   </head>
 
   <body>
-    <div id="output"></div>
+    <div class="holder">
+      <h1>FunTAL: mixing functional code with assembly.</h1>
+
+      <div class="box program">
+        <textarea id="input">
+
+        </textarea>
+      </div>
+
+
+      <div class="box machine">
+        <div id="registers"></div>
+        <hr/>
+        <div id="heap"></div>
+        <hr/>
+        <div id="stack"></div>
+        <hr/>
+        <div id="program"></div>
+        <hr/>
+        <div id="focus"></div>
+        <hr/>
+        <button id="pref">Step &larr;</button>
+        <button id="next">Step &rarr;</button>
+        <button id="many">Step &rarr;*</button>
+      </div>
+    </div>
   </body>
 </html>
