@@ -116,14 +116,14 @@ end = struct
                                     zeta),
                          (QR "ra"))))
 
-  let rec ft t w m =
+  let rec ft t w (m : TAL.mem) =
     let (hm,rm,sm) = m in
     match (t, w) with
     | (F.TUnit, TAL.WUnit) -> (m, F.EUnit)
     | (F.TInt, TAL.WInt n) -> (m, F.EInt n)
     | (F.TTuple ts, TAL.WLoc l) ->
       begin match List.Assoc.find_exn hm l with
-        | TAL.HTuple ws ->
+        | (_, TAL.HTuple ws) ->
           let (m', vs) =
             List.fold_left
               ~f:(fun (mx, b) (t,w) -> let (m'',v) = ft t w mx in (m'', v::b))
@@ -160,7 +160,7 @@ end = struct
                                    SAbstract ([], z2),
                                    QEnd (tytrans t1, SAbstract ([], z2)))]],
                         [], []))))
-      in (((lend, hend)::hm,rm,sm), v)
+      in (((lend, (TAL.Box, hend))::hm,rm,sm), v)
     | (F.TArrowMod (ts,sin,sout,t1), TAL.WLoc l) ->
       let lend = gen_sym ~pref:"lend" () in
       let z1 = gen_sym ~pref:"z" () in
@@ -187,7 +187,7 @@ end = struct
                                    SAbstract (sin, z2),
                                    QEnd (tytrans t1, SAbstract (sout, z2)))]],
                         [], []))))
-      in (((lend, hend)::hm,rm,sm), v)
+      in (((lend, (TAL.Box, hend))::hm,rm,sm), v)
     | _ -> raise (Failure ("ft: can't convert at type " ^ F.show t ^ " value " ^ TAL.show_w w))
 
   let rec tf t v m =
@@ -201,7 +201,7 @@ end = struct
           ~init:(m, [])
           (List.zip_exn ts es) in
       let l = gen_sym ~pref:"loc" () in
-      (((l,TAL.HTuple ws)::hm',rm',sm'), TAL.WLoc l)
+      (((l,(TAL.(Box, HTuple ws)))::hm',rm',sm'), TAL.WLoc l)
     | (F.TRec (a,t), F.EFold (a',t',e)) when (a',t') = (a,t) ->
       let (m', w) = tf (F.type_sub (FTAL.FType (a, F.TRec (a,t))) t) e m in
       (m', TAL.WFold (a,tytrans t,w))
@@ -233,7 +233,7 @@ end = struct
                 QR "ra",
                 instrs))
       in
-      (((l,h)::hm,rm,sm), TAL.WLoc l)
+      (((l,(TAL.Box, h))::hm,rm,sm), TAL.WLoc l)
 
     | (F.TArrowMod (ts,sin,sout,t1), F.ELamMod (ps,sin',sout',body))
       when sin = sin && sout = sout' ->
@@ -264,7 +264,7 @@ end = struct
                 QR "ra",
                 instrs))
       in
-      (((l,h)::hm,rm,sm), TAL.WLoc l)
+      (((l,(TAL.Box, h))::hm,rm,sm), TAL.WLoc l)
     | _ -> raise (Failure "tf: can't convert")
 
 
@@ -413,9 +413,9 @@ end = struct
         | _ -> raise (TypeError ("F expression with invalid return marker", e))
       end
     | TC (instrs,h,_) ->
-      let ht = List.map ~f:(fun (l,p) -> (l, (TAL.Box, tc_h_shallow context TAL.Box p))) h in
+      let ht = List.map ~f:(fun (l,(m, p)) -> (l, (TAL.Box, tc_h_shallow context m p))) h in
       let context = set_heap context (List.append (get_heap context) ht) in
-      let _ = List.iter ~f:(fun (l,v) ->
+      let _ = List.iter ~f:(fun (l,(_, v)) ->
           match List.Assoc.find (get_heap context) l with
           | None -> raise (TypeError ("Component missing heap annotation for location " ^ l, e))
           | Some (m,p) ->
@@ -663,9 +663,11 @@ end = struct
         | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", e))
       end
 
+    (* TODO(dbp 2017-02-18): Add jump instructions with suffixes to
+       make this exhaustive and remove this unhelpful error
+       message. *)
     | _ -> raise (TypeError ("Don't know how to type-check", e))
 
-  (* | Icall of u * sigma * q *)
 
   and tc_u context u = let open TAL in match u with
     | UW w -> tc_w context w
@@ -1189,7 +1191,7 @@ and TAL : sig
     | HTuple of w list
   val show_h : h -> string
 
-  type heapm = (loc * h) list
+  type heapm = (loc * (mut * h)) list
   val show_heapm : heapm -> string
 
   type regm = (reg * w) list
@@ -1363,7 +1365,7 @@ end = struct
     | HTuple of w list
   [@@deriving show]
 
-  type heapm = (loc * h) list
+  type heapm = (loc * (mut * h)) list
   [@@deriving show]
   type regm = (reg * w) list
   [@@deriving show]
@@ -1439,7 +1441,7 @@ end = struct
     (List.map ~f:(instr_sub p) is,
      List.map ~f:(fun (l,h) ->
          match h with
-         | HCode (d,c,s,q,is) -> (l, HCode (d,c,s,q, List.map ~f:(instr_sub p) is))
+         | (m, HCode (d,c,s,q,is)) -> (l, (m, HCode (d,c,s,q, List.map ~f:(instr_sub p) is)))
          | _ -> (l,h)
        ) hm,
     List.map ~f:(fun (l,(m,t)) -> (l, (m,psi_sub p t))) ht)
@@ -1685,7 +1687,7 @@ end = struct
         | Some (WInt _) ->
           let hc os l =
             match List.Assoc.find hm l with
-            | Some (HCode (delt,ch,s,qr,is)) ->
+            | Some (_, (HCode (delt,ch,s,qr,is))) ->
               instrs_sub delt os is
             | _ -> raise (Failure "branching to missing or non-code")
           in
@@ -1700,9 +1702,9 @@ end = struct
       begin match List.Assoc.find_exn rm rs with
         | WLoc l ->
           begin match List.Assoc.find hm l with
-            | Some (HTuple ws) when List.length ws > i ->
+            | Some (_, HTuple ws) when List.length ws > i ->
               ((hm, replace rm rd (List.nth_exn ws i), sm), is)
-            | Some (HTuple _) -> raise (Failure "ld: tuple index out of bounds")
+            | Some (_, HTuple _) -> raise (Failure "ld: tuple index out of bounds")
             | _ -> raise (Failure "ld: trying to load from missing or non-tuple")
           end
         | _ -> raise (Failure "ld: trying to load from non-location")
@@ -1711,17 +1713,19 @@ end = struct
       begin match List.Assoc.find rm rd with
         | Some (WLoc l) ->
           begin match List.Assoc.find hm l with
-            | Some (HTuple ws) when List.length ws > i ->
-              (((replace hm l (HTuple (list_replace i ws (List.Assoc.find_exn rm rs)))), rm, sm), is)
-            | Some (HTuple _) -> raise (Failure "st: tuple index out of bounds")
+            | Some (Ref, HTuple ws) when List.length ws > i ->
+              (((replace hm l (Ref, HTuple (list_replace i ws (List.Assoc.find_exn rm rs)))), rm, sm), is)
+            | Some (Box, HTuple ws) ->
+              raise (Failure "st: can't write to immutable tuple")
+            | Some (_, HTuple _) -> raise (Failure "st: tuple index out of bounds")
             | _ -> raise (Failure "st: trying to store to missing or non-tuple")
           end
         | _ -> raise (Failure "st: trying to store to missing or non-location")
       end
     | ((hm,rm,sm), Iralloc (rd,n)::is) when List.length sm >= n ->
-      let l = FTAL.gen_sym () in (((l, HTuple (List.take sm n)) :: hm, replace rm rd (WLoc l), List.drop sm n), is)
+      let l = FTAL.gen_sym () in (((l, (Ref, HTuple (List.take sm n))) :: hm, replace rm rd (WLoc l), List.drop sm n), is)
     | ((hm,rm,sm), Iballoc (rd,n)::is) when List.length sm >= n ->
-      let l = FTAL.gen_sym () in (((l, HTuple (List.take sm n)) :: hm, replace rm rd (WLoc l), List.drop sm n), is)
+      let l = FTAL.gen_sym () in (((l, (Box, HTuple (List.take sm n))) :: hm, replace rm rd (WLoc l), List.drop sm n), is)
     | ((hm,rm,sm), Imv (rd,u)::is) ->
       ((hm, replace rm rd (ru rm u), sm), is)
     | ((hm,rm,sm), Iunpack (a,rd,u)::is) ->
@@ -1745,7 +1749,7 @@ end = struct
     | ((hm,rm,sm), Ijmp u::is) ->
       let hc os l =
         match List.Assoc.find hm l with
-        | Some (HCode (delt,ch,s,qr,is)) -> instrs_sub delt os is
+        | Some (_, HCode (delt,ch,s,qr,is)) -> instrs_sub delt os is
         | _ -> raise (Failure "jumping to missing or non-code")
       in
       begin match ru rm u with
@@ -1756,7 +1760,7 @@ end = struct
     | ((hm,rm,sm), Icall (u,s,q)::is) ->
       let hc os l =
         match List.Assoc.find hm l with
-        | Some (HCode (delt,ch,s,qr,is)) ->
+        | Some (_, HCode (delt,ch,s,qr,is)) ->
           instrs_sub delt (List.append os [OS s; OQ q]) is
         | _ -> raise (Failure "calling to missing or non-code")
       in
@@ -1768,7 +1772,7 @@ end = struct
     | ((hm,rm,sm), Iret (rloc,_)::is) ->
       let hc os l =
         match List.Assoc.find hm l with
-        | Some (HCode (delt,ch,s,qr,is)) -> instrs_sub delt os is
+        | Some (_, HCode (delt,ch,s,qr,is)) -> instrs_sub delt os is
         | _ -> raise (Failure "returning to missing or non-code")
       in
       begin match List.Assoc.find rm rloc with

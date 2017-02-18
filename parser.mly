@@ -142,7 +142,7 @@ memory:
 
 heap_fragment:
 | h=left_empty_list(binding(location,heap_value))
-  { h }
+  { List.map (fun (l,v) -> (l,(Box,v))) h }
 
 register_file:
 | h=left_empty_list(binding(register, word_value))

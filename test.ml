@@ -165,7 +165,7 @@ let test_ld_ty _ =
        (FTAL.TC TAL.([Imv ("r2", UW (WLoc "l"));
                       Ild ("r1", "r2", 0);
                       Ihalt (TInt, SConcrete [], "r1")],
-                     [("l", HTuple [WInt 1])],
+                     [("l", (Box, HTuple [WInt 1]))],
                      [("l", (Box, PTuple [TInt]))])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
@@ -177,7 +177,7 @@ let test_ld2_ty _ =
        (FTAL.TC TAL.([Imv ("r2", UW (WLoc "l"));
                       Ild ("r1", "r2", 0);
                       Ihalt (TInt, SConcrete [], "r1")],
-                     [("l", HTuple [WInt 1])],
+                     [("l", (Ref, HTuple [WInt 1]))],
                      [("l", (Ref, PTuple [TInt]))])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
@@ -189,7 +189,7 @@ let test_st_ty _ =
                       Imv ("r2", UW (WInt 10));
                       Ist ("r1", 0, "r2");
                       Ihalt (TInt, SConcrete [], "r2")],
-                     [("l", HTuple [WInt 1])],
+                     [("l", (Ref, HTuple [WInt 1]))],
                      [("l", (Ref, PTuple [TInt]))])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
@@ -292,14 +292,14 @@ let call_tl =
   let l = "l" in
   let lh = "lh" in
   let h = [(l,
-            TAL.(HCode ([DZeta "z"; DEpsilon "e"],
+            TAL.(Box, HCode ([DZeta "z"; DEpsilon "e"],
                         [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z"), QEpsilon "e")))],
                         SAbstract ([], "z"),
                         QR "ra",
                         [Imv ("r1", UW (WInt 10));
                          Iret ("ra", "r1")])));
            (lh,
-            TAL.(HCode ([],
+            TAL.(Box, HCode ([],
                         [("r1", TInt)],
                         SConcrete [],
                         QEnd (TInt, SConcrete []),
@@ -469,7 +469,7 @@ let test_ft_factorial_t_ty _ =
   let (l, h, _) = factorial_t' in
   let ((h',_,_),e) = FTAL.ft (F.TArrow ([F.TInt], F.TInt)) l (h,[],[]) in
   let context = FTAL.default_context TAL.QOut in
-  let ht = List.map (fun (l,p) -> (l, (TAL.Box, FTAL.tc_h_shallow context TAL.Box p))) h' in
+  let ht = List.map (fun (l,(m, p)) -> (l, (m, FTAL.tc_h_shallow context TAL.Box p))) h' in
   assert_equal
     (FTAL.tc
        (FTAL.set_heap context ht)

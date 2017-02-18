@@ -21,7 +21,7 @@ let factorial_f =
 let factorial_t' =
   let lf = FTAL.gen_sym ~pref:"l" () in
   let la = FTAL.gen_sym ~pref:"l" () in
-  let h = [(lf, TAL.(HCode ([DZeta "z3"; DEpsilon "e"],
+  let h = [(lf, TAL.(Box, HCode ([DZeta "z3"; DEpsilon "e"],
                             [("ra", TBox (PBlock ([],
                                                   [("r1", TInt)],
                                                   SAbstract ([], "z3"),
@@ -33,7 +33,7 @@ let factorial_t' =
                              Ibnz ("rn", UApp (UW (WLoc la), [OS (SAbstract ([], "z3"))]));
                              Isfree 1;
                              Iret ("ra", "r1")])));
-           (la, TAL.(HCode ([DZeta "z4"],
+           (la, TAL.(Box, HCode ([DZeta "z4"],
                             [("r1", TInt); ("rn", TInt);
                              ("ra", TBox (PBlock ([],
                                                   [("r1", TInt)],
@@ -79,7 +79,7 @@ let factorial_t =
 let blocks_1 =
   let l = FTAL.gen_sym ~pref:"l" () in
   let h = [(l,
-            TAL.(HCode ([DZeta "z3"; DEpsilon "e"],
+            TAL.(Box, HCode ([DZeta "z3"; DEpsilon "e"],
                         [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z3"), QEpsilon "e")))],
                         SAbstract ([TInt], "z3"),
                         QR "ra",
@@ -112,7 +112,7 @@ let blocks_2 =
   let l1 = FTAL.gen_sym ~pref:"l" () in
   let l2 = FTAL.gen_sym ~pref:"l" () in
   let h = TAL.([(l1,
-                 HCode ([DZeta "z3"; DEpsilon "e1"],
+                 (Box, HCode ([DZeta "z3"; DEpsilon "e1"],
                         [("ra", TBox (PBlock ([],
                                               [("r1", TInt)],
                                               SAbstract ([], "z3"),
@@ -123,9 +123,9 @@ let blocks_2 =
                          Iaop (Add, "r1", "r1", UW (WInt 1));
                          Isst (0, "r1");
                          Ijmp (UApp (UW (WLoc l2), [OS (SAbstract ([], "z3"));
-                                                    OQ (QEpsilon "e1")]))]));
+                                                    OQ (QEpsilon "e1")]))])));
                 (l2,
-                 HCode ([DZeta "z4"; DEpsilon "e2"],
+                 (Box, HCode ([DZeta "z4"; DEpsilon "e2"],
                         [("ra", TBox (PBlock ([],
                                               [("r1", TInt)],
                                               SAbstract ([], "z4"),
@@ -135,7 +135,7 @@ let blocks_2 =
                         [Isld ("r1", 0);
                          Iaop (Add, "r1", "r1", UW (WInt 1));
                          Isfree 1;
-                         Iret ("ra", "r1")]))
+                         Iret ("ra", "r1")])))
                ]) in
   let ht = TAL.([(l1, (Box, PBlock ([DZeta "z3"; DEpsilon "e1"],
                                     [("ra", TBox (PBlock ([],
@@ -166,7 +166,7 @@ let higher_order =
   let tau = F.(TArrow([TArrow([TInt],TInt)], TInt)) in
   let g = F.(ELam ([("h", TArrow ([TInt], TInt))], EApp (EVar "h", [EInt 1]))) in
   let h = TAL.([
-      ("l", HCode ([DZeta "z1"; DEpsilon "e1"],
+      ("l", (Box, HCode ([DZeta "z1"; DEpsilon "e1"],
                    [("ra", TBox (PBlock ([],
                                          [("r1", TInt)],
                                          SAbstract ([], "z1"),
@@ -186,8 +186,8 @@ let higher_order =
                                                   SAbstract ([], "z3"),
                                                   QEpsilon "e1"))],
                                       "z1"),
-                           QI 0)]));
-      ("lh", HCode ([DZeta "z2"; DEpsilon "e2"],
+                           QI 0)])));
+      ("lh", (Box, HCode ([DZeta "z2"; DEpsilon "e2"],
                     [("ra", TBox (PBlock ([],
                                           [("r1", TInt)],
                                           SAbstract ([], "z2"),
@@ -197,8 +197,8 @@ let higher_order =
                     [Isld ("r1",0);
                      Isfree 1;
                      Iaop (Mult, "r1", "r1", UW (WInt 2));
-                     Iret ("ra", "r1")]));
-      ("lgret", HCode ([DZeta "z3"; DEpsilon "e3"],
+                     Iret ("ra", "r1")])));
+      ("lgret", (Box, HCode ([DZeta "z3"; DEpsilon "e3"],
                        [("ra", TBox (PBlock ([],
                                              [("r1", TInt)],
                                              SAbstract ([], "z3"),
@@ -213,7 +213,7 @@ let higher_order =
                        QI 0,
                        [Isld ("ra", 0);
                         Isfree 1;
-                        Iret ("ra", "r1")]))]) in
+                        Iret ("ra", "r1")])))]) in
   let ht = TAL.([]) in
   F.(EApp (EBoundary (TArrow([tau],TInt),
                       None,
@@ -228,7 +228,7 @@ let higher_order =
 
 let call_to_call =
   let h = TAL.[
-      ("l1", HCode ([DZeta "z1"; DEpsilon "e1"],
+      ("l1", (Box, HCode ([DZeta "z1"; DEpsilon "e1"],
                     [("ra", TBox (PBlock ([],
                                           [("r1", TInt)],
                                           SAbstract ([], "z1"),
@@ -242,13 +242,13 @@ let call_to_call =
                                                       SAbstract ([], "z1"),
                                                       QEpsilon "e1"))],
                                        "z1"),
-                            QI 0)]));
-      ("l1ret", HCode ([],
+                            QI 0)])));
+      ("l1ret", (Box, HCode ([],
                        [("r1", TInt)],
                        SConcrete [],
                        QEnd (TInt, SConcrete []),
-                       [Ihalt (TInt, SConcrete [], "r1")]));
-      ("l2", HCode ([DZeta "z2"; DEpsilon "e2"],
+                       [Ihalt (TInt, SConcrete [], "r1")])));
+      ("l2", (Box, HCode ([DZeta "z2"; DEpsilon "e2"],
                     [("ra", TBox (PBlock ([],
                                           [("r1", TInt)],
                                           SAbstract ([], "z2"),
@@ -258,8 +258,8 @@ let call_to_call =
                     [Imv ("r1", UW (WInt 1));
                      Ijmp (UApp (UW (WLoc "l2aux"),
                                  [OS (SAbstract ([], "z2"));
-                                  OQ (QEpsilon "e2")]))]));
-      ("l2aux", HCode ([DZeta "z3"; DEpsilon "e3"],
+                                  OQ (QEpsilon "e2")]))])));
+      ("l2aux", (Box, HCode ([DZeta "z3"; DEpsilon "e3"],
                        [("r1", TInt);
                         ("ra", TBox (PBlock ([],
                                           [("r1", TInt)],
@@ -268,15 +268,15 @@ let call_to_call =
                        SAbstract ([], "z3"),
                     QR "ra",
                        [Iaop (Mult, "r1", "r1", UW (WInt 2));
-                        Iret ("ra", "r1")]));
-      ("l2ret", HCode ([],
+                        Iret ("ra", "r1")])));
+      ("l2ret", (Box, HCode ([],
                        [("r1", TInt)],
                        SConcrete [TBox (PBlock ([],
                                                 [("r1", TInt)],
                                                 SConcrete [],
                                                 QEnd (TInt, SConcrete [])))],
                        QI 0,
-                       [Isld ("ra", 0); Isfree 1; Iret ("ra", "r1")]))] in
+                       [Isld ("ra", 0); Isfree 1; Iret ("ra", "r1")])))] in
   let ht = TAL.[("l1", (Box, PBlock ([DZeta "z1"; DEpsilon "e1"],
                                     [("ra", TBox (PBlock ([],
                                                           [("r1", TInt)],
