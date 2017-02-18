@@ -167,8 +167,12 @@ heap_value:
   LBRACKET delta=type_env RBRACKET
   LBRACE chi=register_typing SEMICOLON sigma=stack_typing RBRACE q=return_marker
   DOT i=instruction_sequence
-  { HCode (delta, chi, sigma, q, i) }
-| ws=tuple(word_value) { HTuple ws }
+  { (Box, HCode (delta, chi, sigma, q, i)) }
+| mut=mutability_annotation ws=tuple(word_value) { (mut, HTuple ws) }
+
+  mutability_annotation:
+  | BOX { Box }
+  | REF { Ref }
 
 register_typing: elems=left_empty_list(decl(register, value_type)) { elems }
 
@@ -202,8 +206,7 @@ memory:
   { (h, r, s) }
 
 heap_fragment:
-| h=left_empty_list(binding(location,heap_value))
-  { List.map (fun (l,v) -> (l,(Box,v))) h }
+| h=left_empty_list(binding(location,heap_value)) { h }
 
 register_file:
 | h=left_empty_list(binding(register, word_value))
