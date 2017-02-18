@@ -49,6 +49,7 @@ value_type:
 
 simple_word_value:
 | LPAREN RPAREN { WUnit }
+| LPAREN w=word_value RPAREN { w }
 | n=int { WInt n }
 | l=location { WLoc l }
 | p=pack(word_value)
@@ -77,6 +78,7 @@ register:
 | r=REGISTER { r }
 
 simple_small_value:
+| LPAREN u=small_value RPAREN { u }
 | r=register { UR r }
 | p=pack(small_value)
   { let (tau, u, alpha, tau') = p in UPack (tau, u, alpha, tau') }
