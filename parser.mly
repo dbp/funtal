@@ -45,15 +45,18 @@ value_type:
   mu_type:
   | MU alpha=type_variable DOT tau=value_type { (alpha, tau) }
 
-word_value:
+simple_word_value:
 | LPAREN RPAREN { WUnit }
 | n=int { WInt n }
 | l=location { WLoc l }
 | p=pack(word_value)
   { let (tau, w, alpha, tau') = p in WPack (tau, w, alpha, tau') }
+
+word_value:
+| w=simple_word_value { w }
 | f=fold(word_value)
   { let (alpha,tau,w) = f in WFold (alpha, tau, w) }
-| a=app(word_value)
+| a=app(simple_word_value)
   { let (w, omega) = a in WApp (w, omega) }
 
   fold(value):
@@ -71,14 +74,16 @@ word_value:
 register:
 | r=REGISTER { r }
 
-small_value:
-| w=word_value { UW w }
+simple_small_value:
 | r=register { UR r }
 | p=pack(small_value)
   { let (tau, u, alpha, tau') = p in UPack (tau, u, alpha, tau') }
+
+small_value:
+| w=word_value { UW w }
 | f=fold(small_value)
   { let (alpha, tau, u) = f in UFold (alpha, tau, u) }
-| a=app(small_value)
+| a=app(simple_small_value)
   { let (u, omega) = a in UApp (u, omega) }
 
 type_instantiation:
