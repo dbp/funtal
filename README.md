@@ -1,6 +1,6 @@
 SETUP:
    - install opam, and ocaml 4.03
-   - opam install oasis menhir ppx_deriving ounit core_kernel
+   - opam install oasis menhir pprint ppx_deriving ounit core_kernel
 
 RUN TESTS:
    - make test
@@ -10,5 +10,4 @@ DEBUG:
 
 TODO:
    - do renaming for heap fragment loading
-   - implement type checker
    ...

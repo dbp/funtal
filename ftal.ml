@@ -1266,7 +1266,6 @@ end = struct
     | TRec of string * t
     | TTupleRef of t list
     | TBox of psi_elem
-  [@@deriving show]
 
   and sigma =
       SAbstract of sigma_prefix * string
@@ -1282,12 +1281,11 @@ end = struct
     | QEpsilon of string
     | QEnd of t * sigma
     | QOut
-  [@@deriving show]
 
   and psi_elem =
       PBlock of delta * chi * sigma * q
     | PTuple of t list
-  [@@deriving show]
+
 
   and mut = Ref | Box
 
@@ -1295,6 +1293,9 @@ end = struct
 
   and chi = (reg * t) list
 
+  let show t = Printer.(r (T.p_t t))
+  let show_psi_elem p = Printer.(r (T.p_psi p))
+  let show_q q = Printer.(r (T.p_q q))
 
   let ret_type context q = match q with
     | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
@@ -1314,6 +1315,7 @@ end = struct
     | OS of sigma
     | OQ of q
   [@@deriving show]
+  let show_omega o = Printer.(r (T.p_o o))
 
   type omega_list = omega list
   [@@deriving show]
@@ -1326,6 +1328,7 @@ end = struct
     | WFold of string * t * w
     | WApp of w * omega list
   [@@deriving show]
+  let show_w w = Printer.(r (T.p_w w))
 
   type u =
       UW of w
@@ -1334,6 +1337,7 @@ end = struct
     | UFold of string * t * u
     | UApp of u * omega list
   [@@deriving show]
+  let show_u u = Printer.(r (T.p_u u))
 
   type aop = Add | Sub | Mult
   [@@deriving show]
@@ -1359,6 +1363,7 @@ end = struct
     | Iprotect of sigma_prefix * string
     | Iimport of reg * string * sigma * F.t * F.exp
   [@@deriving show]
+  let show_instr i = Printer.(r (T.p_instr i))
 
   type h =
       HCode of delta * chi * sigma * q * instr list
@@ -1367,10 +1372,11 @@ end = struct
 
   type heapm = (loc * (mut * h)) list
   [@@deriving show]
+  let show_heapm m = Printer.(r (T.p_heapm m))
   type regm = (reg * w) list
-  [@@deriving show]
+  let show_regm m = Printer.(r (T.p_regm m))
   type stackm = w list
-  [@@deriving show]
+  let show_stackm m = Printer.(r (T.p_stackm m))
   type mem = heapm * regm * stackm
 
   let stack_cons t s = match s with
@@ -1785,5 +1791,162 @@ end = struct
     | ((hm,rm,sm), Iprotect (_,_)::is) ->
       ((hm,rm,sm), is)
     | _ -> c
+
+end and Printer : sig
+  open PPrint
+  val r : document -> string
+
+  module T : sig
+    val p_w : TAL.w -> document
+    val p_t : TAL.t -> document
+    val p_o : TAL.omega -> document
+    val p_s : TAL.sigma -> document
+    val p_q : TAL.q -> document
+    val p_u : TAL.u -> document
+    val p_psi : TAL.psi_elem -> document
+    val p_delta : TAL.delta -> document
+    val p_chi : TAL.chi -> document
+    val p_instr : TAL.instr -> document
+    val p_regm : TAL.regm -> document
+    val p_stackm : TAL.stackm -> document
+    val p_heapm : TAL.heapm -> document
+  end
+
+end = struct
+  open PPrint;;
+  module List = Core_kernel.Std.List;;
+
+
+  let r d =
+    let b = Buffer.create 100 in
+    ToBuffer.pretty 0.5 80 b d;
+    Buffer.contents b
+
+  module T = struct
+    open TAL
+
+    let rec p_w (w : w) : document =
+      match w with
+      | WUnit -> lparen ^^ rparen
+      | WInt n -> !^(string_of_int n)
+      | WLoc l -> !^l
+      | WPack (t',w,a,t) ->
+        pack_h t' (p_w w) a t
+      | WFold (a,t,w) -> fold_h a t (p_w w)
+      | WApp (w,os) -> app_h (p_w w) os
+    and p_t (t : t) : document =
+      match t with
+      | TVar a -> !^a
+      | TUnit -> !^"unit"
+      | TInt -> !^"int"
+      | TExists (a,t) -> !^"exists " ^^ p_t (TVar a) ^^ dot ^^ p_t t
+      | TRec (a,t) -> !^"mu " ^^ p_t (TVar a) ^^ dot ^^ p_t t
+      | TTupleRef ts -> p_mut Ref ^^ space ^^ p_psi (PTuple ts)
+      | TBox p -> p_mut Box ^^ space ^^ p_psi p
+    and p_o (o : omega) : document =
+      match o with
+      | OT t -> p_t t
+      | OS s -> p_s s
+      | OQ q -> p_q q
+    and p_s (s : sigma) : document =
+      match s with
+      | SConcrete l -> p_sigma_prefix l ^^ !^" :: *"
+      | SAbstract (l, z) -> p_sigma_prefix l ^^ !^" :: " ^^ !^z
+    and p_sigma_prefix (p : sigma_prefix) : document =
+      separate
+        (break 1 ^^ !^":: ")
+        (List.map ~f:p_t p)
+    and p_q (q : q) : document =
+      match q with
+      | QR r -> !^r
+      | QI i -> !^(string_of_int i)
+      | QEpsilon s -> !^s
+      | QEnd (t,s) ->
+        !^"end" ^^ lbrace ^^ p_t t ^^ semi ^^
+        p_s s ^^ rbrace
+      | QOut -> !^"out"
+    and p_u (u : u) : document =
+      match u with
+      | UW w -> p_w w
+      | UR r -> !^r
+      | UPack (t',u,a,t) -> pack_h t' (p_u u) a t
+      | UFold (a,t,u) -> fold_h a t (p_u u)
+      | UApp (u,os) -> app_h (p_u u) os
+    and p_psi (p : psi_elem) : document =
+      match p with
+      | PTuple ps -> langle ^^
+                     separate_map (comma ^^ break 1) p_t ps ^^
+                     rangle
+      | PBlock (d,c,s,q) ->
+        !^"forall" ^^ p_delta d ^^ dot ^^ break 1 ^^
+        lbrace ^^ p_chi c ^^ semi ^^ p_s s ^^ rbrace ^^ p_q q
+    and p_h (h : h) : document =
+      match h with
+      | HCode (d,c,s,q,is) ->
+        !^"code " ^^ p_delta d ^^ lbrace ^^ p_chi c ^^ semi ^^ break 1 ^^ p_s s ^^ rbrace ^^
+        p_q q ^^ dot ^^ break 1 ^^ p_instruction_sequence is
+      | HTuple (ws) -> langle ^^ separate_map (comma ^^ break 1) p_w ws ^^ rangle
+    and p_mut (m : mut) : document =
+      match m with
+      | Box -> !^"box"
+      | Ref -> !^"ref"
+    and p_delta (d : delta) : document =
+      lbracket ^^
+      separate_map (comma ^^ break 1) (function | DAlpha a | DZeta a | DEpsilon a -> !^a) d
+      ^^ rbracket
+    and p_chi (c : chi) : document =
+      separate_map (comma ^^ break 1)
+        (fun (r,t) -> !^r ^^ colon ^^ p_t t) c
+    and p_instr (i : instr) : document =
+      match i with
+      | Iaop(a,r1,r2,u) -> p_aop a ^^ space ^^ !^r1 ^^ comma ^^ !^r2 ^^ comma ^^ p_u u
+      | Ibnz(r,u) -> !^"bnz " ^^ !^r ^^ comma ^^ p_u u
+      | Ild(r1,r2,n) -> !^"ld " ^^ !^r1 ^^ comma ^^ !^r2 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket
+      | Ist(r1,n,r2) -> !^"st " ^^ !^r1 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket ^^ comma ^^ !^r2
+      | Iralloc(r,n) -> !^"ralloc " ^^ !^r ^^ comma ^^ !^(string_of_int n)
+      | Iballoc(r,n) -> !^"balloc " ^^ !^r ^^ comma ^^ !^(string_of_int n)
+      | Imv(r,u) -> !^"mv " ^^ !^r ^^ comma ^^ p_u u
+      | Iunpack(a,r,u) -> !^"unpack " ^^ langle ^^ !^a ^^ comma ^^ !^r ^^ rangle ^^ p_u u
+      | Iunfold(r,u) -> !^"unfold " ^^ !^r ^^ comma ^^ p_u u
+      | Isalloc n -> !^"salloc " ^^ !^(string_of_int n)
+      | Isfree  n -> !^"sfree " ^^ !^(string_of_int n)
+      | Isld(r,n) -> !^"sld " ^^ !^r ^^ comma ^^ !^(string_of_int n)
+      | Isst(n,r) -> !^"sst " ^^ !^(string_of_int n) ^^ comma ^^ !^r
+      | Ijmp u -> !^"jmp " ^^ p_u u
+      | Icall(u,s,q) -> !^"call " ^^ p_u u ^^ lbrace ^^ p_s s ^^ comma ^^ p_q q ^^ rbrace
+      | Iret(r1,r2) -> !^"ret " ^^ !^r1 ^^ lbrace ^^ !^r2 ^^ rbrace
+      | Ihalt(t,s,r) -> !^"halt " ^^ p_t t ^^ comma ^^ p_s s ^^ lbrace ^^ !^r ^^ rbrace
+      | Iprotect(sp, z) -> !^"protect " ^^ p_sigma_prefix sp ^^ comma ^^ !^z
+      | Iimport(r,z,s,t,e) -> !^"import " ^^ !^r ^^ comma ^^ !^z ^^ !^" as " ^^ p_s s ^^ comma ^^ string "F TYPE" ^^ lbrace ^^ string "F EXP" ^^ rbrace
+    and p_instruction_sequence (is : instr list) : document =
+      lbracket ^^ separate_map (semi ^^ break 1) p_instr is ^^ rbracket
+    and p_aop (a : aop) : document =
+      match a with
+      | Add -> !^"add"
+      | Sub -> !^"sub"
+      | Mult -> !^"mul"
+    and p_regm (m : regm) : document =
+      separate_map (comma ^^ break 1)
+        (fun (r,w) -> !^r ^^ !^" -> " ^^ p_w w)
+        m
+    and p_heapm (m : heapm) : document =
+      separate_map (comma ^^ break 1)
+        (fun (l,(p,h)) -> !^l ^^ !^" -> " ^^ p_mut p ^^ space ^^  p_h h)
+        m
+    and p_stackm (m : stackm) : document =
+      separate_map (!^" ::" ^^ break 1) p_w m ^^ !^" :: *"
+
+    and pack_h t' d a t =
+      !^"pack " ^^
+      langle ^^ p_t t' ^^ comma ^^ d ^^ rangle ^^
+      !^" as " ^^ p_t (TExists (a,t))
+    and fold_h a t d =
+      !^"fold " ^^ p_t (TRec (a,t)) ^^
+      !^" " ^^ d
+    and app_h d os =
+      d ^^ lbracket ^^
+      separate_map (!^", ") p_o os ^^
+      rbracket
+  end
 
 end

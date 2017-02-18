@@ -9,7 +9,7 @@ Plugins: META (0.4), DevFiles (0.4)
 Library "ftal"
   Path: .
   Modules: Ftal, Examples, Parser, Lexer
-  BuildDepends: ppx_deriving.show,str,core_kernel
+  BuildDepends: ppx_deriving.show,str,core_kernel,pprint
 
 Executable "driver"
   Path: .

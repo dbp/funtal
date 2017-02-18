@@ -2,5 +2,6 @@ PKG ppx_deriving.show
 PKG oUnit
 PKG str
 PKG core_kernel
+PKG pprint
 SRC .
 B _build
