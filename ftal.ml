@@ -156,8 +156,9 @@ end = struct
                                  Isalloc 1;
                                  Isst (0, "r1")]) ps));
                            [Imv ("ra", UApp (UW (WLoc lend), [OS (SAbstract ([], z2))]));
-                            Ijmp (UApp (UW w, [OS (SAbstract ([], z2));
-                                               OQ (QEnd (tytrans t1, SAbstract ([], z2)))]))]],
+                            Icall (UW w,
+                                   SAbstract ([], z2),
+                                   QEnd (tytrans t1, SAbstract ([], z2)))]],
                         [], []))))
       in (((lend, hend)::hm,rm,sm), v)
     | (F.TArrowMod (ts,sin,sout,t1), TAL.WLoc l) ->
@@ -182,8 +183,9 @@ end = struct
                                 Isst (0, "r1")]) ps));
                            [Imv ("ra", UApp (UW (WLoc lend),
                                              [OS (SAbstract (sout, z2))]));
-                            Ijmp (UApp (UW w, [OS (SAbstract (sin, z2));
-                                               OQ (QEnd (tytrans t1, SAbstract (sout, z2)))]))]],
+                            Icall (UW w,
+                                   SAbstract (sin, z2),
+                                   QEnd (tytrans t1, SAbstract (sout, z2)))]],
                         [], []))))
       in (((lend, hend)::hm,rm,sm), v)
     | _ -> raise (Failure ("ft: can't convert at type " ^ F.show t ^ " value " ^ TAL.show_w w))
@@ -217,7 +219,7 @@ end = struct
         F.EApp (F.ELam (ps,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', Some s, ([TAL.Isld ("r1", n-i);
-                                               TAL.Ihalt (tytrans t1, s, "r1")], [], [])))
+                                               TAL.Ihalt (tytrans t', s, "r1")], [], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra");
@@ -249,7 +251,7 @@ end = struct
         F.EApp (F.ELamMod (ps,sin,sout,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', Some s, ([TAL.Isld ("r1", n-i);
-                                               TAL.Ihalt (tytrans t1, s, "r1")], [], [])))
+                                               TAL.Ihalt (tytrans t', s, "r1")], [], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", z2, SAbstract ([], z1), t1, body_wrapped);
