@@ -3,5 +3,7 @@ PKG oUnit
 PKG str
 PKG core_kernel
 PKG pprint
+PKG js_of_ocaml
+PKG js_of_ocaml.ppx
 SRC .
 B _build

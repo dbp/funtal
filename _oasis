@@ -6,10 +6,22 @@ License: PROP
 OASISFormat: 0.4
 BuildTools: ocamlbuild
 Plugins: META (0.4), DevFiles (0.4)
+OCamlVersion: >= 4.01
+
+AlphaFeatures: ocamlbuild_more_args
+XOCamlbuildPluginTags: package(js_of_ocaml.ocamlbuild)
+
 Library "ftal"
   Path: .
   Modules: Ftal, Examples, Parser, Lexer
   BuildDepends: ppx_deriving.show,str,core_kernel,pprint
+
+Executable "web"
+  CompiledObject: byte
+  BuildDepends: ftal, js_of_ocaml, js_of_ocaml.ppx, js_of_ocaml.ocamlbuild
+  Path: .
+  MainIs: web.ml
+  Install: true
 
 Executable "driver"
   Path: .
