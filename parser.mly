@@ -7,10 +7,10 @@
 %token LANGLE RANGLE LBRACKET RBRACKET LBRACE RBRACE LPAREN RPAREN
 %token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW EMPTY
 %token<string> IDENTIFIER
+%token<string> TYPE_VARIABLE RETURN_MARKER_VARIABLE STACK_TYPING_VARIABLE
 %token<int> INTEGER
 %token<string> REGISTER
 %token EOF
-
 
 %start<Ftal.TAL.component> component_eof
 %start<Ftal.TAL.mem> memory_eof
@@ -202,13 +202,13 @@ component:
 
 
   type_variable:
-  | alpha=IDENTIFIER { alpha }
+  | alpha=TYPE_VARIABLE { alpha }
 
   return_marker_variable:
-  | epsilon=IDENTIFIER { epsilon }
+  | epsilon=RETURN_MARKER_VARIABLE { epsilon }
 
   stack_typing_variable:
-  | zeta=IDENTIFIER { zeta }
+  | zeta=STACK_TYPING_VARIABLE { zeta }
 
   location:
   | l=IDENTIFIER { l }
