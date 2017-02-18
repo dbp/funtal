@@ -50,6 +50,7 @@ rule token = parse
   | "pack "{ PACK }
   | "as" { AS }
   | "fold" { FOLD }
+  | "code" { CODE }
   | "[" { LBRACKET }
   | "]" { RBRACKET }
   | "{" { LBRACE }

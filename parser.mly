@@ -255,7 +255,7 @@ single_instruction:
   { Isld (rd, i) }
 | SST i=int COMMA rs=register
   { Isst (i, rs) }
-| UNPACK LANGLE alpha=type_variable COMMA rd=register RANGLE u=small_value
+| UNPACK LANGLE alpha=type_variable COMMA rd=register RANGLE COMMA u=small_value
   { Iunpack (alpha, rd, u) }
 | UNFOLD rd=register COMMA u=small_value
   { Iunfold (rd, u) }

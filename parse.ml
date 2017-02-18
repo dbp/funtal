@@ -70,8 +70,7 @@ let parse_file parse_fun path =
     lexbuf.lex_curr_p <- lexbuf.lex_start_p;
     lexbuf
   in
-  try
-    parse parse_fun lexbuf
+  try parse parse_fun lexbuf
   with exn ->
     report_error lexbuf exn;
     exit 1
