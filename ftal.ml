@@ -1019,6 +1019,10 @@ end = struct
 
   type ft = F of exp | TC of TAL.component | TI of TAL.instr list
   [@@deriving show]
+  let show_ft = function
+    | F e -> F.show_exp e
+    | TC c -> TAL.show_component c
+    | TI is -> TAL.show_instrs is
 
   let rec decomp e =
     match e with
@@ -1092,6 +1096,8 @@ end = struct
     | CTuple (bef, ctxt', aft) -> ETuple (List.concat [bef; [plug ctxt' e]; aft])
     | CPi (n, ctxt') -> EPi (n, plug ctxt' e)
     | CBoundary (t,s,talctxt) -> EBoundary (t, s, TAL.plug talctxt e)
+
+
 
   let step (m, e) =
     let (h,r,s) = m in
@@ -1252,6 +1258,7 @@ and TAL : sig
     | Iprotect of sigma_prefix * string
     | Iimport of reg * string * sigma * F.t * F.exp
   val show_instr : instr -> string
+  val show_instrs : instr list -> string
   val pp_instr : Format.formatter -> instr -> unit
 
   type h =
@@ -1432,6 +1439,7 @@ end = struct
     | Iimport of reg * string * sigma * F.t * F.exp
   [@@deriving show]
   let show_instr i = Printer.(r (TALP.p_instr i))
+  let show_instrs is = Printer.(r (TALP.p_instruction_sequence is))
 
   type h =
       HCode of delta * chi * sigma * q * instr list
@@ -1886,6 +1894,7 @@ end and TALP : sig
     val p_stackm : TAL.stackm -> document
     val p_heapm : TAL.heapm -> document
     val p_component : TAL.component -> document
+    val p_instruction_sequence : TAL.instr list -> document
 end = struct
   open PPrint;;
   open TAL

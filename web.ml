@@ -12,10 +12,19 @@ let _ =
   in
   let refresh _ =
     let (h,r,s) = !m in
+    let _ = match Ftal.F.decomp !e with
+      | None ->
+        let _ = set_text "context" (Ftal.F.show_exp !e) in
+        let _ = set_text "focus" "" in
+        ()
+      | Some (c, f) ->
+        let _ = set_text "context" (Ftal.F.show_exp !e) in
+        let _ = set_text "focus" (Ftal.F.show_ft f) in
+        ()
+    in
     let _ = set_text "registers" (Ftal.TAL.show_regm r) in
     let _ = set_text "stack" (Ftal.TAL.show_stackm s) in
     let _ = set_text "heap" (Ftal.TAL.show_heapm h) in
-    let _ = set_text "program" (Ftal.F.show_exp !e) in
     ()
   in
   let next _ =
