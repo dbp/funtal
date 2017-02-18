@@ -28,6 +28,12 @@ let test_parse1 _ = assert_equal
         Iaop (Add, "r1", "r1", UW (WInt 1));
         Ihalt (TInt, SConcrete [], "r1")], [], [])
 
+let test_parse_variables_1 _ =
+  let open TAL in
+  assert_equal
+    (Parse.parse_string Parser.type_env_eof "[], 'a1, 'e2, 'za3")
+    [DAlpha "a1"; DEpsilon "e2"; DZeta "za3"]
+
 let test2 _ = assert_equal
     (F.stepn 10 (empty, F.EBoundary (F.TInt, None,
                                      TAL.([Imv ("r1", UW (WInt 1));
@@ -408,6 +414,7 @@ let suite = "FTAL evaluations" >:::
               "F: 1 + 1 = 2" >:: test2;
               "F: (\\x -> x + x) 1 = 2" >:: test_f_app;
               "parse: 1 + 1 = 2" >:: test_parse1;
+              "parse type-level variables" >:: test_parse_variables_1;
               "F: fact 3 = 6" >:: test_factorial_f;
               "F: fact : int -> int" >:: test_factorial_f_ty;
               "TAL: mv r1,1;halt r1 : int" >:: test_mv_ty;

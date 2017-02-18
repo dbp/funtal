@@ -17,6 +17,7 @@
 %start<Ftal.TAL.instr list> instruction_sequence_eof
 %start<Ftal.TAL.w> word_value_eof
 %start<Ftal.TAL.u> small_value_eof
+%start<Ftal.TAL.delta> type_env_eof
 
 %{ open Ftal.TAL
 
@@ -30,6 +31,7 @@ memory_eof: m=memory EOF { m }
 instruction_sequence_eof: i=instruction_sequence EOF { i }
 word_value_eof: w=word_value EOF { w }
 small_value_eof: u=small_value EOF { u }
+type_env_eof: delta=type_env EOF { delta }
 
 value_type:
 | alpha=type_variable { TVar alpha }
