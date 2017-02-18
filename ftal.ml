@@ -159,7 +159,7 @@ end = struct
                             Icall (UW w,
                                    SAbstract ([], z2),
                                    QEnd (tytrans t1, SAbstract ([], z2)))]],
-                        [], []))))
+                        []))))
       in (((lend, (TAL.Box, hend))::hm,rm,sm), v)
     | (F.TArrowMod (ts,sin,sout,t1), TAL.WLoc l) ->
       let lend = gen_sym ~pref:"lend" () in
@@ -186,7 +186,7 @@ end = struct
                             Icall (UW w,
                                    SAbstract (sin, z2),
                                    QEnd (tytrans t1, SAbstract (sout, z2)))]],
-                        [], []))))
+                        []))))
       in (((lend, (TAL.Box, hend))::hm,rm,sm), v)
     | _ -> raise (Failure ("ft: can't convert at type " ^ F.show t ^ " value " ^ TAL.show_w w))
 
@@ -219,7 +219,7 @@ end = struct
         F.EApp (F.ELam (ps,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', Some s, ([TAL.Isld ("r1", n-i);
-                                               TAL.Ihalt (tytrans t', s, "r1")], [], [])))
+                                               TAL.Ihalt (tytrans t', s, "r1")], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra");
@@ -251,7 +251,7 @@ end = struct
         F.EApp (F.ELamMod (ps,sin,sout,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', Some s, ([TAL.Isld ("r1", n-i);
-                                               TAL.Ihalt (tytrans t', s, "r1")], [], [])))
+                                               TAL.Ihalt (tytrans t', s, "r1")], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", z2, SAbstract ([], z1), t1, body_wrapped);
@@ -412,7 +412,7 @@ end = struct
           end
         | _ -> raise (TypeError ("F expression with invalid return marker", e))
       end
-    | TC (instrs,h,_) ->
+    | TC (instrs,h) ->
       let ht = List.map ~f:(fun (l,(m, p)) -> (l, (TAL.Box, tc_h_shallow context m p))) h in
       let context = set_heap context (List.append (get_heap context) ht) in
       let _ = List.iter ~f:(fun (l,(_, v)) ->
@@ -431,7 +431,7 @@ end = struct
   and tc_is context instrs : unit =
     let open TAL in
     (* TODO(dbp 2017-02-17): Remove this... *)
-    let e = TC (instrs, [], []) in
+    let e = TC (instrs, []) in
     match instrs, get_ret context with
     | Iaop (op, rd, rs, u)::is, QR r when rd = r ->
       raise (TypeError ("Iaop writing to register that is current return marker", e))
@@ -934,7 +934,7 @@ end = struct
       (m, List.fold_left ~f:(fun e p -> sub p e) ~init:body (List.map2_exn ~f:(fun (x,_) e -> FTAL.FTerm (x,e)) ps eargs))
     | EUnfold (EFold (_,_,eb)) -> (m, eb)
     | EPi (n, (ETuple vs)) when List.length vs > n -> (m, List.nth_exn vs n)
-    | EBoundary (t, s, ([TAL.Ihalt (t',s',r)],[],[])) when TAL.t_eq (FTAL.tytrans t) t' ->
+    | EBoundary (t, s, ([TAL.Ihalt (t',s',r)],[])) when TAL.t_eq (FTAL.tytrans t) t' ->
       let (hm,rm,sm) = m in
       FTAL.ft t (List.Assoc.find_exn rm r) m
     | _ -> (m, e)
@@ -1046,9 +1046,9 @@ end = struct
       let _ = Debug.log "stepped TI stack" (TAL.show_stackm s') in
       let _ = Debug.log "stepped TI heap" (TAL.show_heapm h') in
       (m', plug ctxt (TI is'))
-    | Some (ctxt, TC (is,h,_)) ->
+    | Some (ctxt, TC (is,h)) ->
       let m' = TAL.load m h in
-      (m', plug ctxt (TC (is, [], [])))
+      (m', plug ctxt (TC (is, [])))
     | None -> (m, e)
 
 
@@ -1204,7 +1204,7 @@ and TAL : sig
 
   val load : mem -> heapm -> mem
 
-  type component = instr list * heapm * psi
+  type component = instr list * heapm
   val show_component : component -> string
   val pp_component : Format.formatter -> component -> unit
 
@@ -1399,7 +1399,7 @@ end = struct
        that we always gensym new location names, so not renaming should be safe. *)
     (List.append h' h, r, s)
 
-  type component = instr list * heapm * psi
+  type component = instr list * heapm
   [@@deriving show]
 
   type context =
@@ -1432,19 +1432,18 @@ end = struct
     match ctxt with
     | CComponentEmpty ctxt' ->
       begin match ctxt' with
-        | CHoleI -> (un_ti e, [], [])
-        | CImportI (r,z,s,t,ctxt',is) -> (Iimport (r,z,s,t,F.plug ctxt' e)::is, [], [])
+        | CHoleI -> (un_ti e, [])
+        | CImportI (r,z,s,t,ctxt',is) -> (Iimport (r,z,s,t,F.plug ctxt' e)::is, [])
       end
     | CComponentHeap CHoleC -> un_tc e
 
-  let rec sub p ((is, hm, ht) : component) : component =
+  let rec sub p ((is, hm) : component) : component =
     (List.map ~f:(instr_sub p) is,
      List.map ~f:(fun (l,h) ->
          match h with
          | (m, HCode (d,c,s,q,is)) -> (l, (m, HCode (d,c,s,q, List.map ~f:(instr_sub p) is)))
          | _ -> (l,h)
-       ) hm,
-    List.map ~f:(fun (l,(m,t)) -> (l, (m,psi_sub p t))) ht)
+       ) hm)
 
   and instr_sub p i = match i with
     | Iaop (op, r1, r2, u) -> Iaop (op, r1, r2, u_sub p u)
@@ -1631,7 +1630,7 @@ end = struct
 
 
 
-  let decomp (is, m, mt) =
+  let decomp (is, m) =
     match m with
     | [] ->
       begin match is with
@@ -1644,7 +1643,7 @@ end = struct
           end
         | _ -> Some (CComponentEmpty CHoleI, F.TI is)
       end
-    | _ -> Some (CComponentHeap CHoleC, F.TC (is, m, mt))
+    | _ -> Some (CComponentHeap CHoleC, F.TC (is, m))
 
   let rec ru r = function
     | UApp (u, o) -> WApp (ru r u, o)

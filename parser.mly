@@ -200,7 +200,7 @@ single_instruction:
 
 component:
 | LPAREN i=instruction_sequence SEMICOLON h=heap_fragment RPAREN
-  { (i, h, []) (* TODO(dbp 2017-02-16): Parse heap typing! *)}
+  { (i, h) }
 
 
   type_variable:
