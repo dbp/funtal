@@ -56,6 +56,7 @@ module rec FTAL : sig
   type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
   val get_reg : context -> TAL.chi
   val get_stack : context -> TAL.sigma
+  val set_heap : context -> TAL.psi -> context
 
   val default_context : TAL.q -> context
 
@@ -63,6 +64,8 @@ module rec FTAL : sig
   val tc_is : context -> TAL.instr list -> unit
   val tc_w : context -> TAL.w -> TAL.t
   val tc_u : context -> TAL.u -> TAL.t
+  val tc_h : context -> TAL.mut -> TAL.h -> TAL.psi_elem
+  val tc_h_shallow : context -> TAL.mut -> TAL.h -> TAL.psi_elem
 
   type substitution = FTerm of string * F.exp
                     | FType of string * F.t
@@ -138,11 +141,11 @@ end = struct
       let z3 = gen_sym ~pref:"z" () in
       let lend = gen_sym ~pref:"lend" () in
       let hend =
-        TAL.HCode ([TAL.DZeta z1],
-                   [("r1", tytrans t1)],
-                   (TAL.SAbstract ([], z1)),
-                   (TAL.QEnd (tytrans t1, TAL.SAbstract ([], z1))),
-                   [TAL.Ihalt (tytrans t1, TAL.SAbstract ([], z1), "r1")]) in
+        TAL.(HCode ([DZeta z1],
+                    [("r1", tytrans t1)],
+                    (SAbstract ([], z1)),
+                    (QEnd (tytrans t1, SAbstract ([], z1))),
+                    [Ihalt (tytrans t1, SAbstract ([], z1), "r1")])) in
       let ps = List.map ~f:(fun t -> (gen_sym ~pref:"arg" (), t)) ts in
       let v = F.ELam
           (ps, F.EBoundary
@@ -153,8 +156,9 @@ end = struct
                                  Isalloc 1;
                                  Isst (0, "r1")]) ps));
                            [Imv ("ra", UApp (UW (WLoc lend), [OS (SAbstract ([], z2))]));
-                            Ijmp (UApp (UW w, [OS (SAbstract ([], z2));
-                                               OQ (QEnd (tytrans t1, SAbstract ([], z2)))]))]],
+                            Icall (UW w,
+                                   SAbstract ([], z2),
+                                   QEnd (tytrans t1, SAbstract ([], z2)))]],
                         [], []))))
       in (((lend, hend)::hm,rm,sm), v)
     | (F.TArrowMod (ts,sin,sout,t1), TAL.WLoc l) ->
@@ -163,11 +167,11 @@ end = struct
       let z2 = gen_sym ~pref:"z" () in
       let z3 = gen_sym ~pref:"z" () in
       let hend =
-        TAL.HCode ([TAL.DZeta z1],
+        TAL.(HCode ([DZeta z1],
                    [("r1", tytrans t1)],
-                   TAL.SAbstract (sin, z1),
-                   (TAL.QEnd (tytrans t1, TAL.SAbstract (sout, z1))),
-                   [TAL.Ihalt (tytrans t1, TAL.SAbstract (sout, z1), "r1")]) in
+                   SAbstract (sin, z1),
+                   (QEnd (tytrans t1, SAbstract (sout, z1))),
+                   [Ihalt (tytrans t1, SAbstract (sout, z1), "r1")])) in
       let ps = List.map ~f:(fun t -> (gen_sym ~pref:"arg" (), t)) ts in
       let v = F.ELamMod
           (ps, sin, sout, F.EBoundary
@@ -179,8 +183,9 @@ end = struct
                                 Isst (0, "r1")]) ps));
                            [Imv ("ra", UApp (UW (WLoc lend),
                                              [OS (SAbstract (sout, z2))]));
-                            Ijmp (UApp (UW w, [OS (SAbstract (sin, z2));
-                                               OQ (QEnd (tytrans t1, SAbstract (sout, z2)))]))]],
+                            Icall (UW w,
+                                   SAbstract (sin, z2),
+                                   QEnd (tytrans t1, SAbstract (sout, z2)))]],
                         [], []))))
       in (((lend, hend)::hm,rm,sm), v)
     | _ -> raise (Failure ("ft: can't convert at type " ^ F.show t ^ " value " ^ TAL.show_w w))
@@ -214,7 +219,7 @@ end = struct
         F.EApp (F.ELam (ps,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', Some s, ([TAL.Isld ("r1", n-i);
-                                               TAL.Ihalt (tytrans t1, s, "r1")], [], [])))
+                                               TAL.Ihalt (tytrans t', s, "r1")], [], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra");
@@ -246,7 +251,7 @@ end = struct
         F.EApp (F.ELamMod (ps,sin,sout,body),
                 List.mapi ~f:(fun i t' ->
                     F.EBoundary (t', Some s, ([TAL.Isld ("r1", n-i);
-                                               TAL.Ihalt (tytrans t1, s, "r1")], [], [])))
+                                               TAL.Ihalt (tytrans t', s, "r1")], [], [])))
                   (List.map ~f:snd ps))
       in
       let instrs = TAL.([Isalloc 1; Isst (0, "ra"); Iimport ("r1", z2, SAbstract ([], z1), t1, body_wrapped);
@@ -369,7 +374,8 @@ end = struct
               else
                 (FT rv, List.fold_left ~f:(fun s0 (t,e) -> match tc (set_stack context s0) (FC e) with
                      | FT t', s1 when t_eq t t' -> s1
-                     | _ -> raise (TypeError ("Argument to application did not have correct type", FC e))) ~init:s (List.zip_exn ps args))
+                     | FT t', _ -> raise (TypeError ("Argument to application did not have correct type. Expected " ^ show t ^ " but got " ^ show t', FC e))
+                     | _ -> raise (Failure "Impossible")) ~init:s (List.zip_exn ps args))
             | t ->
               let _ = Debug.log "tc gamma" (F.show_gamma (get_env context)) in
               let _ = Debug.log "tc apply non-function" (F.show_exp f ^ " : " ^ show_type (fst t)) in
@@ -406,7 +412,8 @@ end = struct
           end
         | _ -> raise (TypeError ("F expression with invalid return marker", e))
       end
-    | TC (instrs,h,ht) ->
+    | TC (instrs,h,_) ->
+      let ht = List.map ~f:(fun (l,p) -> (l, (TAL.Box, tc_h_shallow context TAL.Box p))) h in
       let context = set_heap context (List.append (get_heap context) ht) in
       let _ = List.iter ~f:(fun (l,v) ->
           match List.Assoc.find (get_heap context) l with
@@ -422,8 +429,6 @@ end = struct
       end
 
   and tc_is context instrs : unit =
-    (* let tc' e = tc context (FC e) in *)
-    (* let show_type = show in *)
     let open TAL in
     (* TODO(dbp 2017-02-17): Remove this... *)
     let e = TC (instrs, [], []) in
@@ -440,7 +445,10 @@ end = struct
       end
     | Imv (rd,u)::is, QR r when rd = r ->
       raise (TypeError ("Imv writing to register that is current return marker", e))
-    | Imv (rd,u)::is, _ ->
+    | Imv (rd,u)::is, q ->
+      let context = match q, u with
+        | QR r, UR r' when r = r' -> set_ret context (QR rd)
+        | _ -> context in
       tc_is (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) is
     | Iimport (rd,z,s,t,f)::is, QR r when rd = r ->
       raise (TypeError ("Iimport writing to register that is current return marker", e))
@@ -498,17 +506,25 @@ end = struct
       raise (TypeError ("Isst: Can't store past exposed stack", e))
     | Isst(n,r):: is, QI n' when n = n' ->
       raise (TypeError ("Isst: Can't overwrite return marker on stack", e))
-    | Isst(n,r):: is, _ ->
+    | Isst(n,r):: is, q ->
       begin match List.Assoc.find (get_reg context) r with
         | None -> raise (TypeError ("Isst trying to store from empty register", e))
         | Some t ->
+          let context = match q with
+            | QR r' when r = r' -> set_ret context (QI n)
+            | _ -> context
+          in
           tc_is (set_stack context (stack_prepend (stack_take (get_stack context) n) (stack_cons t (stack_drop (get_stack context) (n+1))))) is
       end
     | Isld(rd,n)::is, QR r when r = rd ->
       raise (TypeError ("Isld: Can't overwrite return marker in register", e))
     | Isld(rd,n)::is, _ when stack_pref_length (get_stack context) <= n ->
       raise (TypeError ("Isld: Can't load from past exposed stack", e))
-    | Isld(rd,n)::is, _ ->
+    | Isld(rd,n)::is, q ->
+      let context = match q with
+        | QI n' when n = n' -> set_ret context (QR rd)
+        | _ -> context
+      in
       tc_is (set_reg context (List.Assoc.add (get_reg context) rd (List.last_exn (stack_take (get_stack context) (n+1))))) is
     | Ild(rd,rs,n)::is, QR r when r = rd ->
       raise (TypeError ("Ild: Can't overwrite return marker in register", e))
@@ -595,7 +611,7 @@ end = struct
         raise (TypeError ("Iret: return location with wrong stack type expected: " ^ show_sigma s ^ " but got " ^ show_sigma (get_stack context), e))
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta -> ()
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), None ->
-        raise (TypeError ("Iret: return without value in register", e))
+        raise (TypeError ("Iret: return without value of type " ^ show t ^ " in register " ^ ra, e))
       | _ -> raise (TypeError ("Iret: returning to empty register", e))
       end
     | [Iret (rt, rv)], QR r  ->
@@ -604,7 +620,7 @@ end = struct
       raise (TypeError ("Iret: can't use if return marker isn't in register", e))
     | [Ijmp u], q -> begin match tc_u context u with
         | TBox (PBlock ([], c, s, q')) when not (q_eq q q') ->
-          raise (TypeError ("Ijmp: must jump to a block with the same return marker", e))
+          raise (TypeError ("Ijmp: must jump to a block with the same return marker. Expected " ^ show_q q ^ " but jumping to " ^ show_q q', e))
         | TBox (PBlock ([], c, s, q')) when not (s_eq s (get_stack context)) ->
           raise (TypeError ("Ijmp: must jump to a block expecting the current stack", e))
         | TBox (PBlock ([], c, s, q')) when not (String.Set.(subset (of_list (List.map ~f:fst c)) (of_list (List.map ~f:fst (get_reg context))))) ->
@@ -632,11 +648,23 @@ end = struct
         | TBox (PBlock ([], c, s, q')) -> ()
         | _ -> raise (TypeError ("Ibnz: can't jump to non-block", e))
       end
-
+    | [Icall(u,s,QEnd(t',s'))], QEnd(t,s'') when t_eq t t' && s_eq s' s'' ->
+      begin match tc_u context u with
+        | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
+          (* TODO(dbp 2017-02-17): Add other constraints *)
+          ()
+        | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", e))
+      end
+    | [Icall(u,s,QI i')], QI i ->
+      begin match tc_u context u with
+        | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
+          (* TODO(dbp 2017-02-17): Add other constraints *)
+          ()
+        | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", e))
+      end
 
     | _ -> raise (TypeError ("Don't know how to type-check", e))
 
-  (* | Ibnz of reg * u *)
   (* | Icall of u * sigma * q *)
 
   and tc_u context u = let open TAL in match u with
@@ -691,6 +719,11 @@ end = struct
     | TAL.Box, TAL.HCode (d,c,s,q,is) ->
       let _ = tc_is (set_ret (set_stack (set_reg (set_tyenv context d) c) s) q) is in
       TAL.PBlock (d,c,s,q)
+    | _, TAL.HTuple ws -> TAL.PTuple (List.map ~f:(tc_w context) ws)
+    | _ -> raise (TypeErrorH ("Can't have mutable code pointers",mut,h))
+
+  and tc_h_shallow context mut h = match mut, h with
+    | TAL.Box, TAL.HCode (d,c,s,q,is) -> TAL.PBlock (d,c,s,q)
     | _, TAL.HTuple ws -> TAL.PTuple (List.map ~f:(tc_w context) ws)
     | _ -> raise (TypeErrorH ("Can't have mutable code pointers",mut,h))
 
@@ -1016,11 +1049,15 @@ end = struct
       (m', plug ctxt (TC (is, [], [])))
     | None -> (m, e)
 
-  let rec stepn n e =
-    let () = Debug.log "step" (string_of_int n) in
-    match n with
-    | 0 -> e
-    | n -> stepn (n - 1) (step e)
+
+  let stepn n e =
+    let rec stepn' n l e =
+      let () = Debug.log "step" (string_of_int n) in
+      match l, n with
+      |_, 0 -> e
+      | Some e', _ when e = e' -> e
+      | _ -> stepn' (n - 1) (Some e) (step e)
+    in stepn' n None e
 
 
   type gamma = (string * F.t) list
@@ -1416,7 +1453,7 @@ end = struct
     | Ijmp u -> Ijmp (u_sub p u)
     | Icall (u,s,q) -> Icall (u_sub p u, stack_sub p s, retmarker_sub p q)
     | Ihalt (t,s,r) -> Ihalt (type_sub p t, stack_sub p s, r)
-    | Iimport (r,z,s,t,e) -> Iimport (r,z,s,t,F.sub p e)
+    | Iimport (r,z,s,t,e) -> Iimport (r,z,stack_sub p s,F.type_sub p t,F.sub p e)
     | _ -> i
 
   and u_sub p u = match u with
@@ -1491,7 +1528,7 @@ end = struct
       end
     | TTupleRef ts -> TTupleRef (List.map ~f:(type_sub p) ts)
     | TBox ps -> TBox (psi_sub p ps)
-    | _ -> t
+    | TUnit | TInt -> t
 
   and stack_sub p s = match s with
     | SAbstract (pref, z) -> begin match p with
@@ -1501,7 +1538,7 @@ end = struct
             | SAbstract (some, var) ->
               SAbstract (List.append (List.map ~f:(type_sub p) pref) some, var)
           end
-        | _ -> s
+        | _ -> SAbstract (List.map ~f:(type_sub p) pref, z)
       end
     | SConcrete ts -> SConcrete (List.map ~f:(type_sub p) ts)
 
@@ -1636,50 +1673,50 @@ end = struct
 
   let instrs_sub delt os is =
     let subs = type_zip delt os in
-    List.rev (List.fold_left ~f:(fun acc i -> (List.fold_left ~f:(fun t' p -> instr_sub p i) ~init:i subs)::acc) ~init:[] is)
+    List.rev (List.fold_left ~f:(fun acc i -> (List.fold_left ~f:(fun i' p -> instr_sub p i') ~init:i subs)::acc) ~init:[] is)
 
   let reduce (c : mem * instr list) =
     match c with
     | ((hm,rm,sm), Iaop (op, rd, rs, u)::is) ->
       ((hm, replace rm rd (delta op (List.Assoc.find_exn rm rs) (ru rm u)), sm), is)
     | ((hm,rm,sm), Ibnz (r,u)::is) ->
-      begin match List.Assoc.find_exn rm r with
-        | WInt 0 -> ((hm,rm,sm), is)
-        | WInt _ ->
+      begin match List.Assoc.find rm r with
+        | Some (WInt 0) -> ((hm,rm,sm), is)
+        | Some (WInt _) ->
           let hc os l =
-            match List.Assoc.find_exn hm l with
-            | HCode (delt,ch,s,qr,is) ->
+            match List.Assoc.find hm l with
+            | Some (HCode (delt,ch,s,qr,is)) ->
               instrs_sub delt os is
-            | _ -> raise (Failure "branching to non-code")
+            | _ -> raise (Failure "branching to missing or non-code")
           in
           begin match ru rm u with
             | WLoc l -> ((hm,rm,sm), hc [] l)
             | WApp (WLoc l, os) -> ((hm,rm,sm), hc os l)
             | _ -> raise (Failure "branching to non-loc")
           end
-        | _ -> c
+        | _ -> raise (Failure "branching to on missing or non-int")
       end
     | ((hm,rm,sm), Ild (rd,rs,i)::is) ->
       begin match List.Assoc.find_exn rm rs with
         | WLoc l ->
-          begin match List.Assoc.find_exn hm l with
-            | HTuple ws when List.length ws > i ->
+          begin match List.Assoc.find hm l with
+            | Some (HTuple ws) when List.length ws > i ->
               ((hm, replace rm rd (List.nth_exn ws i), sm), is)
-            | HTuple _ -> raise (Failure "ld: tuple index out of bounds")
-            | _ -> raise (Failure "ld: trying to load from non-tuple")
+            | Some (HTuple _) -> raise (Failure "ld: tuple index out of bounds")
+            | _ -> raise (Failure "ld: trying to load from missing or non-tuple")
           end
         | _ -> raise (Failure "ld: trying to load from non-location")
       end
     | ((hm,rm,sm), Ist (rd,i,rs)::is) ->
-      begin match List.Assoc.find_exn rm rd with
-        | WLoc l ->
-          begin match List.Assoc.find_exn hm l with
-            | HTuple ws when List.length ws > i ->
+      begin match List.Assoc.find rm rd with
+        | Some (WLoc l) ->
+          begin match List.Assoc.find hm l with
+            | Some (HTuple ws) when List.length ws > i ->
               (((replace hm l (HTuple (list_replace i ws (List.Assoc.find_exn rm rs)))), rm, sm), is)
-            | HTuple _ -> raise (Failure "st: tuple index out of bounds")
-            | _ -> raise (Failure "st: trying to store to non-tuple")
+            | Some (HTuple _) -> raise (Failure "st: tuple index out of bounds")
+            | _ -> raise (Failure "st: trying to store to missing or non-tuple")
           end
-        | _ -> raise (Failure "st: trying to store to non-location")
+        | _ -> raise (Failure "st: trying to store to missing or non-location")
       end
     | ((hm,rm,sm), Iralloc (rd,n)::is) when List.length sm >= n ->
       let l = FTAL.gen_sym () in (((l, HTuple (List.take sm n)) :: hm, replace rm rd (WLoc l), List.drop sm n), is)
@@ -1707,9 +1744,9 @@ end = struct
       ((hm,rm,list_replace i sm (List.Assoc.find_exn rm rs)), is)
     | ((hm,rm,sm), Ijmp u::is) ->
       let hc os l =
-        match List.Assoc.find_exn hm l with
-        | HCode (delt,ch,s,qr,is) -> instrs_sub delt os is
-        | _ -> raise (Failure "jumping to non-code")
+        match List.Assoc.find hm l with
+        | Some (HCode (delt,ch,s,qr,is)) -> instrs_sub delt os is
+        | _ -> raise (Failure "jumping to missing or non-code")
       in
       begin match ru rm u with
         | WLoc l -> ((hm,rm,sm), hc [] l)
@@ -1718,10 +1755,10 @@ end = struct
       end
     | ((hm,rm,sm), Icall (u,s,q)::is) ->
       let hc os l =
-        match List.Assoc.find_exn hm l with
-        | HCode (delt,ch,s,qr,is) ->
+        match List.Assoc.find hm l with
+        | Some (HCode (delt,ch,s,qr,is)) ->
           instrs_sub delt (List.append os [OS s; OQ q]) is
-        | _ -> raise (Failure "calling to non-code")
+        | _ -> raise (Failure "calling to missing or non-code")
       in
       begin match ru rm u with
         | WLoc l -> ((hm,rm,sm), hc [] l)
@@ -1730,14 +1767,14 @@ end = struct
       end
     | ((hm,rm,sm), Iret (rloc,_)::is) ->
       let hc os l =
-        match List.Assoc.find_exn hm l with
-        | HCode (delt,ch,s,qr,is) -> instrs_sub delt os is
-        | _ -> raise (Failure "returning to non-code")
+        match List.Assoc.find hm l with
+        | Some (HCode (delt,ch,s,qr,is)) -> instrs_sub delt os is
+        | _ -> raise (Failure "returning to missing or non-code")
       in
-      begin match List.Assoc.find_exn rm rloc with
-        | WLoc l -> ((hm,rm,sm), hc [] l)
-        | WApp (WLoc l, os) -> ((hm,rm,sm), hc os l)
-        | _ -> raise (Failure "ret: trying to return to non-location")
+      begin match List.Assoc.find rm rloc with
+        | Some (WLoc l) -> ((hm,rm,sm), hc [] l)
+        | Some (WApp (WLoc l, os)) -> ((hm,rm,sm), hc os l)
+        | _ -> raise (Failure ("ret: trying to return to missing or non-location " ^ rloc))
       end
     | ((hm,rm,sm), Iimport (r,z,s,t,v)::is) ->
       let (m, w) = FTAL.tf t v (hm,rm,sm) in

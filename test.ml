@@ -288,6 +288,65 @@ let test_unfold_ty_exc _ =
                      [],
                      [])))
 
+let call_tl =
+  let l = "l" in
+  let lh = "lh" in
+  let h = [(l,
+            TAL.(HCode ([DZeta "z"; DEpsilon "e"],
+                        [("ra", TBox (PBlock ([], [("r1", TInt)], SAbstract ([], "z"), QEpsilon "e")))],
+                        SAbstract ([], "z"),
+                        QR "ra",
+                        [Imv ("r1", UW (WInt 10));
+                         Iret ("ra", "r1")])));
+           (lh,
+            TAL.(HCode ([],
+                        [("r1", TInt)],
+                        SConcrete [],
+                        QEnd (TInt, SConcrete []),
+                       [Ihalt (TInt, SConcrete [], "r1")])
+                ));
+          ] in
+  let ht = [(l, TAL.(Box, PBlock ([DZeta "z"; DEpsilon "e"],
+                                  [("ra", TBox (PBlock ([],
+                                                        [("r1", TInt)],
+                                                        SAbstract ([], "z"),
+                                                        QEpsilon "e")))],
+                                  SAbstract ([], "z"),
+                                  QR "ra")));
+           (lh, TAL.(Box, PBlock ([],
+                                  [("r1", TInt)],
+                                  SConcrete [],
+                                  QEnd (TInt, SConcrete []))))] in
+  F.EBoundary (F.TInt, None,
+               (TAL.([Imv ("ra", UW (WLoc lh));
+                      Icall (UW (WLoc l), SConcrete [], QEnd (TInt, SConcrete []))]), h, ht))
+
+
+let test_call_tl _ =
+  assert_equal
+    (snd (F.stepn 30 (empty, call_tl)))
+    (F.EInt 10)
+
+let test_call_tl_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC call_tl))
+    (FTAL.FT F.TInt, TAL.SConcrete [])
+
+let test_call_to_call _ =
+  assert_equal
+    (snd (F.stepn 50 (empty, F.EBoundary (F.TInt, None, call_to_call))))
+    (F.EInt 2)
+
+
+let test_call_to_call_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC (F.EBoundary (F.TInt, None, call_to_call))))
+    (FTAL.FT F.TInt, TAL.SConcrete [])
+
 
 let test_factorial_f_ty _ =
   assert_equal
@@ -334,7 +393,7 @@ let f_closures =
 
 let test_closures _ =
   assert_equal
-    (snd (F.stepn 40 (empty, F.EApp (f_closures, [F.EInt 3]))))
+    (snd (F.stepn 50 (empty, F.EApp (f_closures, [F.EInt 3]))))
     (F.EInt 2)
 
 let test_closures_ty _ =
@@ -406,6 +465,17 @@ let test_profiling1_ty _ =
        (FTAL.FC profiling_1))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
+let test_ft_factorial_t_ty _ =
+  let (l, h, _) = factorial_t' in
+  let ((h',_,_),e) = FTAL.ft (F.TArrow ([F.TInt], F.TInt)) l (h,[],[]) in
+  let context = FTAL.default_context TAL.QOut in
+  let ht = List.map (fun (l,p) -> (l, (TAL.Box, FTAL.tc_h_shallow context TAL.Box p))) h' in
+  assert_equal
+    (FTAL.tc
+       (FTAL.set_heap context ht)
+       (FTAL.FC e))
+    (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
+
 
 let suite = "FTAL evaluations" >:::
             [
@@ -432,7 +502,7 @@ let suite = "FTAL evaluations" >:::
               "TAL: sld" >:: test_sld_ty;
               "TAL: ld" >:: test_ld_ty;
               "TAL: ld" >:: test_ld2_ty;
-              "TAL: st" >:: test_st_ty;
+              (* "TAL: st" >:: test_st_ty; *)
               "TAL: ralloc" >:: test_ralloc_ty;
               "TAL: balloc" >:: test_balloc_ty;
               "TAL: balloc exc" >:: test_balloc_ty_exc;
@@ -440,6 +510,10 @@ let suite = "FTAL evaluations" >:::
               "TAL: unpack exc" >:: test_unpack_ty_exc;
               "TAL: unfold" >:: test_unfold_ty;
               "TAL: unfold exc" >:: test_unfold_ty_exc;
+              "TAL: simple call = 10" >:: test_call_tl;
+              "TAL: simple call : int" >:: test_call_tl_ty;
+              "TAL: call to call = 2" >:: test_call_to_call;
+              "TAL: call to call : int" >:: test_call_to_call_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;
               "TAL: int -> int" >:: test_factorial_t_ty;
               "TAL: higher order = 2" >:: test_higher_order;
@@ -456,6 +530,7 @@ let suite = "FTAL evaluations" >:::
               (* "REF: r = ref 1; r := 20; r := !r + 5; !r : int" >:: test_ref2_ty; *)
               "PROFILING_1 = 2" >:: test_profiling1;
               (* "PROFILING_1 : int" >:: test_profiling1_ty; *)
+              "FT: factorial : int -> int" >:: test_ft_factorial_t_ty;
             ]
 
 
