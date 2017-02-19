@@ -1875,8 +1875,8 @@ end = struct
   and p_h (h : h) : document =
     match h with
     | HCode (d,c,s,q,is) ->
-      nest 2 (!^"code " ^^ p_delta d ^^ nest 1 (lbrace ^^ p_chi c ^^ semi ^^
-              break 1 ^^ p_s s ^^ rbrace) ^^ space ^^
+      nest 2 (!^"code " ^^ p_delta d ^^ nest 1 (align (lbrace ^^ p_chi c ^^ semi ^^
+              break 1 ^^ p_s s ^^ rbrace)) ^^ space ^^
               p_q q ^^ dot ^^ break 0 ^^ p_instruction_sequence is)
     | HTuple (ws) -> langle ^^ separate_map (comma ^^ break 1) p_w ws ^^ rangle
   and p_mut (m : mut) : document =
