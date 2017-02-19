@@ -28,22 +28,22 @@ let factorial_t' =
                                                   QEpsilon "e")))],
                             SAbstract ([TInt], "z3"),
                             QR "ra",
-                            [Isld ("rn", 0);
+                            [Isld ("r7", 0);
                              Imv ("r1", UW (WInt 1));
-                             Ibnz ("rn", UApp (UW (WLoc la), [OS (SAbstract ([], "z3"))]));
+                             Ibnz ("r7", UApp (UW (WLoc la), [OS (SAbstract ([], "z3"))]));
                              Isfree 1;
                              Iret ("ra", "r1")])));
            (la, TAL.(Box, HCode ([DZeta "z4"],
-                            [("r1", TInt); ("rn", TInt);
+                            [("r1", TInt); ("r7", TInt);
                              ("ra", TBox (PBlock ([],
                                                   [("r1", TInt)],
                                                   SAbstract ([], "z3"),
                                                   QEpsilon "e")))],
                             SAbstract ([TInt], "z3"),
                             QR "ra",
-                            [Iaop (Mult, "r1", "r1", UR "rn");
-                             Iaop (Sub, "rn", "rn", UW (WInt 1));
-                             Ibnz ("rn", UApp (UW (WLoc la), [OS (SAbstract ([], "z1"))]));
+                            [Iaop (Mult, "r1", "r1", UR "r7");
+                             Iaop (Sub, "r7", "r7", UW (WInt 1));
+                             Ibnz ("r7", UApp (UW (WLoc la), [OS (SAbstract ([], "z1"))]));
                              Isfree 1;
                              Ihalt (TInt, SAbstract ([],  "z4"), "r1")])))] in
   (TAL.WLoc lf, h)
@@ -261,9 +261,9 @@ let with_ref =
                       Isalloc 1;
                       Iimport ("r1", "z_", SAbstract ([], "z"), F.TInt, EVar "init");
                       Isst (0, "r1");
-                      Iralloc ("rc", 1);
+                      Iralloc ("r7", 1);
                       Isalloc 1;
-                      Isst (0, "rc");
+                      Isst (0, "r7");
                       Imv ("r1", UW WUnit);
                       Ihalt (TUnit, SAbstract ([TTupleRef [TInt]], "z"), "r1")],
                       [])));
