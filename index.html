@@ -152,7 +152,7 @@
       var n = document.createElement("div");
       n.className = "error-marker";
       n.setAttribute("title", msg);
-      window.codemirror.setGutterMarker(line, "errors", n);
+      window.codemirror.setGutterMarker(line-1, "errors", n);
       }
 
       var holder = document.getElementById("error");

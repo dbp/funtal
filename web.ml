@@ -1,5 +1,21 @@
 module H = Dom_html
 
+
+let parse_report_loc parse_fun str =
+  let lexbuf = Lexing.from_string str in
+  try `Success (Parse.parse parse_fun lexbuf)
+  with | Parser.Error ->
+    let (_, line, char) = Parse.position lexbuf.Lexing.lex_start_p in
+    `Error (line, "Parser Error: line " ^
+                  string_of_int line ^ ", character " ^
+                  string_of_int char ^ ".")
+       | Lexer.Error (invalid_input, err_pos) ->
+         let (_, line, char) = Parse.position err_pos in
+         `Error (line, "Lexing Error: line " ^
+                       string_of_int line ^ ", character " ^
+                       string_of_int char ^ ".")
+
+
 let simple = {|
 FT [int, ?] (
   [mv r1, 1;
@@ -20,7 +36,7 @@ let set_error ln m =
   let _ = Js.Unsafe.((coerce global)##seterror (Js.number_of_float (float_of_int ln)) (Js.string m)) in
   ()
 let clear_errors _ =
-  let _ = Js.Unsafe.((coerce global)##.clearerrors) in
+  let _ = Js.Unsafe.((coerce global)##clearerrors) in
   ()
 
 let hide_machine _ =
@@ -81,26 +97,29 @@ let _ =
       let s = Js.to_string (get_editor ()) in
       Ftal.(FTAL.(
           try
-            let e = Parse.parse_string Parser.f_expression_eof s in
-            let _ = tc (default_context TAL.QOut) (FC e) in
-            hist := ((e, ([],[],[])), []);
-            refresh ();
-            clear_errors ();
-            show_machine ();
-            Js.Opt.return Js._false
+            match parse_report_loc Parser.f_expression_eof s with
+            | `Success e -> begin
+                let _ = tc (default_context TAL.QOut) (FC e) in
+                hist := ((e, ([],[],[])), []);
+                refresh ();
+                clear_errors ();
+                show_machine ();
+                Js.Opt.return Js._false
+              end
+            | `Error (line, msg) ->
+              begin
+                set_error line msg;
+                Js.Opt.return Js._false
+              end
           with TypeError (t,_)
              | TypeErrorW (t,_)
              | TypeErrorH (t,_,_)
              | TypeErrorU (t,_)  ->
             begin
-              set_error 3 ("Type Error: " ^ t);
+              set_error 0 ("Type Error: " ^ t);
               hide_machine ();
               Js.Opt.return Js._false
             end
-             | x ->
-               set_error 3 "Parse Error";
-               hide_machine ();
-               Js.Opt.return Js._false
         )) in Js._false
   in
   let next _ =
