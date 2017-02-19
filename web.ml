@@ -16,6 +16,13 @@ let _ =
     let open H in
     (getElementById i)##.innerHTML := Js.string t
   in
+  let set_editor t =
+    let open Js in
+    Unsafe.((coerce (global##.codemirror))##setValue (string p1))
+  in
+  let get_editor _ =
+    Js.Unsafe.((coerce (global##.codemirror))##getValue)
+  in
   let refresh _ =
     let ((e, (h,r,s)), past) = !hist in
     let _ = match Ftal.F.decomp e with
@@ -43,32 +50,30 @@ let _ =
   in
   let load _ =
     let open H in
-    let _ = Js.Opt.bind
-      (CoerceTo.textarea (getElementById "input"))
-      (fun p ->
-         let s = Js.to_string p##.value in
-         Ftal.(FTAL.(
-             try
-               let e = Parse.parse_string Parser.f_expression_eof s in
-               let _ = tc (default_context TAL.QOut) (FC e) in
-               hist := ((e, ([],[],[])), []);
-               refresh ();
-               set_text "error" "";
-               let _ = H.((getElementById "machine")##removeAttribute (Js.string "hidden")) in
+    let _ =
+      let s = Js.to_string (get_editor ()) in
+      Ftal.(FTAL.(
+          try
+            let e = Parse.parse_string Parser.f_expression_eof s in
+            let _ = tc (default_context TAL.QOut) (FC e) in
+            hist := ((e, ([],[],[])), []);
+            refresh ();
+            set_text "error" "";
+            let _ = H.((getElementById "machine")##removeAttribute (Js.string "hidden")) in
+            Js.Opt.return Js._false
+          with TypeError (t,_)
+             | TypeErrorW (t,_)
+             | TypeErrorH (t,_,_)
+             | TypeErrorU (t,_)  ->
+            begin
+              set_text "error" ("Type Error: " ^ t);
+              let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
+              Js.Opt.return Js._false
+            end
+             | x -> set_text "error" "Parse Error";
+               let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
                Js.Opt.return Js._false
-             with TypeError (t,_)
-                | TypeErrorW (t,_)
-                | TypeErrorH (t,_,_)
-                | TypeErrorU (t,_)  ->
-               begin
-                 set_text "error" ("Type Error: " ^ t);
-                 let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
-                 Js.Opt.return Js._false
-               end
-                | x -> set_text "error" "Parse Error";
-                 let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
-                 Js.Opt.return Js._false
-           ))) in Js._false
+        )) in Js._false
 in
   let next _ =
     next' ();
@@ -92,5 +97,5 @@ in
   let _ = H.((getElementById "prev")##.onclick := (H.handler prev)) in
   let _ = H.((getElementById "many")##.onclick := (H.handler many)) in
   let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
-  Js.Opt.bind(H.(CoerceTo.textarea (getElementById "input")))
-    (fun e -> e##.value := Js.string p1; Js.Opt.return ())
+  let _ = set_editor p1 in
+  ()
