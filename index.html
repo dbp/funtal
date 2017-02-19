@@ -21,24 +21,28 @@
         <button id="load">&darr; Load &darr;</button>
       </div>
 
+      <div id="error"></div>
+
       <div class="box">
         <h2>Machine</h2>
-        <div class="buttons left">
-          <button title="one step backward" id="prev">Step &larr;</button>
-          <button id="pc">&nbsp;</button>
-          <button title="one step forward" id="next">Step &rarr;</button>
-          <button title="up to 100 steps" id="many">Step &rarr;*</button>
+        <div id="machine">
+          <div class="buttons left">
+            <button title="one step backward" id="prev">Step &larr;</button>
+            <button id="pc">&nbsp;</button>
+            <button title="one step forward" id="next">Step &rarr;</button>
+            <button title="up to 100 steps" id="many">Step &rarr;*</button>
+          </div>
+          <hr/>
+          <pre id="registers"></pre>
+          <hr/>
+          <pre id="stack"></pre>
+          <hr/>
+          <pre id="focus"></pre>
+          <hr/>
+          <pre id="context"></pre>
+          <hr/>
+          <pre id="heap"></pre>
         </div>
-        <hr/>
-        <pre id="registers"></pre>
-        <hr/>
-        <pre id="stack"></pre>
-        <hr/>
-        <pre id="focus"></pre>
-        <hr/>
-        <pre id="context"></pre>
-        <hr/>
-        <pre id="heap"></pre>
       </div>
     </div>
     <script type="text/javascript" src="_build/web.js"></script>
