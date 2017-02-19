@@ -1842,8 +1842,14 @@ end = struct
     | OQ q -> p_q q
   and p_s (s : sigma) : document =
     match s with
-    | SConcrete l -> p_sigma_prefix l ^^ !^" :: *"
-    | SAbstract (l, z) -> p_sigma_prefix l ^^ !^" :: " ^^ !^z
+    | SConcrete l ->
+      if List.length l > 0 then
+        p_sigma_prefix l ^^ !^" :: *"
+      else !^"*"
+    | SAbstract (l, z) ->
+      if List.length l > 0 then
+        p_sigma_prefix l ^^ !^" :: " ^^ !^z
+      else !^z
   and p_sigma_prefix (p : sigma_prefix) : document =
     nest 2 (separate
               (break 1 ^^ !^":: ")
@@ -1893,7 +1899,7 @@ end = struct
                     (fun (r,t) -> !^r ^^ space ^^ colon ^^ space ^^ align (p_t t)) c))
   and p_instr (i : instr) : document =
     nest 2 (match i with
-    | Iaop(a,r1,r2,u) -> p_aop a ^^ space ^^ !^r1 ^^ comma ^^ !^r2 ^^ comma ^^ space ^^ p_u u
+    | Iaop(a,r1,r2,u) -> p_aop a ^^ space ^^ !^r1 ^^ comma ^^ space ^^ !^r2 ^^ comma ^^ space ^^ p_u u
     | Ibnz(r,u) -> !^"bnz " ^^ !^r ^^ comma ^^ space ^^ p_u u
     | Ild(r1,r2,n) -> !^"ld " ^^ !^r1 ^^ comma ^^ space ^^ !^r2 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket
     | Ist(r1,n,r2) -> !^"st " ^^ !^r1 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket ^^ comma ^^ !^r2
@@ -1909,7 +1915,7 @@ end = struct
     | Ijmp u -> !^"jmp " ^^ p_u u
     | Icall(u,s,q) -> !^"call " ^^ p_u u ^^ lbrace ^^ p_s s ^^ comma ^^ space ^^ p_q q ^^ rbrace
     | Iret(r1,r2) -> !^"ret " ^^ !^r1 ^^ space ^^ lbrace ^^ !^r2 ^^ rbrace
-    | Ihalt(t,s,r) -> !^"halt " ^^ p_t t ^^ comma ^^ space ^^ p_s s ^^ lbrace ^^ !^r ^^ rbrace
+    | Ihalt(t,s,r) -> !^"halt " ^^ p_t t ^^ comma ^^ space ^^ p_s s ^^ space ^^ lbrace ^^ !^r ^^ rbrace
     | Iprotect(sp, z) -> !^"protect " ^^ p_sigma_prefix sp ^^ comma ^^ space ^^ !^z
     | Iimport(r,z,s,t,e) -> !^"import " ^^ !^r ^^ comma ^^ space ^^ !^z ^^ !^" as " ^^ p_s s ^^ comma ^^ space ^^ FP.p_t t ^^ lbrace ^^ FP.p_exp e ^^ rbrace)
   and p_instruction_sequence (is : instr list) : document =
@@ -1928,7 +1934,9 @@ end = struct
               (fun (l,(p,h)) -> !^l ^^ !^" -> " ^^ nest 2 (align (p_mut p ^^ space ^^  p_h h)))
               m)
   and p_stackm (m : stackm) : document =
-    nest 2 (separate_map (!^" ::" ^^ break 1) p_w m ^^ !^" :: *")
+    if List.length m > 0 then
+      nest 2 (separate_map (!^" ::" ^^ break 1) p_w m ^^ !^" :: *")
+    else !^"*"
   and p_component ((is,h) : component) : document =
     nest 2 (lparen ^^ p_instruction_sequence is ^^ comma ^^
             break 1 ^^ p_heapm h ^^ rparen)
@@ -1987,7 +1995,7 @@ end = struct
     | ETuple(es) -> langle ^^ group (separate_map (comma ^^ break 1) p_exp es) ^^ rangle
     | EPi(n,e) -> !^"pi." ^^ !^(string_of_int n) ^^ lparen ^^ p_exp e ^^ rparen
     | EBoundary(t,ms,c) ->
-      !^"FT" ^^ lbracket ^^ p_t t ^^ comma ^^
+      !^"FT" ^^ lbracket ^^ p_t t ^^ comma ^^ space ^^
       (match ms with
        | None -> !^"?"
        | Some s -> TALP.p_s s) ^^ rbracket ^^ break 0 ^^ TALP.p_component c)

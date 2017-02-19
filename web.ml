@@ -47,21 +47,27 @@ let _ =
       (CoerceTo.textarea (getElementById "input"))
       (fun p ->
          let s = Js.to_string p##.value in
-         let e = Parse.parse_string Parser.f_expression_eof s in
          Ftal.(FTAL.(
              try
+               let e = Parse.parse_string Parser.f_expression_eof s in
                let _ = tc (default_context TAL.QOut) (FC e) in
                hist := ((e, ([],[],[])), []);
                refresh ();
+               set_text "error" "";
                let _ = H.((getElementById "machine")##removeAttribute (Js.string "hidden")) in
                Js.Opt.return Js._false
              with TypeError (t,_)
                 | TypeErrorW (t,_)
                 | TypeErrorH (t,_,_)
                 | TypeErrorU (t,_)  ->
-               set_text "error" ("Type Error: " ^ t);
-               let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
-               Js.Opt.return Js._false
+               begin
+                 set_text "error" ("Type Error: " ^ t);
+                 let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
+                 Js.Opt.return Js._false
+               end
+                | x -> set_text "error" "Parse Error";
+                 let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
+                 Js.Opt.return Js._false
            ))) in Js._false
 in
   let next _ =
