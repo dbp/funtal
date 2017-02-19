@@ -15,7 +15,7 @@ let classify_identifier ident =
   | _ -> OTHER_IDENTIFIER ident
 }
 
-let int_literal = '-'? ['0'-'9'] ['0'-'9']*
+let int_literal = ['0'-'9'] ['0'-'9']*
 let blank = [' ' '\t']+
 let newline = ('\r'* '\n')
 let identifier = ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_' '\'']*

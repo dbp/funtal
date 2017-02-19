@@ -82,9 +82,9 @@ f_type:
 f_simple_expression:
 | x=f_term_variable { F.EVar x }
 | LPAREN RPAREN { F.EUnit }
-| n=int { F.EInt n }
+| n=nat { F.EInt n }
 | es=tuple(f_expression) { F.ETuple es }
-| PI n=int LPAREN e=f_expression RPAREN { F.EPi (n, e) }
+| PI n=nat LPAREN e=f_expression RPAREN { F.EPi (n, e) }
 | FT LBRACKET tau=f_type COMMA sigma=stack_typing_annot RBRACKET c=component
   { F.EBoundary (tau, sigma, c) }
 | LPAREN e=f_expression RPAREN { e }
@@ -94,6 +94,7 @@ f_app_expression:
 | e=f_simple_expression args=nonempty_list(f_simple_expression) { F.EApp (e, args) }
 
 f_arith_expression:
+| MINUS n=nat { F.EInt (-n) }
 | e1=f_arith_expression op=infixop e2=f_arith_expression { F.EBinop (e1, op, e2) }
 | e=f_app_expression { e }
 
@@ -149,13 +150,14 @@ word_value: w=small_value { lower_value w }
 simple_small_value:
 | LPAREN u=small_value RPAREN { u }
 | LPAREN RPAREN { UW WUnit }
-| n=int { UW (WInt n) }
+| n=nat { UW (WInt n) }
 | l=location { UW (WLoc l) }
 | r=register { UR r }
 | p=pack(small_value)
   { let (tau, u, alpha, tau') = p in UPack (tau, u, alpha, tau') }
 
 small_value:
+| MINUS n=nat { UW (WInt (-n)) }
 | u=simple_small_value { u }
 | f=fold(small_value)
   { let (alpha, tau, u) = f in UFold (alpha, tau, u) }
@@ -221,7 +223,7 @@ stack_typing:
 
 return_marker:
 | r=register { QR r }
-| i=int { QI i }
+| i=nat { QI i }
 | epsilon=return_marker_variable { QEpsilon epsilon }
 | END LBRACE tau=value_type SEMICOLON sigma=stack_typing RBRACE
   { QEnd (tau, sigma) }
@@ -281,19 +283,19 @@ single_instruction:
   { Ild (rd, rs, i) }
 | ST rd=register i=bracketpos COMMA rs=register
   { Ist (rd, i, rs) }
-| RALLOC rd=register COMMA n=int
+| RALLOC rd=register COMMA n=nat
   { Iralloc (rd, n) }
-| BALLOC rd=register COMMA n=int
+| BALLOC rd=register COMMA n=nat
   { Iballoc (rd, n) }
 | MV rd=register COMMA u=small_value
   { Imv (rd, u) }
-| SALLOC n=int
+| SALLOC n=nat
   { Isalloc n }
-| SFREE n=int
+| SFREE n=nat
   { Isfree n }
-| SLD rd=register COMMA i=int
+| SLD rd=register COMMA i=nat
   { Isld (rd, i) }
-| SST i=int COMMA rs=register
+| SST i=nat COMMA rs=register
   { Isst (i, rs) }
 | UNPACK LANGLE alpha=type_variable COMMA rd=register RANGLE COMMA u=small_value
   { Iunpack (alpha, rd, u) }
@@ -334,9 +336,11 @@ identifier:
 
 bigdot: TIMES { () }
 
-int: n=INTEGER { n }
+nat:
+| n=INTEGER { n }
+
 bracereg: LBRACE r=register RBRACE { r }
-bracketpos: LBRACKET i=int RBRACKET { i }
+bracketpos: LBRACKET i=nat RBRACKET { i }
 
 tuple(elem):
 | LANGLE elems=separated_list(COMMA, elem) RANGLE { elems }
