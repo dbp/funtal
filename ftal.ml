@@ -1990,27 +1990,49 @@ end = struct
     | TRec(a,t) -> nest 2 (!^"mu " ^^ !^a ^^ dot ^^ p_t t)
     | TTuple ts -> nest 2 (langle ^^ group (separate_map (comma ^^ break 1) p_t ts) ^^ rangle)
 
-  and p_exp (e : exp) : document =
-    nest 2 (match e with
+  and p_simple_exp = function
     | EVar e -> !^e
     | EUnit -> lparen ^^ rparen
     | EInt n -> !^(string_of_int n)
-    | EBinop(e1,op,e2) -> lparen ^^ p_exp e1 ^^ rparen ^^ p_binop op ^^
-                          lparen ^^ p_exp e2 ^^ rparen
-    | EIf0(et,e1,e2) -> !^"if0" ^^ space ^^ p_exp et ^^ break 1 ^^ p_exp e1 ^^ break 1 ^^ p_exp e2
+    | ETuple(es) -> langle ^^ group (separate_map (comma ^^ break 1) p_exp es) ^^ rangle
+    | EPi(n,e) -> !^"pi" ^^ space ^^ !^(string_of_int n) ^^ lparen ^^ p_exp e ^^ rparen
     | ELam(ps, e) -> lparen ^^ !^"\\(" ^^ separate_map (comma ^^ space) (fun (p,t) -> !^p ^^ colon ^^ p_t t) ps ^^ !^")." ^^ break 1 ^^ p_exp e ^^ rparen
     | ELamMod(ps,sin,sout,e) -> lparen ^^ !^"\\" ^^ lbracket ^^ TALP.p_sigma_prefix sin ^^ rbracket ^^ lbracket ^^ TALP.p_sigma_prefix sout ^^ rbracket ^^ !^"(" ^^ separate_map (comma ^^ space) (fun (p,t) -> !^p ^^ colon ^^ p_t t) ps ^^ !^")." ^^ break 1 ^^ p_exp e ^^ rparen
-    | EApp(e,es) -> lparen ^^ p_exp e ^^ space ^^ group (separate_map (break 1) p_exp es) ^^ rparen
-    | EFold(a,t,e) -> !^"fold " ^^ lparen ^^ p_t (TRec (a,t)) ^^ rparen ^^ space ^^ p_exp e
-    | EUnfold(e) -> !^"unfold " ^^ p_exp e
-    | ETuple(es) -> langle ^^ group (separate_map (comma ^^ break 1) p_exp es) ^^ rangle
-    | EPi(n,e) -> !^"pi." ^^ !^(string_of_int n) ^^ lparen ^^ p_exp e ^^ rparen
     | EBoundary(t,ms,c) ->
       !^"FT" ^^ lbracket ^^ p_t t ^^ comma ^^ space ^^
       (match ms with
        | None -> !^"?"
-       | Some s -> TALP.p_s s) ^^ rbracket ^^ break 0 ^^ TALP.p_component c)
+       | Some s -> TALP.p_s s) ^^ rbracket ^^ break 0 ^^ TALP.p_component c
+    | e -> group (lparen ^^ p_exp e ^^ rparen)
 
+  and p_app_exp = function
+    | EApp(e,es) ->
+      p_simple_exp e
+      ^^ space
+      ^^ group (separate_map (break 1) p_simple_exp es)
+    | e -> p_simple_exp e
+
+  and p_mul_exp = function
+    | EBinop(e1, (BTimes as op), e2) -> p_simple_exp e1 ^^ p_binop op ^^ p_simple_exp e2
+    | e -> p_app_exp e
+
+  and p_sum_exp = function
+    | EBinop(e1, (BPlus as op), e2) -> p_sum_exp e1 ^^ p_binop op ^^ p_sum_exp e2
+    | EBinop(e1, (BMinus as op), e2) -> p_sum_exp e1 ^^ p_binop op ^^ p_mul_exp e2
+    | e -> p_mul_exp e
+
+  and p_arith_exp e = p_sum_exp e
+
+  and p_exp (e : exp) : document =
+    nest 2 (match e with
+    | EIf0(et,e1,e2) ->
+      !^"if0" ^^ space ^^ p_simple_exp et
+      ^^ break 1 ^^ p_simple_exp e1
+      ^^ break 1 ^^ p_simple_exp e2
+    | EFold(a,t,e) -> !^"fold " ^^ lparen ^^ p_t (TRec (a,t)) ^^ rparen ^^ space ^^ p_exp e
+    | EUnfold(e) -> !^"unfold " ^^ p_exp e
+    | e -> p_sum_exp e
+  )
 
   and p_binop (b : binop) : document =
     match b with
@@ -2023,7 +2045,10 @@ end = struct
     | CHole -> !^"[.]"
     | CBinop1 (c,o,e) -> p_context c ^^ space ^^ p_binop o ^^ space ^^ p_exp e
     | CBinop2 (e,o,c) -> p_exp e ^^ space ^^ p_binop o ^^ space ^^ p_context c
-    | CIf0 (c,e1,e2) -> !^"if0 " ^^ p_context c ^^ space ^^ p_exp e1 ^^ space ^^ p_exp e2
+    | CIf0 (c,e1,e2) ->
+      !^"if0 " ^^ p_context c ^^ space
+      ^^ lparen ^^ p_exp e1 ^^ rparen ^^ space
+      ^^ lparen ^^ p_exp e2 ^^ rparen
     | CApp1 (c,es) -> lparen ^^ p_context c ^^ space ^^ group (separate_map (break 1) p_exp es) ^^ rparen
     | CAppn (f,es1,c,es2) -> lparen ^^ p_exp f ^^ space ^^
                              group (separate_map (break 1) p_exp es1 ^^
