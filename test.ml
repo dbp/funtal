@@ -1,12 +1,41 @@
 open OUnit2;;
 open Ftal;;
 open Examples;;
-
 let f_expr str = Parse.parse_string Parser.f_expression_eof str
 let f_type str = Parse.parse_string Parser.f_type_eof str
+
+let roundtrip ?source comp =
+  let orig, roundtrip =
+    Filename.temp_file ~temp_dir:"." "orig" ".ftal",
+    Filename.temp_file ~temp_dir:"." "roundtrip" ".ftal" in
+  let write_source () =
+    match source with
+      | None -> ()
+      | Some str ->
+        let chan = open_out orig in
+        output_string chan str;
+        flush chan;
+        close_out chan;
+  in
+  let write_result () =
+    let doc = TALP.p_component comp in
+    let chan = open_out roundtrip in
+    PPrintEngine.ToChannel.pretty 0.8 80 chan doc;
+    flush chan;
+    close_out chan;
+  in
+  write_source ();
+  write_result ();
+  match Parse.parse_file Parser.component_eof roundtrip with
+  | exception exn ->
+    Printf.eprintf "%!\nRountrip failure %S %S%!\n" orig roundtrip;
+    comp
+  | roundtripped_comp ->
+    Sys.remove orig; Sys.remove roundtrip;
+    roundtripped_comp
+
 let tal_comp str =
-  let comp = Parse.parse_string Parser.component_eof str in
-  comp
+  roundtrip ~source:str (Parse.parse_string Parser.component_eof str)
 
 let empty = ([],[],[])
 

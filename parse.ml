@@ -73,4 +73,4 @@ let parse_file parse_fun path =
   try parse parse_fun lexbuf
   with exn ->
     report_error lexbuf exn;
-    exit 1
+    raise exn
