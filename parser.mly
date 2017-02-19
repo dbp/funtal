@@ -185,12 +185,13 @@ heap_value_type:
 | taus=tuple(value_type) { PTuple taus }
 
 heap_value:
-| CODE
+| mut=mutability_annotation
+  CODE
   delta=type_env
   LBRACE chi=simple_register_typing SEMICOLON sigma=stack_typing
   RBRACE q=return_marker
   DOT i=instruction_sequence
-  { (Box, HCode (delta, chi, sigma, q, i)) }
+  { (mut, HCode (delta, chi, sigma, q, i)) }
 | mut=mutability_annotation ws=tuple(word_value) { (mut, HTuple ws) }
 
   mutability_annotation:

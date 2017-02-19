@@ -371,11 +371,11 @@ let call_tl =
     tal_comp
       "([mv ra, lh;
          call l {*, end{int; *}}],
-        [l -> code ['z, 'e]
+        [l -> box code ['z, 'e]
                {ra: box forall[]. {r1:int; 'z} 'e; 'z} ra.
                [mv r1, 10;
                 ret ra {r1}],
-         lh -> code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
+         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
 
 let test_call_tl _ =
   assert_equal
