@@ -1,10 +1,41 @@
 open OUnit2;;
 open Ftal;;
 open Examples;;
-
 let f_expr str = Parse.parse_string Parser.f_expression_eof str
 let f_type str = Parse.parse_string Parser.f_type_eof str
-let tal_comp str = Parse.parse_string Parser.component_eof str
+
+let roundtrip ?source comp =
+  let orig, roundtrip =
+    Filename.temp_file ~temp_dir:"." "orig" ".ftal",
+    Filename.temp_file ~temp_dir:"." "roundtrip" ".ftal" in
+  let write_source () =
+    match source with
+      | None -> ()
+      | Some str ->
+        let chan = open_out orig in
+        output_string chan str;
+        flush chan;
+        close_out chan;
+  in
+  let write_result () =
+    let doc = TALP.p_component comp in
+    let chan = open_out roundtrip in
+    PPrintEngine.ToChannel.pretty 0.8 80 chan doc;
+    flush chan;
+    close_out chan;
+  in
+  write_source ();
+  write_result ();
+  match Parse.parse_file Parser.component_eof roundtrip with
+  | exception exn ->
+    Printf.eprintf "%!\nRountrip failure %S %S%!\n" orig roundtrip;
+    comp
+  | roundtripped_comp ->
+    Sys.remove orig; Sys.remove roundtrip;
+    roundtripped_comp
+
+let tal_comp str =
+  roundtrip ~source:str (Parse.parse_string Parser.component_eof str)
 
 let empty = ([],[],[])
 
@@ -21,10 +52,10 @@ let test1_ty _ = assert_equal
 let test_parse1 _ = assert_equal
   (Parse.parse_string Parser.component_eof {|
 (
-     mv r1, 1;
-     add r1, r1, 1;
-     halt int, * {r1}
-;
+     [mv r1, 1;
+      add r1, r1, 1;
+      halt int, * {r1}]
+,
      []
 )
 |})
@@ -46,15 +77,15 @@ let test_parse3 _ = assert_equal
 let test_parse_variables_1 _ =
   let open TAL in
   assert_equal
-    (Parse.parse_string Parser.type_env_eof "[], 'a1, 'e2, 'za3")
+    (Parse.parse_string Parser.type_env_eof "[a1, e2, za3]")
     [DAlpha "a1"; DEpsilon "e2"; DZeta "za3"]
 
 let test2 _ = assert_equal
     (F.stepn 10 (empty, F.EBoundary (F.TInt, None,
                                      (tal_comp
-                                        "(mv r1, 1;
+                                        "([mv r1, 1;
                                           add r1, r1, 1;
-                                          halt int, * {r1};
+                                          halt int, * {r1};],
                                           [])"))))
     (([], [("r1", TAL.WInt 2)], []), F.EInt 2)
 
@@ -72,14 +103,14 @@ let test_mv_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC (tal_comp "(mv r1, 1; halt int, * {r1}; [])")))
+       (FTAL.TC (tal_comp "([mv r1, 1; halt int, * {r1};], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_aop_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC (tal_comp "(mv r1, 1; add r2, r1, 2; halt int, * {r2}; [])")))
+       (FTAL.TC (tal_comp "([mv r1, 1; add r2, r1, 2; halt int, * {r2}], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let assert_raises_typeerror (f : unit -> 'a) : unit =
@@ -90,19 +121,19 @@ let test_aop_ty_exc _ =
   assert_raises_typeerror
     (fun _ -> FTAL.tc
         (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-        (FTAL.TC (tal_comp "(mv r1, (); add r2, r1, 2; halt int, * {r2}; [])")))
+        (FTAL.TC (tal_comp "([mv r1, (); add r2, r1, 2; halt int, * {r2}], [])")))
 
 let test_aop_ty_exc2 _ =
   assert_raises_typeerror
     (fun _ -> FTAL.tc
         (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-        (FTAL.TC (tal_comp "(mv r1, 1; add r2, r1, (); halt int, * {r2}; [])")))
+        (FTAL.TC (tal_comp "([mv r1, 1; add r2, r1, (); halt int, * {r2}], [])")))
 
 let test_aop_ty_exc3 _ =
   assert_raises_typeerror
     (fun _ -> FTAL.tc
         (FTAL.default_context (TAL.QR "r2"))
-        (FTAL.TC (tal_comp "(mv r1, 1; add r2, r1, 1; halt int, * {r2}; [])")))
+        (FTAL.TC (tal_comp "([mv r1, 1; add r2, r1, 1; halt int, * {r2}], [])")))
 
 
 let test_import_ty _ =
@@ -110,7 +141,7 @@ let test_import_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC
-          (tal_comp "(import r1, 'z as *, int TF{10}; halt int, * {r1}; [])")))
+          (tal_comp "([import r1, z as *, int TF{10}; halt int, * {r1}], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 
@@ -119,7 +150,7 @@ let test_import_ty_exc _ =
     (fun _ -> FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC
-          (tal_comp "(import r1, 'z as *, int TF{()}; halt int, * {r1}; [])")))
+          (tal_comp "([import r1, z as *, int TF{()}; halt int, * {r1}], [])")))
 
 let test_import_ty_exc2 _ =
   assert_raises_typeerror
@@ -144,20 +175,20 @@ let test_import_stk_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
-       (FTAL.TC (tal_comp "( salloc 3;
-                             import r1, 'zz as unit::*, int TF{
-                               FT [int, unit::'zz] (
-                                 protect unit, 'z;
-                                 mv r1, 10;
-                                 sfree 1;
-                                 halt int, 'z {r1}
-                               ;
+       (FTAL.TC (tal_comp "([salloc 3;
+                             import r1, z' as unit::*, int TF{
+                               FT [int, unit::z'] (
+                                 [protect unit, z;
+                                  mv r1, 10;
+                                  sfree 1;
+                                  halt int, z {r1}]
+                               ,
                                  []
                                )
                              };
                              sfree 1;
-                             halt int, unit::* {r1}
-                           ; [] )")))
+                             halt int, unit::* {r1};
+                           ], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TUnit])
 
 let test_sst_ty _ =
@@ -172,8 +203,9 @@ let test_sld_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete [TUnit]))))
-       (FTAL.TC (tal_comp "(mv r1, 1; salloc 1; sld r2, 0; halt unit, unit::* {r2};
-                            [])")))
+       (FTAL.TC (tal_comp
+                   "([mv r1, 1; salloc 1; sld r2, 0; halt unit, unit::* {r2}],
+                     [])")))
     (FTAL.TT TAL.TUnit, TAL.SConcrete [TAL.TUnit])
 
 let test_ld_ty _ =
@@ -181,13 +213,11 @@ let test_ld_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
-                   "(
-                     mv r2, l;
-                     ld r1, r2[0];
-                     halt int, * {r1}
-                   ;
-                     [], l -> box <1>
-                   )")))
+                   "([
+                       mv r2, l;
+                       ld r1, r2[0];
+                       halt int, * {r1};
+                    ], [l -> box <1>])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_ld2_ty _ =
@@ -195,12 +225,12 @@ let test_ld2_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
-                   "(
-                     mv r2, l;
-                     ld r1, r2[0];
-                     halt int, * {r1}
-                   ;
-                     [], l -> ref <1>
+                   "([
+                       mv r2, l;
+                       ld r1, r2[0];
+                       halt int, * {r1};
+                     ],
+                     [l -> ref <1>]
                    )")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
@@ -209,13 +239,13 @@ let test_st_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
-                   "(
+                   "([
                      mv r1, l;
                      mv r2, 10;
                      st r1[0], r2;
-                     halt int, * {r2}
-                   ;
-                     [], l -> ref <1>
+                     halt int, * {r2};
+                     ],
+                     [l -> ref <1>]
                    )")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
@@ -230,18 +260,16 @@ let test_parse4 _ = assert_equal
           Ihalt (TInt, SConcrete [], "r3")],
          [])
     (tal_comp
-       "(
-         mv r1, 1;
-         salloc 1;
-         sst 0, r1;
-         ralloc r2, 1;
-         mv r1, 10;
-         st r2[0], r1;
-         ld r3, r2[0];
-         halt int, * {r3}
-       ;
-         []
-       )")
+       "([
+           mv r1, 1;
+           salloc 1;
+           sst 0, r1;
+           ralloc r2, 1;
+           mv r1, 10;
+           st r2[0], r1;
+           ld r3, r2[0];
+           halt int, * {r3};
+       ], [])")
 
 
 let test_ralloc_ty _ =
@@ -249,18 +277,16 @@ let test_ralloc_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
-                   "(
-                     mv r1, 1;
-                     salloc 1;
-                     sst 0, r1;
-                     ralloc r2, 1;
-                     mv r1, 10;
-                     st r2[0], r1;
-                     ld r3, r2[0];
-                     halt int, * {r3}
-                   ;
-                     []
-                   )")))
+                   "([
+                       mv r1, 1;
+                       salloc 1;
+                       sst 0, r1;
+                       ralloc r2, 1;
+                       mv r1, 10;
+                       st r2[0], r1;
+                       ld r3, r2[0];
+                       halt int, * {r3};
+                     ], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_balloc_ty _ =
@@ -268,16 +294,14 @@ let test_balloc_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
        (FTAL.TC (tal_comp
-                   "(
-                     mv r1, 1;
-                     salloc 2;
-                     sst 0, r1;
-                     balloc r2, 1;
-                     ld r3, r2[0];
-                     halt int, unit::* {r3}
-                   ;
-                     []
-                   )")))
+                   "([
+                       mv r1, 1;
+                       salloc 2;
+                       sst 0, r1;
+                       balloc r2, 1;
+                       ld r3, r2[0];
+                       halt int, unit::* {r3}
+                     ], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TUnit])
 
 let test_balloc_ty_exc _ =
@@ -285,17 +309,15 @@ let test_balloc_ty_exc _ =
     (fun _ -> FTAL.tc
         (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
         (FTAL.TC (tal_comp
-                    "(
-                      mv r1, 1;
-                      salloc 2;
-                      sst 0, r1;
-                      balloc r2, 1;
-                      st r2[0], r1;
-                      ld r3, r2[0];
-                      halt int, unit::* {r3}
-                    ;
-                      []
-                    )")))
+                    "([
+                        mv r1, 1;
+                        salloc 2;
+                        sst 0, r1;
+                        balloc r2, 1;
+                        st r2[0], r1;
+                        ld r3, r2[0];
+                        halt int, unit::* {r3}
+                      ], [])")))
 
 (* NOTE(dbp 2017-02-17): Writing a "small" example using unpack
    is actually quite hard, because we really need large values &
@@ -307,14 +329,23 @@ let test_unpack_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
        (FTAL.TC (tal_comp
-                   "(
-                     unpack <'a, r2>, pack <int, 1> as exists 'a. 'a;
-                     mv r1, ();
-                     halt unit, * {r1}
-                   ;
-                     []
-                   )")))
+                   "([unpack <a, r2>, pack <int, 1> as exists a. a;
+                      mv r1, ();
+                      halt unit, * {r1}],
+                     [])")))
     (FTAL.TT TAL.TUnit, TAL.SConcrete [])
+
+let test_parse5 _ =
+  (* check that parentheses are allowed: unpack <a, r>, (u); *)
+  assert_equal
+    (tal_comp
+       "([unpack <a, r2>, pack <int, 1> as exists a. a;
+          mv r1, ();
+          halt unit, * {r1}], [])")
+    (tal_comp
+       "([unpack <a, r2>, (pack <int, 1> as exists a. a);
+          mv r1, ();
+          halt unit, * {r1}], [])")
 
 
 let test_unpack_ty_exc _ =
@@ -322,13 +353,9 @@ let test_unpack_ty_exc _ =
     (fun _ -> FTAL.tc
         (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
         (FTAL.TC (tal_comp
-                    "(
-                      unpack <'a, r2>, 10;
-                      mv r1, ();
-                      halt unit, * {r1}
-                    ;
-                      []
-                    )")))
+                    "([unpack <a, r2>, 10;
+                       mv r1, ();
+                       halt unit, * {r1}], [])")))
 
 (* NOTE(dbp 2017-02-17): Like unpack, non-trivial unfold really needs
    large values. But we can do trivial ones easily! *)
@@ -337,12 +364,9 @@ let test_unfold_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
-                   "(
-                     unfold r1, fold mu 'a. int 1;
-                     halt int, * {r1}
-                   ;
-                     []
-                   )")))
+                   "([unfold r1, fold mu a. int 1;
+                      halt int, * {r1}],
+                     [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_unfold_ty_exc _ =
@@ -350,27 +374,20 @@ let test_unfold_ty_exc _ =
     (fun _ -> FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
-                   "(
-                     unfold r1, 1;
-                     halt int, * {r1}
-                   ;
-                     []
-                   )")))
+                   "([unfold r1, 1;
+                      halt int, * {r1};]
+                   , [])")))
 
 let call_tl =
   F.EBoundary (F.TInt, None,
     tal_comp
-      "(
-        mv ra, lh;
-        call l {*, end{int; *}}
-      ;
-        [],
-        l -> code [[], 'z, 'e]
-               {[], ra: box forall[[]]. {[], r1:int; 'z} 'e; 'z} ra.
-               mv r1, 10;
-               ret ra {r1},
-        lh -> code [[]] {[], r1:int; *} end{int; *}. halt int, * {r1}
-      )")
+      "([mv ra, lh;
+         call l {*, end{int; *}}],
+        [l -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; z} ra.
+               [mv r1, 10;
+                ret ra {r1}],
+         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
 
 let test_call_tl _ =
   assert_equal
@@ -530,12 +547,13 @@ let suite = "FTAL evaluations" >:::
             [
               "F: 1 + 1 = 2" >:: test1;
               "F: 1 + 1 : int" >:: test1_ty;
-              "F: 1 + 1 = 2" >:: test2;
+              "F: 1 + 1 = 2 (2)" >:: test2;
               "F: (\\x -> x + x) 1 = 2" >:: test_f_app;
               "parse: 1 + 1 = 2" >:: test_parse1;
               "parse (2)" >:: test_parse2;
               "parse (3)" >:: test_parse3;
               "parse (4)" >:: test_parse4;
+              "parse (5)" >:: test_parse5;
               "parse type-level variables" >:: test_parse_variables_1;
               "F: fact 3 = 6" >:: test_factorial_f;
               "F: fact : int -> int" >:: test_factorial_f_ty;

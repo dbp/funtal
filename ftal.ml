@@ -1817,6 +1817,11 @@ end = struct
   open PPrint;;
   open TAL
 
+  let p_sequence (ds: document list) =
+    lbracket ^^ align (group (separate (comma ^^ break 1) ds)) ^^ rbracket
+  and p_sequence_map f xs =
+    lbracket ^^ align (group (separate_map (comma ^^ break 1) f xs)) ^^ rbracket
+
   let rec p_w (w : w) : document =
     match w with
     | WUnit -> lparen ^^ rparen
@@ -1902,11 +1907,14 @@ end = struct
     | Iaop(a,r1,r2,u) -> p_aop a ^^ space ^^ !^r1 ^^ comma ^^ space ^^ !^r2 ^^ comma ^^ space ^^ p_u u
     | Ibnz(r,u) -> !^"bnz " ^^ !^r ^^ comma ^^ space ^^ p_u u
     | Ild(r1,r2,n) -> !^"ld " ^^ !^r1 ^^ comma ^^ space ^^ !^r2 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket
-    | Ist(r1,n,r2) -> !^"st " ^^ !^r1 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket ^^ comma ^^ !^r2
+    | Ist(r1,n,r2) -> !^"st " ^^ !^r1 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket ^^ comma ^^ space ^^ !^r2
     | Iralloc(r,n) -> !^"ralloc " ^^ !^r ^^ comma ^^ space  ^^ !^(string_of_int n)
     | Iballoc(r,n) -> !^"balloc " ^^ !^r ^^ comma ^^ !^(string_of_int n)
     | Imv(r,u) -> !^"mv " ^^ !^r ^^ comma ^^ space  ^^ p_u u
-    | Iunpack(a,r,u) -> !^"unpack " ^^ langle ^^ !^a ^^ comma ^^ space ^^ !^r ^^ rangle ^^ p_u u
+    | Iunpack(a,r,u) ->
+      !^"unpack "
+      ^^ langle ^^ !^a ^^ comma ^^ space ^^ !^r ^^ rangle ^^ comma ^^ space
+      ^^ p_u u
     | Iunfold(r,u) -> !^"unfold " ^^ !^r ^^ comma ^^ space ^^ p_u u
     | Isalloc n -> !^"salloc " ^^ !^(string_of_int n)
     | Isfree  n -> !^"sfree " ^^ !^(string_of_int n)
@@ -1917,7 +1925,11 @@ end = struct
     | Iret(r1,r2) -> !^"ret " ^^ !^r1 ^^ space ^^ lbrace ^^ !^r2 ^^ rbrace
     | Ihalt(t,s,r) -> !^"halt " ^^ p_t t ^^ comma ^^ space ^^ p_s s ^^ space ^^ lbrace ^^ !^r ^^ rbrace
     | Iprotect(sp, z) -> !^"protect " ^^ p_sigma_prefix sp ^^ comma ^^ space ^^ !^z
-    | Iimport(r,z,s,t,e) -> !^"import " ^^ !^r ^^ comma ^^ space ^^ !^z ^^ !^" as " ^^ p_s s ^^ comma ^^ space ^^ FP.p_t t ^^ lbrace ^^ FP.p_exp e ^^ rbrace)
+    | Iimport(r,z,s,t,e) ->
+      !^"import "
+      ^^ !^r ^^ comma ^^ space
+      ^^ !^z ^^ space ^^ !^"as" ^^ space ^^ p_s s ^^ comma ^^ space
+      ^^ FP.p_t t ^^ space ^^ !^ "TF" ^^ lbrace ^^ FP.p_exp e ^^ rbrace)
   and p_instruction_sequence (is : instr list) : document =
     lbracket ^^ align (group (separate_map (semi ^^ break 1) p_instr is ^^ rbracket))
   and p_aop (a : aop) : document =
@@ -1926,13 +1938,12 @@ end = struct
     | Sub -> !^"sub"
     | Mult -> !^"mul"
   and p_regm (m : regm) : document =
-    align (separate_map (comma ^^ break 1)
-              (fun (r,w) -> !^r ^^ !^" -> " ^^ nest 2 (align (p_w w)))
-              m)
+    let p_binding (r, w) = !^r ^^ !^" -> " ^^ nest 2 (align (p_w w)) in
+    p_sequence_map p_binding m
   and p_heapm (m : heapm) : document =
-    align (separate_map (comma ^^ break 1)
-              (fun (l,(p,h)) -> !^l ^^ !^" -> " ^^ nest 2 (align (p_mut p ^^ space ^^  p_h h)))
-              m)
+    let p_binding (l, (p, h)) =
+      !^l ^^ !^" -> " ^^ nest 2 (align (p_mut p ^^ space ^^  p_h h)) in
+    p_sequence_map p_binding m
   and p_stackm (m : stackm) : document =
     if List.length m > 0 then
       nest 2 (separate_map (!^" ::" ^^ break 1) p_w m ^^ !^" :: *")
