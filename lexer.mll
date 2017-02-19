@@ -76,7 +76,6 @@ rule token = parse
   | "unfold" { UNFOLD }
   | "if0" { IF0 }
   | "pi" { PI }
-  | "*" { BIGDOT }
   | "+" { PLUS }
   | "-" { MINUS }
   | "*" { TIMES }

@@ -8,7 +8,7 @@
 %token FORALL EXISTS MU
 %token UNIT INT REF BOX
 %token LANGLE RANGLE LBRACKET RBRACKET LBRACE RBRACE LPAREN RPAREN
-%token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW QUESTION
+%token DOT COMMA COLON SEMICOLON DOUBLECOLON ARROW QUESTION
 %token LAMBDA IF0 PI
 %token FT TF
 %token<string> A_IDENTIFIER Z_IDENTIFIER E_IDENTIFIER OTHER_IDENTIFIER
@@ -215,7 +215,7 @@ stack_typing:
   stack_typing_end:
   | zeta=stack_typing_variable
     { (fun prefix -> SAbstract (prefix, zeta)) }
-  | BIGDOT
+  | bigdot
     { (fun prefix -> SConcrete prefix) }
 
 return_marker:
@@ -330,6 +330,8 @@ identifier:
 | id=E_IDENTIFIER { id }
 | id=Z_IDENTIFIER { id }
 | id=OTHER_IDENTIFIER { id }
+
+bigdot: TIMES { () }
 
 int: n=INTEGER { n }
 bracereg: LBRACE r=register RBRACE { r }
