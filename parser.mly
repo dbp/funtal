@@ -245,7 +245,10 @@ register_file:
 stack: ws=list(w=word_value DOUBLECOLON {w}) NIL { ws }
 
 instruction_sequence:
-| i=single_instruction SEMICOLON seq=instruction_sequence
+LBRACKET i=instruction_sequence_ option(SEMICOLON) RBRACKET { i }
+
+instruction_sequence_:
+| i=single_instruction SEMICOLON seq=instruction_sequence_
   { i :: seq }
 | JMP u=small_value
   { [Ijmp u] }
@@ -295,9 +298,8 @@ single_instruction:
   | MUL { Mult }
 
 component:
-| LPAREN i=instruction_sequence SEMICOLON h=heap_fragment RPAREN
+| LPAREN i=instruction_sequence COMMA h=heap_fragment RPAREN
   { (i, h) }
-
 
   type_variable:
   | alpha=TYPE_VARIABLE { alpha }
@@ -321,3 +323,15 @@ component:
   left_empty_list(elem):
   | EMPTY { [] }
   | EMPTY COMMA elems=separated_list(COMMA, elem) { elems }
+
+  %inline braced(elem):
+  | LBRACE x=elem RBRACE {x}
+
+  %inline bracketed(elem):
+  | LBRACKET x=elem RBRACKET {x}
+
+  %inline parened(elem):
+  | LPAREN x=elem RPAREN {x}
+
+  %inline angled(elem):
+  | LANGLE x=elem RANGLE {x}
