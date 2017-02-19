@@ -920,6 +920,7 @@ end = struct
     | CPi of int * context
     | CBoundary of t * TAL.sigma option * TAL.context
   [@@deriving show]
+  let show_context c = Printer.(r (FP.p_context c))
 
   type env = (string * t) list
 
@@ -1498,6 +1499,7 @@ end = struct
       CHoleC
   [@@deriving show]
 
+  let show_context c = Printer.(r (TALP.p_context c))
 
   let un_ti = function
     | F.TI is -> is
@@ -1895,6 +1897,7 @@ end and TALP : sig
     val p_heapm : TAL.heapm -> document
     val p_component : TAL.component -> document
     val p_instruction_sequence : TAL.instr list -> document
+    val p_context : TAL.context -> document
 end = struct
   open PPrint;;
   open TAL
@@ -2011,6 +2014,11 @@ end = struct
     separate_map (!^" ::" ^^ break 1) p_w m ^^ !^" :: *"
   and p_component ((is,h) : component) : document =
     lparen ^^ p_instruction_sequence is ^^ comma ^^ break 1 ^^ p_heapm h ^^ rparen
+  and p_context (c : context) : document =
+    match c with
+    | CComponentEmpty CHoleI | CComponentHeap CHoleC -> !^"[.]"
+    | CComponentEmpty (CImportI (r,z,s,t,c,is)) ->
+      !^"import " ^^ !^r ^^ comma ^^ !^z ^^ !^" as " ^^ p_s s ^^ comma ^^ FP.p_t t ^^ lbrace ^^ FP.p_context c ^^ rbrace ^^ semi ^^ space ^^ separate_map (semi ^^ break 1) p_instr is
 
   and pack_h t' d a t =
     !^"pack " ^^
@@ -2027,6 +2035,7 @@ end and FP : sig
     open PPrint
     val p_t : F.t -> document
     val p_exp : F.exp -> document
+    val p_context : F.context -> document
 
 end = struct
   open PPrint;;
@@ -2069,5 +2078,31 @@ end = struct
     | BPlus -> !^"+"
     | BMinus -> !^"-"
     | BTimes -> !^"*"
+
+  and p_context (c : context) : document =
+    match c with
+    | CHole -> !^"[.]"
+    | CBinop1 (c,o,e) -> p_context c ^^ space ^^ p_binop o ^^ space ^^ p_exp e
+    | CBinop2 (e,o,c) -> p_exp e ^^ space ^^ p_binop o ^^ space ^^ p_context c
+    | CIf0 (c,e1,e2) -> !^"if0 " ^^ p_context c ^^ space ^^ p_exp e1 ^^ space ^^ p_exp e2
+    | CApp1 (c,es) -> lparen ^^ p_context c ^^ space ^^ group (separate_map (break 1) p_exp es) ^^ rparen
+    | CAppn (f,es1,c,es2) -> lparen ^^ p_exp f ^^ space ^^
+                             group (separate_map (break 1) p_exp es1 ^^
+                                    (break 1) ^^ p_context c ^^ (break 1) ^^
+                                    separate_map (break 1) p_exp es2) ^^
+                             rparen
+    | CFold (a,t,c) -> !^"fold " ^^ lparen ^^ p_t (TRec (a,t)) ^^ rparen ^^ space ^^ p_context c
+    | CUnfold c -> !^"unfold " ^^ lparen ^^ p_context c ^^ rparen
+    | CTuple (es1, c, es2) -> langle ^^ group (separate_map (break 1) p_exp es1 ^^
+                                               (break 1) ^^ p_context c ^^ (break 1) ^^
+                                               separate_map (break 1) p_exp es2) ^^
+                              rangle
+    | CPi (n, c) -> !^"pi." ^^ !^(string_of_int n) ^^ lparen ^^ p_context c ^^ rparen
+    | CBoundary (t,ms,c) ->
+      !^"FT" ^^ lbracket ^^ p_t t ^^ comma ^^
+      (match ms with
+       | None -> !^"?"
+       | Some s -> TALP.p_s s) ^^ rbracket ^^ TALP.p_context c
+
 
 end

@@ -18,7 +18,7 @@ let _ =
         let _ = set_text "focus" "" in
         ()
       | Some (c, f) ->
-        let _ = set_text "context" (Ftal.F.show_exp !e) in
+        let _ = set_text "context" (Ftal.F.show_context c) in
         let _ = set_text "focus" (Ftal.F.show_ft f) in
         ()
     in
