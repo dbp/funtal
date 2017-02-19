@@ -543,6 +543,30 @@ let test_ft_factorial_t_ty _ =
        (FTAL.FC e))
     (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 
+let test_examples _ =
+  let assert_roundtrip_f fexpr =
+    let pretty = Ftal.F.show_exp fexpr in
+    let reparsed = Parse.parse_string Parser.f_expression_eof pretty in
+    assert_equal fexpr reparsed in
+  let assert_roundtrip_c comp =
+    let pretty =
+      let doc = Ftal.TALP.p_component comp in
+      let buf = Buffer.create 123 in
+      PPrintEngine.ToBuffer.pretty 0.8 80 buf doc;
+      Buffer.contents buf in
+    let reparsed = Parse.parse_string Parser.component_eof pretty in
+    assert_equal comp reparsed in
+  assert_roundtrip_f Examples.factorial_f;
+  assert_roundtrip_f Examples.factorial_t;
+  assert_roundtrip_f Examples.blocks_1;
+  assert_roundtrip_f Examples.blocks_2;
+  assert_roundtrip_f Examples.with_ref;
+  (* (* profiling_1 uses empty applications, which have no syntax *)
+  assert_roundtrip_f Examples.profiling_1;
+  *)
+  assert_roundtrip_c Examples.call_to_call;
+  ()
+
 let suite = "FTAL evaluations" >:::
             [
               "F: 1 + 1 = 2" >:: test1;
@@ -601,6 +625,7 @@ let suite = "FTAL evaluations" >:::
               "PROFILING_1 = 2" >:: test_profiling1;
               (* "PROFILING_1 : int" >:: test_profiling1_ty; *)
               "FT: factorial : int -> int" >:: test_ft_factorial_t_ty;
+              "Example roundtrips" >:: test_examples;
             ]
 
 
