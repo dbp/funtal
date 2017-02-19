@@ -23,6 +23,8 @@ Executable "web"
   MainIs: web.ml
   Install: true
 
+PostBuildCommand: mv _build/web.js artifact/
+
 Executable "driver"
   Path: .
   MainIs: driver.ml

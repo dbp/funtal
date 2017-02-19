@@ -1,3 +1,4 @@
 setup.data
 setup.log
 *.byte
+artifact/web.js
