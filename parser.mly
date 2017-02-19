@@ -32,6 +32,19 @@
 
 %{ open Ftal
    open TAL
+
+   (* NOTE(gasche 2017-02-19): see #5. We merged the syntactic categories of word
+      values and small values, as having both created a lot of conflicts
+      in the grammar. Whenever we want to parse a word value (a small value
+      without registers), we parse a small value then call the [lower_value]
+      function below, which partially projects into word values. *)
+   exception LowerValueError of u
+   let rec lower_value : u -> w = function
+     | UW w -> w
+     | UR _ as u -> raise (LowerValueError u)
+     | UPack (t, u, s, t') -> WPack (t, lower_value u, s, t')
+     | UFold (s, t, u) -> WFold (s, t, lower_value u)
+     | UApp (u, omegas) -> WApp (lower_value u, omegas)
 %}
 
 
@@ -128,20 +141,26 @@ value_type:
   mu_type:
   | MU alpha=type_variable DOT tau=value_type { (alpha, tau) }
 
-simple_word_value:
-| LPAREN RPAREN { WUnit }
-| LPAREN w=word_value RPAREN { w }
-| n=int { WInt n }
-| l=location { WLoc l }
-| p=pack(word_value)
-  { let (tau, w, alpha, tau') = p in WPack (tau, w, alpha, tau') }
+register:
+| r=REGISTER { r }
 
-word_value:
-| w=simple_word_value { w }
-| f=fold(word_value)
-  { let (alpha,tau,w) = f in WFold (alpha, tau, w) }
-| a=app(simple_word_value)
-  { let (w, omega) = a in WApp (w, omega) }
+word_value: w=small_value { lower_value w }
+
+simple_small_value:
+| LPAREN u=small_value RPAREN { u }
+| LPAREN RPAREN { UW WUnit }
+| n=int { UW (WInt n) }
+| l=location { UW (WLoc l) }
+| r=register { UR r }
+| p=pack(small_value)
+  { let (tau, u, alpha, tau') = p in UPack (tau, u, alpha, tau') }
+
+small_value:
+| u=simple_small_value { u }
+| f=fold(small_value)
+  { let (alpha, tau, u) = f in UFold (alpha, tau, u) }
+| a=app(simple_small_value)
+  { let (u, omega) = a in UApp (u, omega) }
 
   fold(value):
   | FOLD mu=mu_type v=value
@@ -154,22 +173,6 @@ word_value:
   app(value):
   | v=value LBRACKET omegas=separated_list(COMMA,type_instantiation) RBRACKET
     { (v, omegas) }
-
-register:
-| r=REGISTER { r }
-
-simple_small_value:
-| LPAREN u=small_value RPAREN { u }
-| r=register { UR r }
-| p=pack(small_value)
-  { let (tau, u, alpha, tau') = p in UPack (tau, u, alpha, tau') }
-
-small_value:
-| w=word_value { UW w }
-| f=fold(small_value)
-  { let (alpha, tau, u) = f in UFold (alpha, tau, u) }
-| a=app(simple_small_value)
-  { let (u, omega) = a in UApp (u, omega) }
 
 type_instantiation:
 | tau=value_type { OT tau }
