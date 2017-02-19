@@ -47,9 +47,22 @@
       </div>
     </div>
     <script type="text/javascript" src="codemirror.js"></script>
+    <script type="text/javascript" src="simple.js"></script>
+    <script type="text/javascript" src="matchbrackets.js"></script>
     <script type="text/javascript">
+      CodeMirror.defineSimpleMode("funtal", {
+      start: [
+      {regex: /forall|code|box|ref|add|sub|mul|bnz|ld|st|ralloc|balloc|mv|unpack|unfold|salloc|sfree|sld|sst|jmp|call|ret|halt|protect|import|as|pack|fold|if0|pi|FT/, token: "keyword"},
+      {regex: /unit|int|exists|mu|\*|\:\:|end|out/, token: "atom"}
+      ],
+      meta:
+      { dontIndentStates: ["start"]
+        }});
+
       window.codemirror = CodeMirror.fromTextArea(document.getElementById("input"), {
-      lineNumbers: true
+      lineNumbers: true,
+      matchBrackets: true,
+      mode: "funtal"
       });
     </script>
     <script type="text/javascript" src="_build/web.js"></script>
