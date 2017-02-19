@@ -1,26 +1,38 @@
 %token JMP CALL RET HALT
-%token BNZ LD ST RALLOC BALLOC MV SALLOC SFREE SLD SST PACK AS UNPACK FOLD UNFOLD
-%token CODE END NIL
-%token ADD MUL SUB
+%token BNZ LD ST RALLOC BALLOC MV SALLOC SFREE SLD SST
+%token PACK AS UNPACK FOLD UNFOLD
+%token IMPORT PROTECT
+%token CODE END NIL OUT
+%token ADD MUL SUB /* these are the assembly keywords */
+%token PLUS MINUS TIMES /* these are the binary symbols */
 %token FORALL EXISTS MU
 %token UNIT INT REF BOX
 %token LANGLE RANGLE LBRACKET RBRACKET LBRACE RBRACE LPAREN RPAREN
-%token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW EMPTY
+%token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW EMPTY QUESTION
+%token LAMBDA IF0 PI
+%token FT TF
 %token<string> IDENTIFIER
 %token<string> TYPE_VARIABLE RETURN_MARKER_VARIABLE STACK_TYPING_VARIABLE
 %token<int> INTEGER
 %token<string> REGISTER
 %token EOF
 
+%left PLUS MINUS
+%left TIMES
+
 %start<Ftal.TAL.component> component_eof
 %start<Ftal.TAL.mem> memory_eof
 %start<Ftal.TAL.instr list> instruction_sequence_eof
+%start<Ftal.TAL.heapm> heap_fragment_eof
 %start<Ftal.TAL.w> word_value_eof
 %start<Ftal.TAL.u> small_value_eof
 %start<Ftal.TAL.delta> type_env_eof
 
-%{ open Ftal.TAL
+%start<Ftal.F.t> f_type_eof
+%start<Ftal.F.exp> f_expression_eof
 
+%{ open Ftal
+   open TAL
 %}
 
 
@@ -29,9 +41,79 @@
 component_eof: c=component EOF { c }
 memory_eof: m=memory EOF { m }
 instruction_sequence_eof: i=instruction_sequence EOF { i }
+heap_fragment_eof: h=heap_fragment EOF { h }
 word_value_eof: w=word_value EOF { w }
 small_value_eof: u=small_value EOF { u }
 type_env_eof: delta=type_env EOF { delta }
+
+f_type_eof: tau=f_type EOF { tau }
+f_expression_eof: e=f_expression EOF { e }
+
+f_type:
+| alpha=f_type_variable { F.TVar alpha }
+| UNIT { F.TUnit }
+| INT { F.TInt }
+| LPAREN taus=separated_list(COMMA,f_type) RPAREN ARROW tau=f_type
+  { F.TArrow (taus, tau) }
+| LPAREN taus=separated_list(COMMA,f_type) RPAREN
+  LBRACKET sin=stack_prefix RBRACKET
+  ARROW
+  LBRACKET sout=stack_prefix RBRACKET
+  tau=f_type
+  { F.TArrowMod (taus, sin, sout, tau) }
+| mu=f_mu_type { let (alpha, tau) = mu in F.TRec (alpha, tau) }
+| taus=tuple(f_type) { F.TTuple taus }
+
+  f_type_variable: alpha=type_variable { alpha }
+  f_mu_type: MU alpha=f_type_variable DOT tau=f_type { (alpha, tau) }
+
+f_simple_expression:
+| x=f_term_variable { F.EVar x }
+| LPAREN RPAREN { F.EUnit }
+| n=int { F.EInt n }
+| es=tuple(f_expression) { F.ETuple es }
+| PI n=int LPAREN e=f_expression RPAREN { F.EPi (n, e) }
+| LPAREN e=f_expression RPAREN { e }
+| FT LBRACKET tau=f_type COMMA sigma=stack_typing_annot RBRACKET c=component
+  { F.EBoundary (tau, sigma, c) }
+
+f_app_expression:
+| e=f_simple_expression { e }
+| e=f_simple_expression args=nonempty_list(f_simple_expression) { F.EApp (e, args) }
+
+f_arith_expression:
+| e=f_app_expression { e }
+| e1=f_arith_expression op=infixop e2=f_arith_expression { F.EBinop (e1, op, e2) }
+
+f_expression:
+| e=f_arith_expression { e }
+| IF0 p=f_simple_expression e1=f_simple_expression e2=f_simple_expression
+  { F.EIf0 (p, e1, e2) }
+| LAMBDA args=f_telescope DOT body=f_expression
+  { F.ELam (args, body) }
+| LAMBDA
+  LBRACKET sin=stack_prefix RBRACKET
+  LBRACKET sout=stack_prefix RBRACKET
+  args=f_telescope DOT body=f_expression
+  { F.ELamMod (args, sin, sout, body) }
+| FOLD mu=f_mu_type e=f_expression
+  { let (alpha, tau) = mu in F.EFold (alpha, tau, e) }
+| UNFOLD e=f_expression { F.EUnfold e }
+
+  stack_typing_annot:
+  | QUESTION { None }
+  | sigma=stack_typing { Some sigma }
+
+  f_term_variable: x=IDENTIFIER { x }
+
+  f_telescope:
+  | LPAREN args=separated_list(COMMA, decl(f_term_variable, f_type)) RPAREN
+  { args }
+
+  %inline infixop:
+  | PLUS { F.BPlus }
+  | MINUS { F.BMinus }
+  | TIMES { F.BTimes }
 
 value_type:
 | alpha=type_variable { TVar alpha }
@@ -49,6 +131,7 @@ value_type:
 
 simple_word_value:
 | LPAREN RPAREN { WUnit }
+| LPAREN w=word_value RPAREN { w }
 | n=int { WInt n }
 | l=location { WLoc l }
 | p=pack(word_value)
@@ -77,6 +160,7 @@ register:
 | r=REGISTER { r }
 
 simple_small_value:
+| LPAREN u=small_value RPAREN { u }
 | r=register { UR r }
 | p=pack(small_value)
   { let (tau, u, alpha, tau') = p in UPack (tau, u, alpha, tau') }
@@ -104,12 +188,17 @@ heap_value:
   LBRACKET delta=type_env RBRACKET
   LBRACE chi=register_typing SEMICOLON sigma=stack_typing RBRACE q=return_marker
   DOT i=instruction_sequence
-  { HCode (delta, chi, sigma, q, i) }
-| ws=tuple(word_value) { HTuple ws }
+  { (Box, HCode (delta, chi, sigma, q, i)) }
+| mut=mutability_annotation ws=tuple(word_value) { (mut, HTuple ws) }
 
-register_typing: elems=left_empty_list(register_typing_elem) { elems }
+  mutability_annotation:
+  | BOX { Box }
+  | REF { Ref }
 
-  register_typing_elem: r=register COLON tau=value_type { (r, tau) }
+register_typing: elems=left_empty_list(decl(register, value_type)) { elems }
+
+stack_prefix:
+  | taus=separated_list(DOUBLECOLON, value_type) { taus }
 
 stack_typing:
 | prefix=list(tau=value_type DOUBLECOLON {tau}) finish=stack_typing_end
@@ -127,7 +216,7 @@ return_marker:
 | epsilon=return_marker_variable { QEpsilon epsilon }
 | END LBRACE tau=value_type SEMICOLON sigma=stack_typing RBRACE
   { QEnd (tau, sigma) }
-/* qout missing for now */
+| OUT { QOut }
 
 type_env: elems=left_empty_list(type_env_elem) { elems }
 
@@ -141,8 +230,7 @@ memory:
   { (h, r, s) }
 
 heap_fragment:
-| h=left_empty_list(binding(location,heap_value))
-  { List.map (fun (l,v) -> (l,(Box,v))) h }
+| h=left_empty_list(binding(location,heap_value)) { h }
 
 register_file:
 | h=left_empty_list(binding(register, word_value))
@@ -150,6 +238,9 @@ register_file:
 
   binding(variable, value):
   | x=variable ARROW v=value { (x, v) }
+
+  decl(variable,spec):
+  | x=variable COLON s=spec { (x, s) }
 
 stack: ws=list(w=word_value DOUBLECOLON {w}) NIL { ws }
 
@@ -188,10 +279,15 @@ single_instruction:
   { Isld (rd, i) }
 | SST i=int COMMA rs=register
   { Isst (i, rs) }
-| UNPACK LANGLE alpha=type_variable COMMA rd=register RANGLE u=small_value
+| UNPACK LANGLE alpha=type_variable COMMA rd=register RANGLE COMMA u=small_value
   { Iunpack (alpha, rd, u) }
 | UNFOLD rd=register COMMA u=small_value
   { Iunfold (rd, u) }
+| IMPORT r=register COMMA zeta=stack_typing_variable
+  AS sigma=stack_typing COMMA tau=f_type TF LBRACE e=f_expression RBRACE
+  { Iimport (r, zeta, sigma, tau, e) }
+| PROTECT phi=stack_prefix COMMA zeta=stack_typing_variable
+  { Iprotect (phi, zeta) }
 
   aop:
   | ADD { Add }
