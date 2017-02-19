@@ -1907,11 +1907,14 @@ end = struct
     | Iaop(a,r1,r2,u) -> p_aop a ^^ space ^^ !^r1 ^^ comma ^^ space ^^ !^r2 ^^ comma ^^ space ^^ p_u u
     | Ibnz(r,u) -> !^"bnz " ^^ !^r ^^ comma ^^ space ^^ p_u u
     | Ild(r1,r2,n) -> !^"ld " ^^ !^r1 ^^ comma ^^ space ^^ !^r2 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket
-    | Ist(r1,n,r2) -> !^"st " ^^ !^r1 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket ^^ comma ^^ !^r2
+    | Ist(r1,n,r2) -> !^"st " ^^ !^r1 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket ^^ comma ^^ space ^^ !^r2
     | Iralloc(r,n) -> !^"ralloc " ^^ !^r ^^ comma ^^ space  ^^ !^(string_of_int n)
     | Iballoc(r,n) -> !^"balloc " ^^ !^r ^^ comma ^^ !^(string_of_int n)
     | Imv(r,u) -> !^"mv " ^^ !^r ^^ comma ^^ space  ^^ p_u u
-    | Iunpack(a,r,u) -> !^"unpack " ^^ langle ^^ !^a ^^ comma ^^ space ^^ !^r ^^ rangle ^^ space ^^ p_u u
+    | Iunpack(a,r,u) ->
+      !^"unpack "
+      ^^ langle ^^ !^a ^^ comma ^^ space ^^ !^r ^^ rangle ^^ comma ^^ space
+      ^^ p_u u
     | Iunfold(r,u) -> !^"unfold " ^^ !^r ^^ comma ^^ space ^^ p_u u
     | Isalloc n -> !^"salloc " ^^ !^(string_of_int n)
     | Isfree  n -> !^"sfree " ^^ !^(string_of_int n)
