@@ -1,0 +1,2889 @@
+f_expression_eof: FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER RPAREN UNPACK 
+##
+## Ends in an error in state: 277.
+##
+## f_expression -> FOLD LPAREN f_mu_type RPAREN . f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD LPAREN f_mu_type RPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 276.
+##
+## f_expression -> FOLD LPAREN f_mu_type . RPAREN f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD LPAREN f_mu_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FOLD LPAREN Z_IDENTIFIER 
+##
+## Ends in an error in state: 275.
+##
+## f_expression -> FOLD LPAREN . f_mu_type RPAREN f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD LPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FOLD MU A_IDENTIFIER DOT A_IDENTIFIER UNPACK 
+##
+## Ends in an error in state: 291.
+##
+## f_expression -> FOLD f_mu_type . f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD f_mu_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FOLD MU UNPACK 
+##
+## Ends in an error in state: 197.
+##
+## f_mu_type -> MU . f_type_variable DOT f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## MU 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FOLD MU Z_IDENTIFIER DOT UNPACK 
+##
+## Ends in an error in state: 200.
+##
+## f_mu_type -> MU f_type_variable DOT . f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## MU f_type_variable DOT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FOLD MU Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 199.
+##
+## f_mu_type -> MU f_type_variable . DOT f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## MU f_type_variable 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FOLD Z_IDENTIFIER 
+##
+## Ends in an error in state: 274.
+##
+## f_expression -> FOLD . f_mu_type f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+## f_expression -> FOLD . LPAREN f_mu_type RPAREN f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LANGLE UNPACK 
+##
+## Ends in an error in state: 202.
+##
+## tuple(f_type) -> LANGLE . loption(separated_nonempty_list(COMMA,f_type)) RANGLE [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LANGLE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LANGLE Z_IDENTIFIER RPAREN 
+##
+## Ends in an error in state: 206.
+##
+## tuple(f_type) -> LANGLE loption(separated_nonempty_list(COMMA,f_type)) . RANGLE [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LANGLE loption(separated_nonempty_list(COMMA,f_type)) 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 209, spurious reduction of production separated_nonempty_list(COMMA,f_type) -> f_type 
+## In state 205, spurious reduction of production loption(separated_nonempty_list(COMMA,f_type)) -> separated_nonempty_list(COMMA,f_type) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN RPAREN ARROW UNPACK 
+##
+## Ends in an error in state: 223.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN ARROW . f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN ARROW 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET RBRACKET UNPACK 
+##
+## Ends in an error in state: 221.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET stack_prefix RBRACKET . f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET stack_prefix RBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET UNIT COMMA 
+##
+## Ends in an error in state: 220.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET stack_prefix . RBRACKET f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET stack_prefix 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 169, spurious reduction of production separated_nonempty_list(DOUBLECOLON,value_type) -> value_type 
+## In state 175, spurious reduction of production loption(separated_nonempty_list(DOUBLECOLON,value_type)) -> separated_nonempty_list(DOUBLECOLON,value_type) 
+## In state 176, spurious reduction of production stack_prefix -> loption(separated_nonempty_list(DOUBLECOLON,value_type)) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 219.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET . stack_prefix RBRACKET f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW Z_IDENTIFIER 
+##
+## Ends in an error in state: 218.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW . LBRACKET stack_prefix RBRACKET f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 217.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET . ARROW LBRACKET stack_prefix RBRACKET f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET UNIT COMMA 
+##
+## Ends in an error in state: 216.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix . RBRACKET ARROW LBRACKET stack_prefix RBRACKET f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 169, spurious reduction of production separated_nonempty_list(DOUBLECOLON,value_type) -> value_type 
+## In state 175, spurious reduction of production loption(separated_nonempty_list(DOUBLECOLON,value_type)) -> separated_nonempty_list(DOUBLECOLON,value_type) 
+## In state 176, spurious reduction of production stack_prefix -> loption(separated_nonempty_list(DOUBLECOLON,value_type)) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 215.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET . stack_prefix RBRACKET ARROW LBRACKET stack_prefix RBRACKET f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN RPAREN Z_IDENTIFIER 
+##
+## Ends in an error in state: 214.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN . ARROW f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN . LBRACKET stack_prefix RBRACKET ARROW LBRACKET stack_prefix RBRACKET f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN UNPACK 
+##
+## Ends in an error in state: 201.
+##
+## f_type -> LPAREN . loption(separated_nonempty_list(COMMA,f_type)) RPAREN ARROW f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+## f_type -> LPAREN . loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET stack_prefix RBRACKET f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN Z_IDENTIFIER COMMA UNPACK 
+##
+## Ends in an error in state: 210.
+##
+## separated_nonempty_list(COMMA,f_type) -> f_type COMMA . separated_nonempty_list(COMMA,f_type) [ RPAREN RANGLE ]
+##
+## The known suffix of the stack is as follows:
+## f_type COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN Z_IDENTIFIER RANGLE 
+##
+## Ends in an error in state: 213.
+##
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) . RPAREN ARROW f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+## f_type -> LPAREN loption(separated_nonempty_list(COMMA,f_type)) . RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET stack_prefix RBRACKET f_type [ Z_IDENTIFIER UNFOLD TF RPAREN RANGLE PI OTHER_IDENTIFIER MINUS LPAREN LANGLE LAMBDA INTEGER IF0 FT FOLD E_IDENTIFIER COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN loption(separated_nonempty_list(COMMA,f_type)) 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 209, spurious reduction of production separated_nonempty_list(COMMA,f_type) -> f_type 
+## In state 205, spurious reduction of production loption(separated_nonempty_list(COMMA,f_type)) -> separated_nonempty_list(COMMA,f_type) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET LPAREN Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 209.
+##
+## separated_nonempty_list(COMMA,f_type) -> f_type . [ RPAREN RANGLE ]
+## separated_nonempty_list(COMMA,f_type) -> f_type . COMMA separated_nonempty_list(COMMA,f_type) [ RPAREN RANGLE ]
+##
+## The known suffix of the stack is as follows:
+## f_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET UNPACK 
+##
+## Ends in an error in state: 260.
+##
+## f_simple_expression -> FT LBRACKET . f_type COMMA stack_typing_annot RBRACKET component [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FT LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA UNIT DOUBLECOLON UNPACK 
+##
+## Ends in an error in state: 46.
+##
+## list(__anonymous_0) -> value_type DOUBLECOLON . list(__anonymous_0) [ Z_IDENTIFIER TIMES ]
+##
+## The known suffix of the stack is as follows:
+## value_type DOUBLECOLON 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA UNIT Z_IDENTIFIER 
+##
+## Ends in an error in state: 45.
+##
+## list(__anonymous_0) -> value_type . DOUBLECOLON list(__anonymous_0) [ Z_IDENTIFIER TIMES ]
+##
+## The known suffix of the stack is as follows:
+## value_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA UNPACK 
+##
+## Ends in an error in state: 262.
+##
+## f_simple_expression -> FT LBRACKET f_type COMMA . stack_typing_annot RBRACKET component [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FT LBRACKET f_type COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA Z_IDENTIFIER RBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 265.
+##
+## f_simple_expression -> FT LBRACKET f_type COMMA stack_typing_annot RBRACKET . component [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FT LBRACKET f_type COMMA stack_typing_annot RBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 264.
+##
+## f_simple_expression -> FT LBRACKET f_type COMMA stack_typing_annot . RBRACKET component [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FT LBRACKET f_type COMMA stack_typing_annot 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT LBRACKET Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 261.
+##
+## f_simple_expression -> FT LBRACKET f_type . COMMA stack_typing_annot RBRACKET component [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FT LBRACKET f_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: FT Z_IDENTIFIER 
+##
+## Ends in an error in state: 259.
+##
+## f_simple_expression -> FT . LBRACKET f_type COMMA stack_typing_annot RBRACKET component [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: IF0 UNPACK 
+##
+## Ends in an error in state: 258.
+##
+## f_expression -> IF0 . f_simple_expression f_simple_expression f_simple_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## IF0 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: IF0 Z_IDENTIFIER UNPACK 
+##
+## Ends in an error in state: 271.
+##
+## f_expression -> IF0 f_simple_expression . f_simple_expression f_simple_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## IF0 f_simple_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: IF0 Z_IDENTIFIER Z_IDENTIFIER UNPACK 
+##
+## Ends in an error in state: 272.
+##
+## f_expression -> IF0 f_simple_expression f_simple_expression . f_simple_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## IF0 f_simple_expression f_simple_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGISTER COLON A_IDENTIFIER COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 76.
+##
+## separated_nonempty_list(COMMA,decl(register,value_type)) -> decl(register,value_type) COMMA . separated_nonempty_list(COMMA,decl(register,value_type)) [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## decl(register,value_type) COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGISTER COLON A_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 75.
+##
+## separated_nonempty_list(COMMA,decl(register,value_type)) -> decl(register,value_type) . [ SEMICOLON ]
+## separated_nonempty_list(COMMA,decl(register,value_type)) -> decl(register,value_type) . COMMA separated_nonempty_list(COMMA,decl(register,value_type)) [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## decl(register,value_type) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGISTER COLON Z_IDENTIFIER 
+##
+## Ends in an error in state: 72.
+##
+## decl(register,value_type) -> register COLON . value_type [ SEMICOLON COMMA ]
+##
+## The known suffix of the stack is as follows:
+## register COLON 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 71.
+##
+## decl(register,value_type) -> register . COLON value_type [ SEMICOLON COMMA ]
+##
+## The known suffix of the stack is as follows:
+## register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICOLON UNPACK 
+##
+## Ends in an error in state: 44.
+##
+## heap_value_type -> FORALL type_env DOT LBRACE simple_register_typing SEMICOLON . stack_typing RBRACE return_marker [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FORALL type_env DOT LBRACE simple_register_typing SEMICOLON 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICOLON Z_IDENTIFIER RBRACE Z_IDENTIFIER 
+##
+## Ends in an error in state: 52.
+##
+## heap_value_type -> FORALL type_env DOT LBRACE simple_register_typing SEMICOLON stack_typing RBRACE . return_marker [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FORALL type_env DOT LBRACE simple_register_typing SEMICOLON stack_typing RBRACE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICOLON Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 51.
+##
+## heap_value_type -> FORALL type_env DOT LBRACE simple_register_typing SEMICOLON stack_typing . RBRACE return_marker [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FORALL type_env DOT LBRACE simple_register_typing SEMICOLON stack_typing 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE Z_IDENTIFIER 
+##
+## Ends in an error in state: 42.
+##
+## heap_value_type -> FORALL type_env DOT LBRACE . simple_register_typing SEMICOLON stack_typing RBRACE return_marker [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FORALL type_env DOT LBRACE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT Z_IDENTIFIER 
+##
+## Ends in an error in state: 41.
+##
+## heap_value_type -> FORALL type_env DOT . LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FORALL type_env DOT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 40.
+##
+## heap_value_type -> FORALL type_env . DOT LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FORALL type_env 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET UNPACK 
+##
+## Ends in an error in state: 27.
+##
+## type_env -> LBRACKET . simple_type_env RBRACKET [ LBRACE DOT ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET Z_IDENTIFIER COMMA UNPACK 
+##
+## Ends in an error in state: 32.
+##
+## separated_nonempty_list(COMMA,type_env_elem) -> type_env_elem COMMA . separated_nonempty_list(COMMA,type_env_elem) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## type_env_elem COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 31.
+##
+## separated_nonempty_list(COMMA,type_env_elem) -> type_env_elem . [ RBRACKET ]
+## separated_nonempty_list(COMMA,type_env_elem) -> type_env_elem . COMMA separated_nonempty_list(COMMA,type_env_elem) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## type_env_elem 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX FORALL Z_IDENTIFIER 
+##
+## Ends in an error in state: 26.
+##
+## heap_value_type -> FORALL . type_env DOT LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## FORALL 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET BOX Z_IDENTIFIER 
+##
+## Ends in an error in state: 25.
+##
+## value_type -> BOX . heap_value_type [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## BOX 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET EXISTS A_IDENTIFIER DOT Z_IDENTIFIER 
+##
+## Ends in an error in state: 24.
+##
+## existential_type -> EXISTS type_variable DOT . value_type [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## EXISTS type_variable DOT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET EXISTS A_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 23.
+##
+## existential_type -> EXISTS type_variable . DOT value_type [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## EXISTS type_variable 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET EXISTS Z_IDENTIFIER 
+##
+## Ends in an error in state: 22.
+##
+## existential_type -> EXISTS . type_variable DOT value_type [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## EXISTS 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET MU A_IDENTIFIER DOT Z_IDENTIFIER 
+##
+## Ends in an error in state: 20.
+##
+## mu_type -> MU type_variable DOT . value_type [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## MU type_variable DOT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET MU A_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 19.
+##
+## mu_type -> MU type_variable . DOT value_type [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## MU type_variable 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET MU Z_IDENTIFIER 
+##
+## Ends in an error in state: 18.
+##
+## mu_type -> MU . type_variable DOT value_type [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## MU 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET LPAREN RPAREN DOT UNPACK 
+##
+## Ends in an error in state: 257.
+##
+## f_expression -> LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET f_telescope DOT . f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET f_telescope DOT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET LPAREN RPAREN Z_IDENTIFIER 
+##
+## Ends in an error in state: 256.
+##
+## f_expression -> LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET f_telescope . DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET f_telescope 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 255.
+##
+## f_expression -> LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET . f_telescope DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET UNIT COMMA 
+##
+## Ends in an error in state: 254.
+##
+## f_expression -> LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix . RBRACKET f_telescope DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 169, spurious reduction of production separated_nonempty_list(DOUBLECOLON,value_type) -> value_type 
+## In state 175, spurious reduction of production loption(separated_nonempty_list(DOUBLECOLON,value_type)) -> separated_nonempty_list(DOUBLECOLON,value_type) 
+## In state 176, spurious reduction of production stack_prefix -> loption(separated_nonempty_list(DOUBLECOLON,value_type)) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 253.
+##
+## f_expression -> LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET . stack_prefix RBRACKET f_telescope DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET RBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 252.
+##
+## f_expression -> LAMBDA LBRACKET stack_prefix RBRACKET . LBRACKET stack_prefix RBRACKET f_telescope DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA LBRACKET stack_prefix RBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET REF LANGLE UNIT COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 83.
+##
+## separated_nonempty_list(COMMA,value_type) -> value_type COMMA . separated_nonempty_list(COMMA,value_type) [ RANGLE ]
+##
+## The known suffix of the stack is as follows:
+## value_type COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET REF LANGLE UNIT Z_IDENTIFIER 
+##
+## Ends in an error in state: 82.
+##
+## separated_nonempty_list(COMMA,value_type) -> value_type . [ RANGLE ]
+## separated_nonempty_list(COMMA,value_type) -> value_type . COMMA separated_nonempty_list(COMMA,value_type) [ RANGLE ]
+##
+## The known suffix of the stack is as follows:
+## value_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET REF LANGLE Z_IDENTIFIER 
+##
+## Ends in an error in state: 17.
+##
+## tuple(value_type) -> LANGLE . loption(separated_nonempty_list(COMMA,value_type)) RANGLE [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LANGLE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET REF Z_IDENTIFIER 
+##
+## Ends in an error in state: 16.
+##
+## value_type -> REF . tuple(value_type) [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## REF 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET UNIT COMMA 
+##
+## Ends in an error in state: 251.
+##
+## f_expression -> LAMBDA LBRACKET stack_prefix . RBRACKET LBRACKET stack_prefix RBRACKET f_telescope DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA LBRACKET stack_prefix 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 169, spurious reduction of production separated_nonempty_list(DOUBLECOLON,value_type) -> value_type 
+## In state 175, spurious reduction of production loption(separated_nonempty_list(DOUBLECOLON,value_type)) -> separated_nonempty_list(DOUBLECOLON,value_type) 
+## In state 176, spurious reduction of production stack_prefix -> loption(separated_nonempty_list(DOUBLECOLON,value_type)) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET UNIT DOUBLECOLON Z_IDENTIFIER 
+##
+## Ends in an error in state: 170.
+##
+## separated_nonempty_list(DOUBLECOLON,value_type) -> value_type DOUBLECOLON . separated_nonempty_list(DOUBLECOLON,value_type) [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## value_type DOUBLECOLON 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET UNIT Z_IDENTIFIER 
+##
+## Ends in an error in state: 169.
+##
+## separated_nonempty_list(DOUBLECOLON,value_type) -> value_type . [ RBRACKET COMMA ]
+## separated_nonempty_list(DOUBLECOLON,value_type) -> value_type . DOUBLECOLON separated_nonempty_list(DOUBLECOLON,value_type) [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## value_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 250.
+##
+## f_expression -> LAMBDA LBRACKET . stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET f_telescope DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LPAREN RPAREN DOT UNPACK 
+##
+## Ends in an error in state: 295.
+##
+## f_expression -> LAMBDA f_telescope DOT . f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA f_telescope DOT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LPAREN RPAREN Z_IDENTIFIER 
+##
+## Ends in an error in state: 294.
+##
+## f_expression -> LAMBDA f_telescope . DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA f_telescope 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LPAREN UNPACK 
+##
+## Ends in an error in state: 239.
+##
+## f_telescope -> LPAREN . loption(separated_nonempty_list(COMMA,decl(f_term_variable,f_type))) RPAREN [ DOT ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER COLON A_IDENTIFIER COMMA UNPACK 
+##
+## Ends in an error in state: 248.
+##
+## separated_nonempty_list(COMMA,decl(f_term_variable,f_type)) -> decl(f_term_variable,f_type) COMMA . separated_nonempty_list(COMMA,decl(f_term_variable,f_type)) [ RPAREN ]
+##
+## The known suffix of the stack is as follows:
+## decl(f_term_variable,f_type) COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER COLON A_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 247.
+##
+## separated_nonempty_list(COMMA,decl(f_term_variable,f_type)) -> decl(f_term_variable,f_type) . [ RPAREN ]
+## separated_nonempty_list(COMMA,decl(f_term_variable,f_type)) -> decl(f_term_variable,f_type) . COMMA separated_nonempty_list(COMMA,decl(f_term_variable,f_type)) [ RPAREN ]
+##
+## The known suffix of the stack is as follows:
+## decl(f_term_variable,f_type) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER COLON UNPACK 
+##
+## Ends in an error in state: 245.
+##
+## decl(f_term_variable,f_type) -> f_term_variable COLON . f_type [ RPAREN COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_term_variable COLON 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 244.
+##
+## decl(f_term_variable,f_type) -> f_term_variable . COLON f_type [ RPAREN COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_term_variable 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LAMBDA Z_IDENTIFIER 
+##
+## Ends in an error in state: 238.
+##
+## f_expression -> LAMBDA . f_telescope DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+## f_expression -> LAMBDA . LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET f_telescope DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LAMBDA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LANGLE UNPACK 
+##
+## Ends in an error in state: 237.
+##
+## tuple(f_expression) -> LANGLE . loption(separated_nonempty_list(COMMA,f_expression)) RANGLE [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LANGLE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LANGLE Z_IDENTIFIER COMMA UNPACK 
+##
+## Ends in an error in state: 301.
+##
+## separated_nonempty_list(COMMA,f_expression) -> f_expression COMMA . separated_nonempty_list(COMMA,f_expression) [ RANGLE ]
+##
+## The known suffix of the stack is as follows:
+## f_expression COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LANGLE Z_IDENTIFIER RPAREN 
+##
+## Ends in an error in state: 300.
+##
+## separated_nonempty_list(COMMA,f_expression) -> f_expression . [ RANGLE ]
+## separated_nonempty_list(COMMA,f_expression) -> f_expression . COMMA separated_nonempty_list(COMMA,f_expression) [ RANGLE ]
+##
+## The known suffix of the stack is as follows:
+## f_expression 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
+## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 283, spurious reduction of production f_expression -> f_arith_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LPAREN UNPACK 
+##
+## Ends in an error in state: 235.
+##
+## f_simple_expression -> LPAREN . RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+## f_simple_expression -> LPAREN . f_expression RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: LPAREN Z_IDENTIFIER RBRACE 
+##
+## Ends in an error in state: 303.
+##
+## f_simple_expression -> LPAREN f_expression . RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN f_expression 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
+## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 283, spurious reduction of production f_expression -> f_arith_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: MINUS INTEGER Z_IDENTIFIER 
+##
+## Ends in an error in state: 283.
+##
+## f_arith_expression -> f_arith_expression . PLUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression . MINUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression . TIMES f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_expression -> f_arith_expression . [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_arith_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: MINUS Z_IDENTIFIER 
+##
+## Ends in an error in state: 233.
+##
+## f_arith_expression -> MINUS . nat [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## MINUS 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: PI INTEGER LPAREN UNPACK 
+##
+## Ends in an error in state: 232.
+##
+## f_simple_expression -> PI nat LPAREN . f_expression RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## PI nat LPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: PI INTEGER LPAREN Z_IDENTIFIER RBRACE 
+##
+## Ends in an error in state: 305.
+##
+## f_simple_expression -> PI nat LPAREN f_expression . RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## PI nat LPAREN f_expression 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
+## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 283, spurious reduction of production f_expression -> f_arith_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: PI INTEGER Z_IDENTIFIER 
+##
+## Ends in an error in state: 231.
+##
+## f_simple_expression -> PI nat . LPAREN f_expression RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## PI nat 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: PI Z_IDENTIFIER 
+##
+## Ends in an error in state: 230.
+##
+## f_simple_expression -> PI . nat LPAREN f_expression RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## PI 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: UNFOLD UNPACK 
+##
+## Ends in an error in state: 229.
+##
+## f_expression -> UNFOLD . f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## UNFOLD 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: UNPACK 
+##
+## Ends in an error in state: 385.
+##
+## f_expression_eof' -> . f_expression_eof [ # ]
+##
+## The known suffix of the stack is as follows:
+## 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: Z_IDENTIFIER MINUS MINUS INTEGER Z_IDENTIFIER 
+##
+## Ends in an error in state: 290.
+##
+## f_arith_expression -> f_arith_expression . PLUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression . MINUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression MINUS f_arith_expression . [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression . TIMES f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_arith_expression MINUS f_arith_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: Z_IDENTIFIER MINUS UNPACK 
+##
+## Ends in an error in state: 289.
+##
+## f_arith_expression -> f_arith_expression MINUS . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_arith_expression MINUS 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: Z_IDENTIFIER PLUS MINUS INTEGER Z_IDENTIFIER 
+##
+## Ends in an error in state: 288.
+##
+## f_arith_expression -> f_arith_expression . PLUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression PLUS f_arith_expression . [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression . MINUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression . TIMES f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_arith_expression PLUS f_arith_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: Z_IDENTIFIER PLUS UNPACK 
+##
+## Ends in an error in state: 287.
+##
+## f_arith_expression -> f_arith_expression PLUS . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_arith_expression PLUS 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: Z_IDENTIFIER RPAREN 
+##
+## Ends in an error in state: 387.
+##
+## f_expression_eof -> f_expression . EOF [ # ]
+##
+## The known suffix of the stack is as follows:
+## f_expression 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
+## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 283, spurious reduction of production f_expression -> f_arith_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: Z_IDENTIFIER TIMES UNPACK 
+##
+## Ends in an error in state: 284.
+##
+## f_arith_expression -> f_arith_expression TIMES . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_arith_expression TIMES 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: Z_IDENTIFIER UNPACK 
+##
+## Ends in an error in state: 278.
+##
+## f_app_expression -> f_simple_expression . [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_app_expression -> f_simple_expression . nonempty_list(f_simple_expression) [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_simple_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+f_expression_eof: Z_IDENTIFIER Z_IDENTIFIER UNPACK 
+##
+## Ends in an error in state: 280.
+##
+## nonempty_list(f_simple_expression) -> f_simple_expression . [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## nonempty_list(f_simple_expression) -> f_simple_expression . nonempty_list(f_simple_expression) [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+##
+## The known suffix of the stack is as follows:
+## f_simple_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET BALLOC REGISTER COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 328.
+##
+## single_instruction -> BALLOC register COMMA . nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## BALLOC register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET BALLOC REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 327.
+##
+## single_instruction -> BALLOC register . COMMA nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## BALLOC register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET BALLOC Z_IDENTIFIER 
+##
+## Ends in an error in state: 326.
+##
+## single_instruction -> BALLOC . register COMMA nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## BALLOC 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET BNZ REGISTER COMMA UNPACK 
+##
+## Ends in an error in state: 324.
+##
+## single_instruction -> BNZ register COMMA . small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## BNZ register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET BNZ REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 323.
+##
+## single_instruction -> BNZ register . COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## BNZ register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET BNZ Z_IDENTIFIER 
+##
+## Ends in an error in state: 322.
+##
+## single_instruction -> BNZ . register COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## BNZ 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET CALL UNPACK 
+##
+## Ends in an error in state: 315.
+##
+## final_instruction -> CALL . small_value LBRACE stack_typing COMMA return_marker RBRACE [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## CALL 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE UNPACK 
+##
+## Ends in an error in state: 317.
+##
+## final_instruction -> CALL small_value LBRACE . stack_typing COMMA return_marker RBRACE [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## CALL small_value LBRACE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 320.
+##
+## final_instruction -> CALL small_value LBRACE stack_typing COMMA return_marker . RBRACE [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## CALL small_value LBRACE stack_typing COMMA return_marker 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 319.
+##
+## final_instruction -> CALL small_value LBRACE stack_typing COMMA . return_marker RBRACE [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## CALL small_value LBRACE stack_typing COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 318.
+##
+## final_instruction -> CALL small_value LBRACE stack_typing . COMMA return_marker RBRACE [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## CALL small_value LBRACE stack_typing 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER SEMICOLON 
+##
+## Ends in an error in state: 316.
+##
+## final_instruction -> CALL small_value . LBRACE stack_typing COMMA return_marker RBRACE [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## CALL small_value 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 103, spurious reduction of production small_value -> simple_small_value 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET HALT UNIT COMMA UNPACK 
+##
+## Ends in an error in state: 312.
+##
+## final_instruction -> HALT value_type COMMA . stack_typing bracereg [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## HALT value_type COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET HALT UNIT COMMA Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 313.
+##
+## final_instruction -> HALT value_type COMMA stack_typing . bracereg [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## HALT value_type COMMA stack_typing 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET HALT UNIT Z_IDENTIFIER 
+##
+## Ends in an error in state: 311.
+##
+## final_instruction -> HALT value_type . COMMA stack_typing bracereg [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## HALT value_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET HALT Z_IDENTIFIER 
+##
+## Ends in an error in state: 310.
+##
+## final_instruction -> HALT . value_type COMMA stack_typing bracereg [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## HALT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA UNPACK 
+##
+## Ends in an error in state: 191.
+##
+## single_instruction -> IMPORT register COMMA . stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS UNPACK 
+##
+## Ends in an error in state: 193.
+##
+## single_instruction -> IMPORT register COMMA stack_typing_variable AS . stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register COMMA stack_typing_variable AS 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA UNPACK 
+##
+## Ends in an error in state: 195.
+##
+## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA . f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF LBRACE UNPACK 
+##
+## Ends in an error in state: 228.
+##
+## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE . f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF LBRACE Z_IDENTIFIER RPAREN 
+##
+## Ends in an error in state: 308.
+##
+## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression . RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
+## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 283, spurious reduction of production f_expression -> f_arith_expression 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF Z_IDENTIFIER 
+##
+## Ends in an error in state: 227.
+##
+## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF . LBRACE f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 226.
+##
+## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type . TF LBRACE f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 194.
+##
+## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing . COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register COMMA stack_typing_variable AS stack_typing 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 192.
+##
+## single_instruction -> IMPORT register COMMA stack_typing_variable . AS stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register COMMA stack_typing_variable 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 190.
+##
+## single_instruction -> IMPORT register . COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET IMPORT Z_IDENTIFIER 
+##
+## Ends in an error in state: 189.
+##
+## single_instruction -> IMPORT . register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## IMPORT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER RPAREN UNPACK 
+##
+## Ends in an error in state: 99.
+##
+## fold(small_value) -> FOLD LPAREN mu_type RPAREN . small_value [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD LPAREN mu_type RPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 98.
+##
+## fold(small_value) -> FOLD LPAREN mu_type . RPAREN small_value [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD LPAREN mu_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP FOLD LPAREN Z_IDENTIFIER 
+##
+## Ends in an error in state: 97.
+##
+## fold(small_value) -> FOLD LPAREN . mu_type RPAREN small_value [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD LPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP FOLD MU A_IDENTIFIER DOT A_IDENTIFIER UNPACK 
+##
+## Ends in an error in state: 121.
+##
+## fold(small_value) -> FOLD mu_type . small_value [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD mu_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP FOLD Z_IDENTIFIER 
+##
+## Ends in an error in state: 96.
+##
+## fold(small_value) -> FOLD . mu_type small_value [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+## fold(small_value) -> FOLD . LPAREN mu_type RPAREN small_value [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## FOLD 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP LPAREN UNPACK 
+##
+## Ends in an error in state: 94.
+##
+## simple_small_value -> LPAREN . small_value RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+## simple_small_value -> LPAREN . RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP LPAREN Z_IDENTIFIER SEMICOLON 
+##
+## Ends in an error in state: 123.
+##
+## simple_small_value -> LPAREN small_value . RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN small_value 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 103, spurious reduction of production small_value -> simple_small_value 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP MINUS Z_IDENTIFIER 
+##
+## Ends in an error in state: 92.
+##
+## small_value -> MINUS . nat [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## MINUS 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA UNPACK 
+##
+## Ends in an error in state: 90.
+##
+## pack(small_value) -> PACK LANGLE value_type COMMA . small_value RANGLE AS existential_type [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+## pack(small_value) -> PACK LANGLE value_type COMMA . small_value RANGLE AS LPAREN existential_type RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## PACK LANGLE value_type COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE AS LPAREN EXISTS A_IDENTIFIER DOT A_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 129.
+##
+## pack(small_value) -> PACK LANGLE value_type COMMA small_value RANGLE AS LPAREN existential_type . RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## PACK LANGLE value_type COMMA small_value RANGLE AS LPAREN existential_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE AS LPAREN Z_IDENTIFIER 
+##
+## Ends in an error in state: 128.
+##
+## pack(small_value) -> PACK LANGLE value_type COMMA small_value RANGLE AS LPAREN . existential_type RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## PACK LANGLE value_type COMMA small_value RANGLE AS LPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE AS Z_IDENTIFIER 
+##
+## Ends in an error in state: 127.
+##
+## pack(small_value) -> PACK LANGLE value_type COMMA small_value RANGLE AS . existential_type [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+## pack(small_value) -> PACK LANGLE value_type COMMA small_value RANGLE AS . LPAREN existential_type RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## PACK LANGLE value_type COMMA small_value RANGLE AS 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE Z_IDENTIFIER 
+##
+## Ends in an error in state: 126.
+##
+## pack(small_value) -> PACK LANGLE value_type COMMA small_value RANGLE . AS existential_type [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+## pack(small_value) -> PACK LANGLE value_type COMMA small_value RANGLE . AS LPAREN existential_type RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## PACK LANGLE value_type COMMA small_value RANGLE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER SEMICOLON 
+##
+## Ends in an error in state: 125.
+##
+## pack(small_value) -> PACK LANGLE value_type COMMA small_value . RANGLE AS existential_type [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+## pack(small_value) -> PACK LANGLE value_type COMMA small_value . RANGLE AS LPAREN existential_type RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## PACK LANGLE value_type COMMA small_value 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 103, spurious reduction of production small_value -> simple_small_value 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT Z_IDENTIFIER 
+##
+## Ends in an error in state: 89.
+##
+## pack(small_value) -> PACK LANGLE value_type . COMMA small_value RANGLE AS existential_type [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+## pack(small_value) -> PACK LANGLE value_type . COMMA small_value RANGLE AS LPAREN existential_type RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## PACK LANGLE value_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP PACK LANGLE Z_IDENTIFIER 
+##
+## Ends in an error in state: 14.
+##
+## pack(small_value) -> PACK LANGLE . value_type COMMA small_value RANGLE AS existential_type [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+## pack(small_value) -> PACK LANGLE . value_type COMMA small_value RANGLE AS LPAREN existential_type RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## PACK LANGLE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP PACK Z_IDENTIFIER 
+##
+## Ends in an error in state: 13.
+##
+## pack(small_value) -> PACK . LANGLE value_type COMMA small_value RANGLE AS existential_type [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+## pack(small_value) -> PACK . LANGLE value_type COMMA small_value RANGLE AS LPAREN existential_type RPAREN [ SEMICOLON RPAREN RBRACKET RANGLE LBRACKET LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## PACK 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP UNPACK 
+##
+## Ends in an error in state: 187.
+##
+## final_instruction -> JMP . small_value [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## JMP 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE UNIT SEMICOLON UNPACK 
+##
+## Ends in an error in state: 58.
+##
+## return_marker -> END LBRACE value_type SEMICOLON . stack_typing RBRACE [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RBRACE RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON DOT COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## END LBRACE value_type SEMICOLON 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE UNIT SEMICOLON Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 59.
+##
+## return_marker -> END LBRACE value_type SEMICOLON stack_typing . RBRACE [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RBRACE RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON DOT COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## END LBRACE value_type SEMICOLON stack_typing 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE UNIT Z_IDENTIFIER 
+##
+## Ends in an error in state: 57.
+##
+## return_marker -> END LBRACE value_type . SEMICOLON stack_typing RBRACE [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RBRACE RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON DOT COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## END LBRACE value_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE Z_IDENTIFIER 
+##
+## Ends in an error in state: 56.
+##
+## return_marker -> END LBRACE . value_type SEMICOLON stack_typing RBRACE [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RBRACE RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON DOT COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## END LBRACE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END Z_IDENTIFIER 
+##
+## Ends in an error in state: 55.
+##
+## return_marker -> END . LBRACE value_type SEMICOLON stack_typing RBRACE [ Z_IDENTIFIER SEMICOLON RPAREN REGISTER RBRACKET RBRACE RANGLE PACK OTHER_IDENTIFIER MINUS LPAREN LBRACKET LBRACE INTEGER FOLD E_IDENTIFIER DOUBLECOLON DOT COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## END 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET UNIT Z_IDENTIFIER 
+##
+## Ends in an error in state: 105.
+##
+## list(__anonymous_0) -> value_type . DOUBLECOLON list(__anonymous_0) [ Z_IDENTIFIER TIMES ]
+## type_instantiation -> value_type . [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## value_type 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET UNPACK 
+##
+## Ends in an error in state: 104.
+##
+## app(simple_small_value) -> simple_small_value LBRACKET . loption(separated_nonempty_list(COMMA,type_instantiation)) RBRACKET [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## simple_small_value LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET Z_IDENTIFIER COMMA UNPACK 
+##
+## Ends in an error in state: 107.
+##
+## separated_nonempty_list(COMMA,type_instantiation) -> type_instantiation COMMA . separated_nonempty_list(COMMA,type_instantiation) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## type_instantiation COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 106.
+##
+## separated_nonempty_list(COMMA,type_instantiation) -> type_instantiation . [ RBRACKET ]
+## separated_nonempty_list(COMMA,type_instantiation) -> type_instantiation . COMMA separated_nonempty_list(COMMA,type_instantiation) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## type_instantiation 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET RPAREN Z_IDENTIFIER 
+##
+## Ends in an error in state: 383.
+##
+## component_eof -> component . EOF [ # ]
+##
+## The known suffix of the stack is as follows:
+## component 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 380.
+##
+## component -> LPAREN instruction_sequence COMMA heap_fragment . RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN instruction_sequence COMMA heap_fragment 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET UNPACK 
+##
+## Ends in an error in state: 347.
+##
+## heap_fragment -> LBRACKET . simple_heap_fragment RBRACKET [ RPAREN ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON UNPACK 
+##
+## Ends in an error in state: 369.
+##
+## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON . stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON Z_IDENTIFIER RBRACE REGISTER DOT Z_IDENTIFIER 
+##
+## Ends in an error in state: 373.
+##
+## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT . instruction_sequence [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON Z_IDENTIFIER RBRACE REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 372.
+##
+## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker . DOT instruction_sequence [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON Z_IDENTIFIER RBRACE Z_IDENTIFIER 
+##
+## Ends in an error in state: 371.
+##
+## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE . return_marker DOT instruction_sequence [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 370.
+##
+## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing . RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE Z_IDENTIFIER 
+##
+## Ends in an error in state: 367.
+##
+## heap_value -> mutability_annotation CODE type_env LBRACE . simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## mutability_annotation CODE type_env LBRACE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 366.
+##
+## heap_value -> mutability_annotation CODE type_env . LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## mutability_annotation CODE type_env 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE Z_IDENTIFIER 
+##
+## Ends in an error in state: 365.
+##
+## heap_value -> mutability_annotation CODE . type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## mutability_annotation CODE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE RANGLE COMMA UNPACK 
+##
+## Ends in an error in state: 378.
+##
+## separated_nonempty_list(COMMA,binding(location,heap_value)) -> binding(location,heap_value) COMMA . separated_nonempty_list(COMMA,binding(location,heap_value)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## binding(location,heap_value) COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE RANGLE Z_IDENTIFIER 
+##
+## Ends in an error in state: 377.
+##
+## separated_nonempty_list(COMMA,binding(location,heap_value)) -> binding(location,heap_value) . [ RBRACKET ]
+## separated_nonempty_list(COMMA,binding(location,heap_value)) -> binding(location,heap_value) . COMMA separated_nonempty_list(COMMA,binding(location,heap_value)) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## binding(location,heap_value) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE UNPACK 
+##
+## Ends in an error in state: 357.
+##
+## tuple(word_value) -> LANGLE . loption(separated_nonempty_list(COMMA,word_value)) RANGLE [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LANGLE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE Z_IDENTIFIER COMMA UNPACK 
+##
+## Ends in an error in state: 359.
+##
+## separated_nonempty_list(COMMA,word_value) -> word_value COMMA . separated_nonempty_list(COMMA,word_value) [ RANGLE ]
+##
+## The known suffix of the stack is as follows:
+## word_value COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE Z_IDENTIFIER SEMICOLON 
+##
+## Ends in an error in state: 358.
+##
+## separated_nonempty_list(COMMA,word_value) -> word_value . [ RANGLE ]
+## separated_nonempty_list(COMMA,word_value) -> word_value . COMMA separated_nonempty_list(COMMA,word_value) [ RANGLE ]
+##
+## The known suffix of the stack is as follows:
+## word_value 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 103, spurious reduction of production small_value -> simple_small_value 
+## In state 360, spurious reduction of production word_value -> small_value 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF Z_IDENTIFIER 
+##
+## Ends in an error in state: 356.
+##
+## heap_value -> mutability_annotation . CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
+## heap_value -> mutability_annotation . tuple(word_value) [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## mutability_annotation 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW Z_IDENTIFIER 
+##
+## Ends in an error in state: 353.
+##
+## binding(location,heap_value) -> location ARROW . heap_value [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## location ARROW 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 352.
+##
+## binding(location,heap_value) -> location . ARROW heap_value [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## location 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 346.
+##
+## component -> LPAREN instruction_sequence COMMA . heap_fragment RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN instruction_sequence COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 345.
+##
+## component -> LPAREN instruction_sequence . COMMA heap_fragment RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN instruction_sequence 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RPAREN 
+##
+## Ends in an error in state: 334.
+##
+## simple_instruction_sequence -> final_instruction . option(SEMICOLON) [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## final_instruction 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 103, spurious reduction of production small_value -> simple_small_value 
+## In state 188, spurious reduction of production final_instruction -> JMP small_value 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER SEMICOLON Z_IDENTIFIER 
+##
+## Ends in an error in state: 343.
+##
+## instruction_sequence -> LBRACKET simple_instruction_sequence . RBRACKET [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET simple_instruction_sequence 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 103.
+##
+## app(simple_small_value) -> simple_small_value . LBRACKET loption(separated_nonempty_list(COMMA,type_instantiation)) RBRACKET [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+## small_value -> simple_small_value . [ SEMICOLON RPAREN RBRACKET RANGLE LBRACE COMMA ]
+##
+## The known suffix of the stack is as follows:
+## simple_small_value 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET LD REGISTER COMMA REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 185.
+##
+## single_instruction -> LD register COMMA register . bracketpos [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## LD register COMMA register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET LD REGISTER COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 184.
+##
+## single_instruction -> LD register COMMA . register bracketpos [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## LD register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET LD REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 183.
+##
+## single_instruction -> LD register . COMMA register bracketpos [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## LD register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET LD Z_IDENTIFIER 
+##
+## Ends in an error in state: 182.
+##
+## single_instruction -> LD . register COMMA register bracketpos [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## LD 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET MV REGISTER COMMA UNPACK 
+##
+## Ends in an error in state: 179.
+##
+## single_instruction -> MV register COMMA . small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## MV register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET MV REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 178.
+##
+## single_instruction -> MV register . COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## MV register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET MV Z_IDENTIFIER 
+##
+## Ends in an error in state: 177.
+##
+## single_instruction -> MV . register COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## MV 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET PROTECT COMMA UNPACK 
+##
+## Ends in an error in state: 173.
+##
+## single_instruction -> PROTECT stack_prefix COMMA . stack_typing_variable [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## PROTECT stack_prefix COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET PROTECT UNIT RBRACKET 
+##
+## Ends in an error in state: 172.
+##
+## single_instruction -> PROTECT stack_prefix . COMMA stack_typing_variable [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## PROTECT stack_prefix 
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 169, spurious reduction of production separated_nonempty_list(DOUBLECOLON,value_type) -> value_type 
+## In state 175, spurious reduction of production loption(separated_nonempty_list(DOUBLECOLON,value_type)) -> separated_nonempty_list(DOUBLECOLON,value_type) 
+## In state 176, spurious reduction of production stack_prefix -> loption(separated_nonempty_list(DOUBLECOLON,value_type)) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET PROTECT Z_IDENTIFIER 
+##
+## Ends in an error in state: 168.
+##
+## single_instruction -> PROTECT . stack_prefix COMMA stack_typing_variable [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## PROTECT 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET RALLOC REGISTER COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 166.
+##
+## single_instruction -> RALLOC register COMMA . nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## RALLOC register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET RALLOC REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 165.
+##
+## single_instruction -> RALLOC register . COMMA nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## RALLOC register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET RALLOC Z_IDENTIFIER 
+##
+## Ends in an error in state: 164.
+##
+## single_instruction -> RALLOC . register COMMA nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## RALLOC 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET RET REGISTER LBRACE REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 161.
+##
+## bracereg -> LBRACE register . RBRACE [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET RET REGISTER LBRACE Z_IDENTIFIER 
+##
+## Ends in an error in state: 160.
+##
+## bracereg -> LBRACE . register RBRACE [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET RET REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 159.
+##
+## final_instruction -> RET register . bracereg [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## RET register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET RET Z_IDENTIFIER 
+##
+## Ends in an error in state: 158.
+##
+## final_instruction -> RET . register bracereg [ SEMICOLON RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## RET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SALLOC Z_IDENTIFIER 
+##
+## Ends in an error in state: 156.
+##
+## single_instruction -> SALLOC . nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## SALLOC 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SFREE INTEGER SEMICOLON Z_IDENTIFIER 
+##
+## Ends in an error in state: 332.
+##
+## simple_instruction_sequence -> single_instruction SEMICOLON . simple_instruction_sequence [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## single_instruction SEMICOLON 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SFREE INTEGER Z_IDENTIFIER 
+##
+## Ends in an error in state: 331.
+##
+## simple_instruction_sequence -> single_instruction . SEMICOLON simple_instruction_sequence [ RBRACKET ]
+##
+## The known suffix of the stack is as follows:
+## single_instruction 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SFREE Z_IDENTIFIER 
+##
+## Ends in an error in state: 154.
+##
+## single_instruction -> SFREE . nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## SFREE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SLD REGISTER COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 152.
+##
+## single_instruction -> SLD register COMMA . nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## SLD register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SLD REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 151.
+##
+## single_instruction -> SLD register . COMMA nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## SLD register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SLD Z_IDENTIFIER 
+##
+## Ends in an error in state: 150.
+##
+## single_instruction -> SLD . register COMMA nat [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## SLD 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SST INTEGER COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 148.
+##
+## single_instruction -> SST nat COMMA . register [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## SST nat COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SST INTEGER Z_IDENTIFIER 
+##
+## Ends in an error in state: 147.
+##
+## single_instruction -> SST nat . COMMA register [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## SST nat 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SST Z_IDENTIFIER 
+##
+## Ends in an error in state: 146.
+##
+## single_instruction -> SST . nat COMMA register [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## SST 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET ST REGISTER LBRACKET INTEGER RBRACKET COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 144.
+##
+## single_instruction -> ST register bracketpos COMMA . register [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## ST register bracketpos COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET ST REGISTER LBRACKET INTEGER RBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 143.
+##
+## single_instruction -> ST register bracketpos . COMMA register [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## ST register bracketpos 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET ST REGISTER LBRACKET INTEGER Z_IDENTIFIER 
+##
+## Ends in an error in state: 141.
+##
+## bracketpos -> LBRACKET nat . RBRACKET [ SEMICOLON COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET nat 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET ST REGISTER LBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 140.
+##
+## bracketpos -> LBRACKET . nat RBRACKET [ SEMICOLON COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET ST REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 139.
+##
+## single_instruction -> ST register . bracketpos COMMA register [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## ST register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET ST Z_IDENTIFIER 
+##
+## Ends in an error in state: 138.
+##
+## single_instruction -> ST . register bracketpos COMMA register [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## ST 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SUB REGISTER COMMA REGISTER COMMA UNPACK 
+##
+## Ends in an error in state: 341.
+##
+## single_instruction -> aop register COMMA register COMMA . small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## aop register COMMA register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SUB REGISTER COMMA REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 340.
+##
+## single_instruction -> aop register COMMA register . COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## aop register COMMA register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SUB REGISTER COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 339.
+##
+## single_instruction -> aop register COMMA . register COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## aop register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SUB REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 338.
+##
+## single_instruction -> aop register . COMMA register COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## aop register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET SUB Z_IDENTIFIER 
+##
+## Ends in an error in state: 337.
+##
+## single_instruction -> aop . register COMMA register COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## aop 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNFOLD REGISTER COMMA UNPACK 
+##
+## Ends in an error in state: 135.
+##
+## single_instruction -> UNFOLD register COMMA . small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNFOLD register COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNFOLD REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 134.
+##
+## single_instruction -> UNFOLD register . COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNFOLD register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNFOLD Z_IDENTIFIER 
+##
+## Ends in an error in state: 133.
+##
+## single_instruction -> UNFOLD . register COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNFOLD 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNPACK LANGLE A_IDENTIFIER COMMA REGISTER RANGLE COMMA UNPACK 
+##
+## Ends in an error in state: 11.
+##
+## single_instruction -> UNPACK LANGLE type_variable COMMA register RANGLE COMMA . small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNPACK LANGLE type_variable COMMA register RANGLE COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNPACK LANGLE A_IDENTIFIER COMMA REGISTER RANGLE Z_IDENTIFIER 
+##
+## Ends in an error in state: 10.
+##
+## single_instruction -> UNPACK LANGLE type_variable COMMA register RANGLE . COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNPACK LANGLE type_variable COMMA register RANGLE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNPACK LANGLE A_IDENTIFIER COMMA REGISTER Z_IDENTIFIER 
+##
+## Ends in an error in state: 9.
+##
+## single_instruction -> UNPACK LANGLE type_variable COMMA register . RANGLE COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNPACK LANGLE type_variable COMMA register 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNPACK LANGLE A_IDENTIFIER COMMA Z_IDENTIFIER 
+##
+## Ends in an error in state: 7.
+##
+## single_instruction -> UNPACK LANGLE type_variable COMMA . register RANGLE COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNPACK LANGLE type_variable COMMA 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNPACK LANGLE A_IDENTIFIER Z_IDENTIFIER 
+##
+## Ends in an error in state: 6.
+##
+## single_instruction -> UNPACK LANGLE type_variable . COMMA register RANGLE COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNPACK LANGLE type_variable 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNPACK LANGLE Z_IDENTIFIER 
+##
+## Ends in an error in state: 4.
+##
+## single_instruction -> UNPACK LANGLE . type_variable COMMA register RANGLE COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNPACK LANGLE 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET UNPACK Z_IDENTIFIER 
+##
+## Ends in an error in state: 3.
+##
+## single_instruction -> UNPACK . LANGLE type_variable COMMA register RANGLE COMMA small_value [ SEMICOLON ]
+##
+## The known suffix of the stack is as follows:
+## UNPACK 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN LBRACKET Z_IDENTIFIER 
+##
+## Ends in an error in state: 2.
+##
+## instruction_sequence -> LBRACKET . simple_instruction_sequence RBRACKET [ RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## LBRACKET 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: LPAREN Z_IDENTIFIER 
+##
+## Ends in an error in state: 1.
+##
+## component -> LPAREN . instruction_sequence COMMA heap_fragment RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
+##
+## The known suffix of the stack is as follows:
+## LPAREN 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+component_eof: Z_IDENTIFIER 
+##
+## Ends in an error in state: 0.
+##
+## component_eof' -> . component_eof [ # ]
+##
+## The known suffix of the stack is as follows:
+## 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
