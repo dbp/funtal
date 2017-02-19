@@ -32,43 +32,62 @@
          callbacks between languages, and assembly components
          comprised of different numbers of basic blocks.</p>
 
-      <h3>Artifact by Daniel Patterson and Gabriel Scherer.</h3>
+      <hr/>
+
+      <h2>Artifact: a FunTAL type-checker and small-step machine.</h2>
+      <h3>Daniel Patterson and Gabriel Scherer.</h3>
 
       <p>
         We present a type-checker and small-step machine semantics for
-        FunTAL. We include all of the examples from the paper, as well
-        as smaller examples to start with. You can load them into the
-        machine and step through watching as the registers, stack, and
-        heap are modified. You can also modify the examples or write
-        your own, running them once they type-check.
+        FunTAL. We <strong>well-typed, runnable examples from the
+          paper</strong>, as well as a few smaller examples to start with.
       </p>
 
-      <p>Note: there are some syntactic differences from the
-      presentation in the paper, primarily to reduce ambiguity in the
-      grammar, and secondarily to make the type-checking algorith type
-        directed. Those changes are the following:
+      <p>With our artifact you write programs and then type-check /
+        load them into a FunTAL machine. The machine shows the
+        registers, stack, and heap. It is a small-step machine and
+        at each step shows the redex and the context.
+      </p>
 
-        <ul>
-          <li><code>FT</code> boundary terms use brackets to specify
-            types, rather than superscripts.</li>
-          <li><code>import</code> specifies types by ...</li>
-          <li><code>FT</code> terms must now specify the stack that
+      <p><strong>Note:</strong> there are some syntactic differences
+        from the presentation in the paper, primarily to reduce
+        ambiguity in the grammar, and secondarily to make the
+        type-checking algorith type directed. You can see these changes
+        in the examples as part of this artifact, but we summarize them
+        here for completeness:</p>
+
+      <ul>
+        <li>TAL components are a bracketed sequence of
+          instructions and a bracketed sequence of heap bindings,
+          i.e., <code>([instr; ...],[l -> h, ...])</code></li>
+        <li><code>FT</code> boundary terms use brackets to specify
+          types, rather than superscripts.</li>
+        <li><code>import</code> specifies types by ...</li>
+        <li><code>FT</code> terms must now specify the stack that
           they expect when the TAL code within finishes. If the TAL
           code will not modify the stack, you can
           write <code>?</code>.</li>
-        </ul>
-      </p>
+        <li>We restrict type variables (in Fun and TAL) to start
+          with <code>a</code>, stack variables to start
+          with <code>z</code> and return marker variables to start
+          with <code>e</code>.</li>
+      </ul>
 
       <p>
-        Examples:
-        <a href="#" id="simple">Simple TAL</a>
-        | <a href="#" id="call_to_call">Call to call</a>
+        <strong>Examples from paper:</strong>
+        <a href="#" id="call_to_call">Call to call</a>
         | <a href="#" id="higher_order">Higher Order</a>
         | <a href="#" id="blocks_1">Blocks 1</a>
         | <a href="#" id="blocks_2">Blocks 2</a>
         | <a href="#" id="factorial_f">Factorial (functional)</a>
         | <a href="#" id="factorial_t">Factorial (imperative)</a>
       </p>
+
+      <p>
+        <strong>Additional examples:</strong>
+        <a href="#" id="simple">Simple TAL</a>
+      </p>
+
 
       <div class="box">
         <textarea id="input">
@@ -101,6 +120,9 @@
           <hr/>
           <pre id="heap"></pre>
         </div>
+      </div>
+      <div class="footer">
+        Powered by OCaml and js_of_ocaml.
       </div>
     </div>
     <script type="text/javascript" src="codemirror.js"></script>

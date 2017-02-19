@@ -9,8 +9,8 @@ FT [int, ?] (
 |}
 
 let higher_order = Ftal.F.show_exp Examples.higher_order
-let factorial_f = Ftal.F.show_exp Examples.factorial_f
-let factorial_t = Ftal.F.show_exp Examples.factorial_t
+let factorial_f = Ftal.F.(show_exp (EApp (Examples.factorial_f, [EInt 3])))
+let factorial_t = Ftal.F.(show_exp (EApp (Examples.factorial_t, [EInt 3])))
 let call_to_call = Ftal.F.show_exp (Ftal.F.(EBoundary (TInt, None, Examples.call_to_call)))
 let blocks_1 = Ftal.F.show_exp Examples.blocks_1
 let blocks_2 = Ftal.F.show_exp Examples.blocks_2
@@ -43,10 +43,14 @@ let _ =
     let ((e, (h,r,s)), past) = !hist in
     let _ = match Ftal.F.decomp e with
       | None ->
+        H.((getElementById "next")##setAttribute (Js.string "disabled") (Js.string "on"));
+        H.((getElementById "many")##setAttribute (Js.string "disabled") (Js.string "on"));
         let _ = set_text "context" (Ftal.F.show_exp e) in
         let _ = set_text "focus" "" in
         ()
       | Some (c, f) ->
+        H.((getElementById "next")##removeAttribute (Js.string "disabled"));
+        H.((getElementById "many")##removeAttribute (Js.string "disabled"));
         let _ = set_text "context" (Ftal.F.show_context c) in
         let _ = set_text "focus" (Ftal.F.show_ft f) in
         ()
