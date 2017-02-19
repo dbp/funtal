@@ -85,20 +85,19 @@ f_simple_expression:
 | n=int { F.EInt n }
 | es=tuple(f_expression) { F.ETuple es }
 | PI n=int LPAREN e=f_expression RPAREN { F.EPi (n, e) }
-| LPAREN e=f_expression RPAREN { e }
 | FT LBRACKET tau=f_type COMMA sigma=stack_typing_annot RBRACKET c=component
   { F.EBoundary (tau, sigma, c) }
+| LPAREN e=f_expression RPAREN { e }
 
 f_app_expression:
 | e=f_simple_expression { e }
 | e=f_simple_expression args=nonempty_list(f_simple_expression) { F.EApp (e, args) }
 
 f_arith_expression:
-| e=f_app_expression { e }
 | e1=f_arith_expression op=infixop e2=f_arith_expression { F.EBinop (e1, op, e2) }
+| e=f_app_expression { e }
 
 f_expression:
-| e=f_arith_expression { e }
 | IF0 p=f_simple_expression e1=f_simple_expression e2=f_simple_expression
   { F.EIf0 (p, e1, e2) }
 | LAMBDA args=f_telescope DOT body=f_expression
@@ -108,9 +107,10 @@ f_expression:
   LBRACKET sout=stack_prefix RBRACKET
   args=f_telescope DOT body=f_expression
   { F.ELamMod (args, sin, sout, body) }
-| FOLD mu=f_mu_type e=f_expression
+| FOLD mu=mayparened(f_mu_type) e=f_expression
   { let (alpha, tau) = mu in F.EFold (alpha, tau, e) }
 | UNFOLD e=f_expression { F.EUnfold e }
+| e=f_arith_expression { e }
 
   stack_typing_annot:
   | QUESTION { None }
@@ -163,11 +163,12 @@ small_value:
   { let (u, omega) = a in UApp (u, omega) }
 
   fold(value):
-  | FOLD mu=mu_type v=value
+  | FOLD mu=mayparened(mu_type) v=value
     { let (alpha, tau) = mu in (alpha, tau, v) }
 
   pack(value):
-  | PACK LANGLE tau=value_type COMMA v=value RANGLE AS goal=existential_type
+  | PACK LANGLE tau=value_type COMMA v=value RANGLE
+    AS goal=mayparened(existential_type)
     { let (alpha,tau') = goal in (tau, v, alpha, tau') }
 
   app(value):
@@ -340,6 +341,9 @@ bracketpos: LBRACKET i=int RBRACKET { i }
 tuple(elem):
 | LANGLE elems=separated_list(COMMA, elem) RANGLE { elems }
 
+%inline mayparened(elem):
+| x=elem { x }
+| x=parened(elem) { x }
 
 %inline braced(elem):
 | LBRACE x=elem RBRACE {x}
