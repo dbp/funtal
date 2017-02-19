@@ -76,7 +76,7 @@ f_type:
 | mu=f_mu_type { let (alpha, tau) = mu in F.TRec (alpha, tau) }
 | taus=tuple(f_type) { F.TTuple taus }
 
-  f_type_variable: alpha=type_variable { alpha }
+  f_type_variable: alpha=identifier { alpha }
   f_mu_type: MU alpha=f_type_variable DOT tau=f_type { (alpha, tau) }
 
 f_simple_expression:
