@@ -1,12 +1,12 @@
 module H = Dom_html
 
-let simple = {|FT [int, ?] (
-     mv r1, 1;
-     add r1, r1, 1;
-     halt int, * {r1}
-;
-     []
-               )|}
+let simple = {|
+FT [int, ?] (
+  [mv r1, 1;
+   add r1, r1, 1;
+   halt int, * {r1}],
+  [])
+|}
 
 let higher_order = Ftal.F.show_exp Examples.higher_order
 let factorial_f = Ftal.F.show_exp Examples.factorial_f
