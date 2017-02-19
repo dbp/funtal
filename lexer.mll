@@ -7,28 +7,18 @@ let lexing_error lexbuf =
   let invalid_input = String.make 1 (Lexing.lexeme_char lexbuf 0) in
   raise (Error (invalid_input, lexbuf.Lexing.lex_curr_p))
 
-let classify_type_variable lexbuf =
-  let var =
-    (* remove the ' that starts the lexeme *)
-    let str = Lexing.lexeme lexbuf in
-    String.sub str 1 (String.length str - 1) in
-  match var.[0] with
-  | 'a' -> TYPE_VARIABLE var
-  | 'e' -> RETURN_MARKER_VARIABLE var
-  | 'z' -> STACK_TYPING_VARIABLE var
-  | other ->
-    Printf.eprintf "Error parsing the type-level variable '%s:\n\
-      type-level variables should start with either 'a' (type variables),\n\
-      'e' (return marker variables) or 'z' (stack typing variables),\n\
-      this variable starts with the unknown '%c'.\n"
-      var var.[0];
-    raise (Error (var, lexbuf.Lexing.lex_curr_p))
+let classify_identifier ident =
+  match ident.[0] with
+  | 'a' -> A_IDENTIFIER ident
+  | 'e' -> E_IDENTIFIER ident
+  | 'z' -> Z_IDENTIFIER ident
+  | _ -> OTHER_IDENTIFIER ident
 }
 
 let int_literal = '-'? ['0'-'9'] ['0'-'9']*
 let blank = [' ' '\t']+
 let newline = ('\r'* '\n')
-let identifier = ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_']*
+let identifier = ['a'-'z' 'A'-'Z' '_'] ['a'-'z' 'A'-'Z' '0'-'9' '_' '\'']*
 let register = ('r' ['1' - '7'] | "ra")
 
 rule token = parse
@@ -97,7 +87,6 @@ rule token = parse
   | "TF" { TF }
   | "import" { IMPORT }
   | "protect" { PROTECT }
-  | identifier { IDENTIFIER (Lexing.lexeme lexbuf) }
-  | "'" identifier { classify_type_variable lexbuf }
+  | identifier { classify_identifier (Lexing.lexeme lexbuf) }
   | eof { EOF }
   | _ { lexing_error lexbuf }

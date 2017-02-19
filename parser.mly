@@ -11,8 +11,7 @@
 %token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW QUESTION
 %token LAMBDA IF0 PI
 %token FT TF
-%token<string> IDENTIFIER
-%token<string> TYPE_VARIABLE RETURN_MARKER_VARIABLE STACK_TYPING_VARIABLE
+%token<string> A_IDENTIFIER Z_IDENTIFIER E_IDENTIFIER OTHER_IDENTIFIER
 %token<int> INTEGER
 %token<string> REGISTER
 %token EOF
@@ -104,7 +103,7 @@ f_expression:
   | QUESTION { None }
   | sigma=stack_typing { Some sigma }
 
-  f_term_variable: x=IDENTIFIER { x }
+  f_term_variable: x=identifier { x }
 
   f_telescope:
   | LPAREN args=separated_list(COMMA, decl(f_term_variable, f_type)) RPAREN
@@ -311,33 +310,42 @@ component:
 | LPAREN i=instruction_sequence COMMA h=heap_fragment RPAREN
   { (i, h) }
 
-  type_variable:
-  | alpha=TYPE_VARIABLE { alpha }
+type_variable:
+| alpha=A_IDENTIFIER { alpha }
 
-  return_marker_variable:
-  | epsilon=RETURN_MARKER_VARIABLE { epsilon }
+return_marker_variable:
+| epsilon=E_IDENTIFIER { epsilon }
 
-  stack_typing_variable:
-  | zeta=STACK_TYPING_VARIABLE { zeta }
+stack_typing_variable:
+| zeta=Z_IDENTIFIER { zeta }
 
-  location:
-  | l=IDENTIFIER { l }
+location:
+| l=identifier { l }
 
-  int: n=INTEGER { n }
-  bracereg: LBRACE r=register RBRACE { r }
-  bracketpos: LBRACKET i=int RBRACKET { i }
+identifier:
+| id=A_IDENTIFIER { id }
+| id=E_IDENTIFIER { id }
+| id=Z_IDENTIFIER { id }
+| id=OTHER_IDENTIFIER { id }
 
-  tuple(elem):
-  | LANGLE elems=separated_list(COMMA, elem) RANGLE { elems }
+int: n=INTEGER { n }
+bracereg: LBRACE r=register RBRACE { r }
+bracketpos: LBRACKET i=int RBRACKET { i }
 
-  %inline braced(elem):
-  | LBRACE x=elem RBRACE {x}
+tuple(elem):
+| LANGLE elems=separated_list(COMMA, elem) RANGLE { elems }
 
-  %inline bracketed(elem):
-  | LBRACKET x=elem RBRACKET {x}
 
-  %inline parened(elem):
-  | LPAREN x=elem RPAREN {x}
+%inline braced(elem):
+| LBRACE x=elem RBRACE {x}
 
-  %inline angled(elem):
-  | LANGLE x=elem RANGLE {x}
+%inline bracketed(elem):
+| LBRACKET x=elem RBRACKET {x}
+
+%inline parened(elem):
+| LPAREN x=elem RPAREN {x}
+
+%inline angled(elem):
+| LANGLE x=elem RANGLE {x}
+
+

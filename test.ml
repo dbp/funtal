@@ -77,7 +77,7 @@ let test_parse3 _ = assert_equal
 let test_parse_variables_1 _ =
   let open TAL in
   assert_equal
-    (Parse.parse_string Parser.type_env_eof "['a1, 'e2, 'za3]")
+    (Parse.parse_string Parser.type_env_eof "[a1, e2, za3]")
     [DAlpha "a1"; DEpsilon "e2"; DZeta "za3"]
 
 let test2 _ = assert_equal
@@ -141,7 +141,7 @@ let test_import_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC
-          (tal_comp "([import r1, 'z as *, int TF{10}; halt int, * {r1}], [])")))
+          (tal_comp "([import r1, z as *, int TF{10}; halt int, * {r1}], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 
@@ -150,7 +150,7 @@ let test_import_ty_exc _ =
     (fun _ -> FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC
-          (tal_comp "([import r1, 'z as *, int TF{()}; halt int, * {r1}], [])")))
+          (tal_comp "([import r1, z as *, int TF{()}; halt int, * {r1}], [])")))
 
 let test_import_ty_exc2 _ =
   assert_raises_typeerror
@@ -176,12 +176,12 @@ let test_import_stk_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
        (FTAL.TC (tal_comp "([salloc 3;
-                             import r1, 'zz as unit::*, int TF{
-                               FT [int, unit::'zz] (
-                                 [protect unit, 'z;
+                             import r1, z' as unit::*, int TF{
+                               FT [int, unit::z'] (
+                                 [protect unit, z;
                                   mv r1, 10;
                                   sfree 1;
-                                  halt int, 'z {r1}]
+                                  halt int, z {r1}]
                                ,
                                  []
                                )
@@ -329,7 +329,7 @@ let test_unpack_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
        (FTAL.TC (tal_comp
-                   "([unpack <'a, r2>, pack <int, 1> as exists 'a. 'a;
+                   "([unpack <a, r2>, pack <int, 1> as exists a. a;
                       mv r1, ();
                       halt unit, * {r1}],
                      [])")))
@@ -341,7 +341,7 @@ let test_unpack_ty_exc _ =
     (fun _ -> FTAL.tc
         (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
         (FTAL.TC (tal_comp
-                    "([unpack <'a, r2>, 10;
+                    "([unpack <a, r2>, 10;
                        mv r1, ();
                        halt unit, * {r1}], [])")))
 
@@ -352,7 +352,7 @@ let test_unfold_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
-                   "([unfold r1, fold mu 'a. int 1;
+                   "([unfold r1, fold mu a. int 1;
                       halt int, * {r1}],
                      [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
@@ -371,8 +371,8 @@ let call_tl =
     tal_comp
       "([mv ra, lh;
          call l {*, end{int; *}}],
-        [l -> box code ['z, 'e]
-               {ra: box forall[]. {r1:int; 'z} 'e; 'z} ra.
+        [l -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; z} ra.
                [mv r1, 10;
                 ret ra {r1}],
          lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
