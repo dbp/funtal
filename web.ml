@@ -15,30 +15,37 @@ let call_to_call = Ftal.F.show_exp (Ftal.F.(EBoundary (TInt, None, Examples.call
 let blocks_1 = Ftal.F.show_exp Examples.blocks_1
 let blocks_2 = Ftal.F.show_exp Examples.blocks_2
 
+
+let set_error ln m =
+  let _ = Js.Unsafe.((coerce global)##seterror (Js.number_of_float (float_of_int ln)) (Js.string m)) in
+  ()
+let clear_errors _ =
+  let _ = Js.Unsafe.((coerce global)##.clearerrors) in
+  ()
+
+let hide_machine _ =
+  H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on"))
+let show_machine _ =
+  H.((getElementById "machine")##removeAttribute (Js.string "hidden"))
+let set_text i t =
+  let open H in
+  (getElementById i)##.innerHTML := Js.string t
+let set_editor t =
+  let open Js in
+  clear_errors ();
+  hide_machine ();
+  let _ = Unsafe.((coerce (global##.codemirror))##setValue (string t)) in
+  ()
+let ehandle s =
+  H.handler (fun _ -> set_editor s; Js._false)
+let get_editor _ =
+  Js.Unsafe.((coerce (global##.codemirror))##getValue)
+let set_click i h =
+  H.((getElementById i)##.onclick := h);
+  ()
+
 let _ =
   let hist = ref ((Ftal.F.EUnit, ([],[],[])), []) in
-  let hide_machine _ =
-    H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on"))
-  in
-  let show_machine _ =
-    H.((getElementById "machine")##removeAttribute (Js.string "hidden"))
-  in
-  let set_text i t =
-    let open H in
-    (getElementById i)##.innerHTML := Js.string t
-  in
-  let set_editor t =
-    let open Js in
-    set_text "error" "";
-    hide_machine ();
-    Unsafe.((coerce (global##.codemirror))##setValue (string t))
-  in
-  let ehandle s =
-    H.handler (fun _ -> set_editor s)
-  in
-  let get_editor _ =
-    Js.Unsafe.((coerce (global##.codemirror))##getValue)
-  in
   let refresh _ =
     let ((e, (h,r,s)), past) = !hist in
     let _ = match Ftal.F.decomp e with
@@ -78,7 +85,7 @@ let _ =
             let _ = tc (default_context TAL.QOut) (FC e) in
             hist := ((e, ([],[],[])), []);
             refresh ();
-            set_text "error" "";
+            clear_errors ();
             show_machine ();
             Js.Opt.return Js._false
           with TypeError (t,_)
@@ -86,15 +93,16 @@ let _ =
              | TypeErrorH (t,_,_)
              | TypeErrorU (t,_)  ->
             begin
-              set_text "error" ("Type Error: " ^ t);
+              set_error 3 ("Type Error: " ^ t);
               hide_machine ();
               Js.Opt.return Js._false
             end
-             | x -> set_text "error" "Parse Error";
+             | x ->
+               set_error 3 "Parse Error";
                hide_machine ();
                Js.Opt.return Js._false
         )) in Js._false
-in
+  in
   let next _ =
     next' ();
     refresh ();
@@ -112,17 +120,17 @@ in
     refresh ();
     Js._false
   in
-  let _ = H.((getElementById "load")##.onclick := (H.handler load)) in
-  let _ = H.((getElementById "next")##.onclick := (H.handler next)) in
-  let _ = H.((getElementById "prev")##.onclick := (H.handler prev)) in
-  let _ = H.((getElementById "many")##.onclick := (H.handler many)) in
-  let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
-  let _ = H.((getElementById "simple")##.onclick := (ehandle simple)) in
-  let _ = H.((getElementById "call_to_call")##.onclick := (ehandle call_to_call)) in
-  let _ = H.((getElementById "higher_order")##.onclick := (ehandle higher_order)) in
-  let _ = H.((getElementById "blocks_1")##.onclick := (ehandle blocks_1)) in
-  let _ = H.((getElementById "blocks_2")##.onclick := (ehandle blocks_2)) in
-  let _ = H.((getElementById "factorial_f")##.onclick := (ehandle factorial_f)) in
-  let _ = H.((getElementById "factorial_t")##.onclick := (ehandle factorial_t)) in
-  let _ = set_editor simple in
+  set_click "load" (H.handler load);
+  set_click "next" (H.handler next);
+  set_click "prev" (H.handler prev);
+  set_click "many" (H.handler many);
+  hide_machine ();
+  set_click "simple" (ehandle simple);
+  set_click "call_to_call" (ehandle call_to_call);
+  set_click "higher_order" (ehandle higher_order);
+  set_click "blocks_1" (ehandle blocks_1);
+  set_click "blocks_2" (ehandle blocks_2);
+  set_click "factorial_f" (ehandle factorial_f);
+  set_click "factorial_t" (ehandle factorial_t);
+  set_editor simple;
   ()

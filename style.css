@@ -51,6 +51,22 @@ code {
   height: auto;
 }
 
+.errors {
+  width: 12px;
+}
+
+.error-marker {
+  border-radius: 5px;
+  width: 10px;
+  height: 10px;
+  background-color: #8B0000;
+  display: inline-block;
+}
+
+.error-line {
+  border-bottom: 1px solid #8B0000 !important;
+}
+
 .buttons {
   margin: 5px;
   text-align: center;
@@ -58,9 +74,12 @@ code {
 
 #error {
   color: #8B0000;
-  font-weight: bold;
-  font-size: 1.2em;
-  text-align: center;
+  padding: 5px;
+  margin-left: 25px;
+}
+
+#error span {
+  padding-left: 10px;
 }
 
 .left {

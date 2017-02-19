@@ -91,15 +91,15 @@
 
       <div class="box">
         <textarea id="input">
-
         </textarea>
+        <div id="error"></div>
       </div>
 
       <div class="buttons">
         <button id="load">&darr; Type-check &amp; load &darr;</button>
       </div>
 
-      <div id="error"></div>
+
 
       <div class="box">
         <div id="machine">
@@ -142,8 +142,27 @@
       lineNumbers: true,
       matchBrackets: true,
       viewportMargin: Infinity,
+      gutters: ["CodeMirror-linenumbers","errors"],
       mode: "funtal"
       });
+
+      window.seterror = function(line, msg) {
+      clearerrors();
+      if (line > 0) {
+      var n = document.createElement("div");
+      n.className = "error-marker";
+      n.setAttribute("title", msg);
+      window.codemirror.setGutterMarker(line, "errors", n);
+      }
+
+      var holder = document.getElementById("error");
+      holder.innerHTML = "<div class='error-marker'></div><span>" + msg + "</span>";
+      };
+
+      window.clearerrors = function() {
+      window.codemirror.clearGutter("errors");
+      document.getElementById("error").innerHTML = "";
+      }
     </script>
     <script type="text/javascript" src="_build/web.js"></script>
   </body>
