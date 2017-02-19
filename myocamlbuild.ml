@@ -4,10 +4,8 @@ open Ocamlbuild_plugin
 
 let () = flag ["menhir"; "parser"; "trace"] (A"--trace")
 
-let () = dispatch dispatch_default
-
 let _ =
-       Ocamlbuild_plugin.dispatch
+       dispatch
          (fun hook ->
             dispatch_default hook;
             Ocamlbuild_js_of_ocaml.dispatcher
