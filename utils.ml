@@ -85,3 +85,13 @@ let list_index l x =
 let list_for_all2 ~f l1 l2 =
   try List.for_all2_exn ~f l1 l2
   with _ -> false
+
+let global_replace c replacement str =
+  let len = String.length str in
+  let buf = Buffer.create len in
+  for i = 0 to len - 1 do
+    if str.[i] <> c
+    then Buffer.add_char buf str.[i]
+    else Buffer.add_string buf replacement
+  done;
+  Buffer.contents buf
