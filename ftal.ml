@@ -1817,6 +1817,11 @@ end = struct
   open PPrint;;
   open TAL
 
+  let p_sequence (ds: document list) =
+    lbracket ^^ align (group (separate (comma ^^ break 1) ds)) ^^ rbracket
+  and p_sequence_map f xs =
+    lbracket ^^ align (group (separate_map (comma ^^ break 1) f xs)) ^^ rbracket
+
   let rec p_w (w : w) : document =
     match w with
     | WUnit -> lparen ^^ rparen
@@ -1926,13 +1931,12 @@ end = struct
     | Sub -> !^"sub"
     | Mult -> !^"mul"
   and p_regm (m : regm) : document =
-    align (separate_map (comma ^^ break 1)
-              (fun (r,w) -> !^r ^^ !^" -> " ^^ nest 2 (align (p_w w)))
-              m)
+    let p_binding (r, w) = !^r ^^ !^" -> " ^^ nest 2 (align (p_w w)) in
+    p_sequence_map p_binding m
   and p_heapm (m : heapm) : document =
-    align (separate_map (comma ^^ break 1)
-              (fun (l,(p,h)) -> !^l ^^ !^" -> " ^^ nest 2 (align (p_mut p ^^ space ^^  p_h h)))
-              m)
+    let p_binding (l, (p, h)) =
+      !^l ^^ !^" -> " ^^ nest 2 (align (p_mut p ^^ space ^^  p_h h)) in
+    p_sequence_map p_binding m
   and p_stackm (m : stackm) : document =
     if List.length m > 0 then
       nest 2 (separate_map (!^" ::" ^^ break 1) p_w m ^^ !^" :: *")
