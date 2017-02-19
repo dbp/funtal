@@ -1,24 +1,33 @@
-open Examples;;
-
 module H = Dom_html
 
-let p1 = {|FT [int, ?] (
+let simple = {|FT [int, ?] (
      mv r1, 1;
      add r1, r1, 1;
      halt int, * {r1}
 ;
      []
-)|}
+               )|}
+
+let higher_order = Ftal.F.show_exp Examples.higher_order
+let factorial_f = Ftal.F.show_exp Examples.factorial_f
+let factorial_t = Ftal.F.show_exp Examples.factorial_t
+let call_to_call = Ftal.F.show_exp (Ftal.F.(EBoundary (TInt, None, Examples.call_to_call)))
+let blocks_1 = Ftal.F.show_exp Examples.blocks_1
+let blocks_2 = Ftal.F.show_exp Examples.blocks_2
 
 let _ =
-  let hist = ref ((higher_order, ([],[],[])), []) in
+  let hist = ref ((Ftal.F.EUnit, ([],[],[])), []) in
   let set_text i t =
     let open H in
     (getElementById i)##.innerHTML := Js.string t
   in
   let set_editor t =
     let open Js in
-    Unsafe.((coerce (global##.codemirror))##setValue (string p1))
+    set_text "error" "";
+    Unsafe.((coerce (global##.codemirror))##setValue (string t))
+  in
+  let ehandle s =
+    H.handler (fun _ -> set_editor s)
   in
   let get_editor _ =
     Js.Unsafe.((coerce (global##.codemirror))##getValue)
@@ -97,5 +106,12 @@ in
   let _ = H.((getElementById "prev")##.onclick := (H.handler prev)) in
   let _ = H.((getElementById "many")##.onclick := (H.handler many)) in
   let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
-  let _ = set_editor p1 in
+  let _ = H.((getElementById "simple")##.onclick := (ehandle simple)) in
+  let _ = H.((getElementById "call_to_call")##.onclick := (ehandle call_to_call)) in
+  let _ = H.((getElementById "higher_order")##.onclick := (ehandle higher_order)) in
+  let _ = H.((getElementById "blocks_1")##.onclick := (ehandle blocks_1)) in
+  let _ = H.((getElementById "blocks_2")##.onclick := (ehandle blocks_2)) in
+  let _ = H.((getElementById "factorial_f")##.onclick := (ehandle factorial_f)) in
+  let _ = H.((getElementById "factorial_t")##.onclick := (ehandle factorial_t)) in
+  let _ = set_editor simple in
   ()

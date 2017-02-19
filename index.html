@@ -2,30 +2,87 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>FunTAL: mixing functional code with assembly.</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>FunTAL: mixing a functional language with assembly.</title>
     <link rel="stylesheet" type="text/css" href="codemirror.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
   </head>
 
   <body>
     <div class="holder">
-      <h1>FunTAL: mixing functional code with assembly.</h1>
+      <h1>FunTAL: mixing a functional language with assembly.</h1>
+
+      <h3>Daniel Patterson, Jamie Perconti, Christos Dimoulas, Amal Ahmed.</h3>
+      <h4>To appear in Programming Language Design and Implementation (PLDI) 2017.</h4>
+
+      <h3>Draft <a href="https://dbp.io/pubs/2017/funtal.pdf">paper</a> and <a href="https://dbp.io/pubs/2017/funtal-tr.pdf">technical appendix</a>.</h3>
+
+      <p>We present FunTAL, the first multi-language system to
+         formalize safe interoperability between a high-level
+         functional language and low-level assembly code while
+         supporting compositional reasoning about the mix. A central
+         challenge in developing such a multi-language is how to
+         bridge the gap between assembly, which is staged into calls
+         to continuations, and high-level code, where subterms return
+         a result. We present a compositional stack-based typed
+         assembly language that supports components, comprised of one
+         or more basic blocks, that may be embedded in high-level
+         contexts. We also present a logical relation for FunTAL that
+         supports reasoning about equivalence of high-level components
+         and their assembly replacements, mixed-language programs with
+         callbacks between languages, and assembly components
+         comprised of different numbers of basic blocks.</p>
+
+      <h3>Artifact by Daniel Patterson and Gabriel Scherer.</h3>
+
+      <p>
+        We present a type-checker and small-step machine semantics for
+        FunTAL. We include all of the examples from the paper, as well
+        as smaller examples to start with. You can load them into the
+        machine and step through watching as the registers, stack, and
+        heap are modified. You can also modify the examples or write
+        your own, running them once they type-check.
+      </p>
+
+      <p>Note: there are some syntactic differences from the
+      presentation in the paper, primarily to reduce ambiguity in the
+      grammar, and secondarily to make the type-checking algorith type
+        directed. Those changes are the following:
+
+        <ul>
+          <li><code>FT</code> boundary terms use brackets to specify
+            types, rather than superscripts.</li>
+          <li><code>import</code> specifies types by ...</li>
+          <li><code>FT</code> terms must now specify the stack that
+          they expect when the TAL code within finishes. If the TAL
+          code will not modify the stack, you can
+          write <code>?</code>.</li>
+        </ul>
+      </p>
+
+      <p>
+        Examples:
+        <a href="#" id="simple">Simple TAL</a>
+        | <a href="#" id="call_to_call">Call to call</a>
+        | <a href="#" id="higher_order">Higher Order</a>
+        | <a href="#" id="blocks_1">Blocks 1</a>
+        | <a href="#" id="blocks_2">Blocks 2</a>
+        | <a href="#" id="factorial_f">Factorial (functional)</a>
+        | <a href="#" id="factorial_t">Factorial (imperative)</a>
+      </p>
 
       <div class="box">
-        <h2>Editor</h2>
         <textarea id="input">
 
         </textarea>
       </div>
 
       <div class="buttons">
-        <button id="load">&darr; Load &darr;</button>
+        <button id="load">&darr; Type-check &amp; load &darr;</button>
       </div>
 
       <div id="error"></div>
 
       <div class="box">
-        <h2>Machine</h2>
         <div id="machine">
           <div class="buttons left">
             <button title="one step backward" id="prev">Step &larr;</button>
@@ -62,6 +119,7 @@
       window.codemirror = CodeMirror.fromTextArea(document.getElementById("input"), {
       lineNumbers: true,
       matchBrackets: true,
+      viewportMargin: Infinity,
       mode: "funtal"
       });
     </script>
