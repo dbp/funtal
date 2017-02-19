@@ -87,7 +87,6 @@ rule token = parse
   | "if0" { IF0 }
   | "pi" { PI }
   | "*" { BIGDOT }
-  | "[]" { EMPTY }
   | "+" { PLUS }
   | "-" { MINUS }
   | "*" { TIMES }

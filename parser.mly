@@ -8,7 +8,7 @@
 %token FORALL EXISTS MU
 %token UNIT INT REF BOX
 %token LANGLE RANGLE LBRACKET RBRACKET LBRACE RBRACE LPAREN RPAREN
-%token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW EMPTY QUESTION
+%token DOT BIGDOT COMMA COLON SEMICOLON DOUBLECOLON ARROW QUESTION
 %token LAMBDA IF0 PI
 %token FT TF
 %token<string> IDENTIFIER
@@ -178,15 +178,17 @@ type_instantiation:
 | q=return_marker { OQ q }
 
 heap_value_type:
-| FORALL LBRACKET delta=type_env RBRACKET DOT
-  LBRACE chi=register_typing SEMICOLON sigma=stack_typing RBRACE q=return_marker
+| FORALL delta=type_env DOT
+  LBRACE chi=simple_register_typing SEMICOLON sigma=stack_typing
+  RBRACE q=return_marker
   { PBlock (delta, chi, sigma, q) }
 | taus=tuple(value_type) { PTuple taus }
 
 heap_value:
 | CODE
-  LBRACKET delta=type_env RBRACKET
-  LBRACE chi=register_typing SEMICOLON sigma=stack_typing RBRACE q=return_marker
+  delta=type_env
+  LBRACE chi=simple_register_typing SEMICOLON sigma=stack_typing
+  RBRACE q=return_marker
   DOT i=instruction_sequence
   { (Box, HCode (delta, chi, sigma, q, i)) }
 | mut=mutability_annotation ws=tuple(word_value) { (mut, HTuple ws) }
@@ -195,7 +197,10 @@ heap_value:
   | BOX { Box }
   | REF { Ref }
 
-register_typing: elems=left_empty_list(decl(register, value_type)) { elems }
+/*
+register_typing: li=bracketed(simple_register_typing) { li }
+*/
+simple_register_typing: li=separated_list(COMMA, decl(register, value_type)) { li }
 
 stack_prefix:
   | taus=separated_list(DOUBLECOLON, value_type) { taus }
@@ -218,7 +223,8 @@ return_marker:
   { QEnd (tau, sigma) }
 | OUT { QOut }
 
-type_env: elems=left_empty_list(type_env_elem) { elems }
+type_env: li=bracketed(simple_type_env) { li }
+simple_type_env: li=separated_list(COMMA, type_env_elem) { li}
 
   type_env_elem:
   | alpha=type_variable { DAlpha alpha }
@@ -229,12 +235,11 @@ memory:
 | LPAREN h=heap_fragment SEMICOLON r=register_file SEMICOLON s=stack RPAREN
   { (h, r, s) }
 
-heap_fragment:
-| h=left_empty_list(binding(location,heap_value)) { h }
+heap_fragment: li=bracketed(simple_heap_fragment) { li }
+simple_heap_fragment: li=separated_list(COMMA, binding(location,heap_value)) { li }
 
-register_file:
-| h=left_empty_list(binding(register, word_value))
-  { h }
+register_file: li=bracketed(simple_register_file) { li }
+simple_register_file: li=separated_list(COMMA, binding(register, word_value)) { li }
 
   binding(variable, value):
   | x=variable ARROW v=value { (x, v) }
@@ -245,19 +250,23 @@ register_file:
 stack: ws=list(w=word_value DOUBLECOLON {w}) NIL { ws }
 
 instruction_sequence:
-LBRACKET i=instruction_sequence_ option(SEMICOLON) RBRACKET { i }
+LBRACKET i=simple_instruction_sequence RBRACKET { i }
 
-instruction_sequence_:
-| i=single_instruction SEMICOLON seq=instruction_sequence_
+simple_instruction_sequence:
+| i=single_instruction SEMICOLON seq=simple_instruction_sequence
   { i :: seq }
+| i=final_instruction option(SEMICOLON)
+  { [i] }
+
+final_instruction:
 | JMP u=small_value
-  { [Ijmp u] }
+  { Ijmp u }
 | CALL u=small_value LBRACE sigma=stack_typing COMMA q=return_marker RBRACE
-  { [Icall (u, sigma, q)] }
+  { Icall (u, sigma, q) }
 | RET r=register rr=bracereg
-  { [Iret (r, rr)] }
+  { Iret (r, rr) }
 | HALT tau=value_type COMMA sigma=stack_typing rr=bracereg
-  { [Ihalt (tau, sigma, rr)] }
+  { Ihalt (tau, sigma, rr) }
 
 single_instruction:
 | op=aop rd=register COMMA rs=register COMMA u=small_value
@@ -319,10 +328,6 @@ component:
 
   tuple(elem):
   | LANGLE elems=separated_list(COMMA, elem) RANGLE { elems }
-
-  left_empty_list(elem):
-  | EMPTY { [] }
-  | EMPTY COMMA elems=separated_list(COMMA, elem) { elems }
 
   %inline braced(elem):
   | LBRACE x=elem RBRACE {x}

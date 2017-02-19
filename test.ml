@@ -77,7 +77,7 @@ let test_parse3 _ = assert_equal
 let test_parse_variables_1 _ =
   let open TAL in
   assert_equal
-    (Parse.parse_string Parser.type_env_eof "[], 'a1, 'e2, 'za3")
+    (Parse.parse_string Parser.type_env_eof "['a1, 'e2, 'za3]")
     [DAlpha "a1"; DEpsilon "e2"; DZeta "za3"]
 
 let test2 _ = assert_equal
@@ -217,7 +217,7 @@ let test_ld_ty _ =
                        mv r2, l;
                        ld r1, r2[0];
                        halt int, * {r1};
-                    ], [], l -> box <1>)")))
+                    ], [l -> box <1>])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_ld2_ty _ =
@@ -230,7 +230,7 @@ let test_ld2_ty _ =
                        ld r1, r2[0];
                        halt int, * {r1};
                      ],
-                     [], l -> ref <1>
+                     [l -> ref <1>]
                    )")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
@@ -245,7 +245,7 @@ let test_st_ty _ =
                      st r1[0], r2;
                      halt int, * {r2};
                      ],
-                     [], l -> ref <1>
+                     [l -> ref <1>]
                    )")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
@@ -371,13 +371,11 @@ let call_tl =
     tal_comp
       "([mv ra, lh;
          call l {*, end{int; *}}],
-        [],
-        l -> code [[], 'z, 'e]
-               {[], ra: box forall[[]]. {[], r1:int; 'z} 'e; 'z} ra.
+        [l -> code ['z, 'e]
+               {ra: box forall[]. {r1:int; 'z} 'e; 'z} ra.
                [mv r1, 10;
                 ret ra {r1}],
-        lh -> code [[]] {[], r1:int; *} end{int; *}. [halt int, * {r1}]
-      )")
+         lh -> code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
 
 let test_call_tl _ =
   assert_equal
