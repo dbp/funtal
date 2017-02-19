@@ -335,6 +335,18 @@ let test_unpack_ty _ =
                      [])")))
     (FTAL.TT TAL.TUnit, TAL.SConcrete [])
 
+let test_parse5 _ =
+  (* check that parentheses are allowed: unpack <a, r>, (u); *)
+  assert_equal
+    (tal_comp
+       "([unpack <a, r2>, pack <int, 1> as exists a. a;
+          mv r1, ();
+          halt unit, * {r1}], [])")
+    (tal_comp
+       "([unpack <a, r2>, (pack <int, 1> as exists a. a);
+          mv r1, ();
+          halt unit, * {r1}], [])")
+
 
 let test_unpack_ty_exc _ =
   assert_raises_typeerror
@@ -541,6 +553,7 @@ let suite = "FTAL evaluations" >:::
               "parse (2)" >:: test_parse2;
               "parse (3)" >:: test_parse3;
               "parse (4)" >:: test_parse4;
+              "parse (5)" >:: test_parse5;
               "parse type-level variables" >:: test_parse_variables_1;
               "F: fact 3 = 6" >:: test_factorial_f;
               "F: fact : int -> int" >:: test_factorial_f_ty;
