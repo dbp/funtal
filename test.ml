@@ -535,7 +535,7 @@ let suite = "FTAL evaluations" >:::
             [
               "F: 1 + 1 = 2" >:: test1;
               "F: 1 + 1 : int" >:: test1_ty;
-              "F: 1 + 1 = 2" >:: test2;
+              "F: 1 + 1 = 2 (2)" >:: test2;
               "F: (\\x -> x + x) 1 = 2" >:: test_f_app;
               "parse: 1 + 1 = 2" >:: test_parse1;
               "parse (2)" >:: test_parse2;
