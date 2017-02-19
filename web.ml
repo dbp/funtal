@@ -17,6 +17,12 @@ let blocks_2 = Ftal.F.show_exp Examples.blocks_2
 
 let _ =
   let hist = ref ((Ftal.F.EUnit, ([],[],[])), []) in
+  let hide_machine _ =
+    H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on"))
+  in
+  let show_machine _ =
+    H.((getElementById "machine")##removeAttribute (Js.string "hidden"))
+  in
   let set_text i t =
     let open H in
     (getElementById i)##.innerHTML := Js.string t
@@ -24,6 +30,7 @@ let _ =
   let set_editor t =
     let open Js in
     set_text "error" "";
+    hide_machine ();
     Unsafe.((coerce (global##.codemirror))##setValue (string t))
   in
   let ehandle s =
@@ -68,7 +75,7 @@ let _ =
             hist := ((e, ([],[],[])), []);
             refresh ();
             set_text "error" "";
-            let _ = H.((getElementById "machine")##removeAttribute (Js.string "hidden")) in
+            show_machine ();
             Js.Opt.return Js._false
           with TypeError (t,_)
              | TypeErrorW (t,_)
@@ -76,11 +83,11 @@ let _ =
              | TypeErrorU (t,_)  ->
             begin
               set_text "error" ("Type Error: " ^ t);
-              let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
+              hide_machine ();
               Js.Opt.return Js._false
             end
              | x -> set_text "error" "Parse Error";
-               let _ = H.((getElementById "machine")##setAttribute (Js.string "hidden") (Js.string "on")) in
+               hide_machine ();
                Js.Opt.return Js._false
         )) in Js._false
 in
