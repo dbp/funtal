@@ -1,3 +1,7 @@
+(* NOTE(dbp 2017-02-18): Due to issues with js_of_ocaml (assertion
+   failures), we've removed the dependency on Core_kernel and instead
+   replicated the few functions needed here, at the same names. *)
+
 module List' = struct
   module Assoc = struct
     let rec remove xs x = match xs with
