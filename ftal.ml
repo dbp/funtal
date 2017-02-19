@@ -1922,7 +1922,11 @@ end = struct
     | Iret(r1,r2) -> !^"ret " ^^ !^r1 ^^ space ^^ lbrace ^^ !^r2 ^^ rbrace
     | Ihalt(t,s,r) -> !^"halt " ^^ p_t t ^^ comma ^^ space ^^ p_s s ^^ space ^^ lbrace ^^ !^r ^^ rbrace
     | Iprotect(sp, z) -> !^"protect " ^^ p_sigma_prefix sp ^^ comma ^^ space ^^ !^z
-    | Iimport(r,z,s,t,e) -> !^"import " ^^ !^r ^^ comma ^^ space ^^ !^z ^^ !^" as " ^^ p_s s ^^ comma ^^ space ^^ FP.p_t t ^^ lbrace ^^ FP.p_exp e ^^ rbrace)
+    | Iimport(r,z,s,t,e) ->
+      !^"import "
+      ^^ !^r ^^ comma ^^ space
+      ^^ !^z ^^ space ^^ !^"as" ^^ space ^^ p_s s ^^ comma ^^ space
+      ^^ FP.p_t t ^^ space ^^ !^ "TF" ^^ lbrace ^^ FP.p_exp e ^^ rbrace)
   and p_instruction_sequence (is : instr list) : document =
     lbracket ^^ align (group (separate_map (semi ^^ break 1) p_instr is ^^ rbracket))
   and p_aop (a : aop) : document =
