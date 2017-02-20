@@ -41,5 +41,6 @@ configure:
 # OASIS_STOP
 
 install-deps:
+	opam update
 	opam pin add funtal . --no-action # tell opam about a local "funtal" package
 	opam install --deps-only funtal   # then install its dependencies

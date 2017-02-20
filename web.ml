@@ -30,8 +30,12 @@ FT [int, ?] (
 |}
 
 let omega = {|
-  (lam(f : mu a. (a) -> a).((unfold f) f))
-  (fold (mu a. (a) -> a) lam(f : mu a. (a) -> a).((unfold f) f))
+(lam(f : mu a. (a) -> a).((unfold f) f))
+(fold (mu a. (a) -> a) lam(f : mu a. (a) -> a).((unfold f) f))
+|}
+
+let import = {|
+FT [int, ?] ([import r1, z as *, int TF{10}; halt int, * {r1}], [])
 |}
 
 let higher_order = Ftal.F.show_exp Examples.higher_order
@@ -174,6 +178,7 @@ let _ =
   hide_machine ();
   set_click "simple" (ehandle simple);
   set_click "omega" (ehandle omega);
+  set_click "import" (ehandle import);
   set_click "call_to_call" (ehandle call_to_call);
   set_click "higher_order" (ehandle higher_order);
   set_click "blocks_1" (ehandle blocks_1);

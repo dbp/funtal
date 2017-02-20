@@ -75,7 +75,8 @@
 
       <p>
         <strong>Additional examples:</strong>
-        <a href="#" id="simple">Simple TAL</a>
+        <a href="#" id="import">Import</a>
+        | <a href="#" id="simple">Simple TAL</a>
         | <a href="#" id="omega">Omega</a>
       </p>
 
@@ -116,7 +117,7 @@
           <h5>Redex:</h5>
           <pre id="focus"></pre>
           <hr/>
-          <h5>Context:</h5>
+          <h5>Context/Result:</h5>
           <pre id="context"></pre>
           <hr/>
           <h5>Heap:</h5>
@@ -131,8 +132,9 @@
 
       <table>
         <tr><th>Paper</th><th>Artifact</th><th>Description</th></tr>
+
         <tr>
-          <td><code>(instr; ..., l &rarr; h, ...)</code></td>
+          <td><code>(&iota;; ..., l &rarr; h, ...)</code></td>
           <td><code>([instr; ...],[l -> h, ...])</code></td>
           <td>TAL components use brackets around instructions and heap fragment.</td>
         </tr>
@@ -170,9 +172,16 @@
 
         <tr>
           <td><code>&middot; | &tau; :: ... </code></td>
-          <td><code>:: | t :: ...</code></td>
+          <td><code>:: | t :: ... ::</code></td>
           <td>Empty stack prefixes (in protect, stack modifying
-          lambdas) are written as <code>::</code>.</td>
+          lambdas) are written as <code>::</code>, and stack prefixes
+          end with <code>::</code>.</td>
+        </tr>
+
+        <tr>
+          <td><code>&forall;, &mu;, &lambda;, &#8707;, &bullet;</code></td>
+          <td><code>forall, mu, lam, exists, *</code></td>
+          <td>Greek letters replaced with english.</td>
         </tr>
 
 
