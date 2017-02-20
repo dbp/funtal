@@ -1836,7 +1836,7 @@ end and Printer : sig
 end = struct
   let r d =
     let b = Buffer.create 100 in
-    PPrint.ToBuffer.pretty 0.5 80 b d;
+    PPrint.ToBuffer.pretty 0.8 80 b d;
     Buffer.contents b
 end and TALP : sig
     open PPrint
@@ -1862,12 +1862,16 @@ end = struct
   open TAL
 
   let p_sequence (ds: document list) =
-    lbracket ^^ align (group (separate (comma ^^ break 1) ds)) ^^ rbracket
+    group @@ brackets @@ align @@ group @@ separate (comma ^^ break 1) ds
   and p_sequence_map f xs =
-    lbracket ^^ align (group (separate_map (comma ^^ break 1) f xs)) ^^ rbracket
+    group @@ brackets @@ align @@ group @@ separate_map (comma ^^ break 1) f xs
+
+  let args docs = break 0 ^^ separate (comma ^^ break 1) docs
+
+  let p_nat n = !^(string_of_int n)
 
   let rec p_w (w : w) : document =
-    match w with
+    group @@ match w with
     | WUnit _ -> lparen ^^ rparen
     | WInt (_,n) -> !^(string_of_int n)
     | WLoc (_,l) -> !^l
@@ -1876,7 +1880,7 @@ end = struct
     | WFold (_,a,t,w) -> fold_h a t (p_w w)
     | WApp (_,w,os) -> app_h (p_w w) os
   and p_t (t : t) : document =
-    match t with
+    group @@ match t with
     | TVar a -> !^a
     | TUnit -> !^"unit"
     | TInt -> !^"int"
@@ -1885,12 +1889,12 @@ end = struct
     | TTupleRef ts -> p_mut Ref ^^ space ^^ p_psi (PTuple ts)
     | TBox p -> p_mut Box ^^ space ^^ p_psi p
   and p_o (o : omega) : document =
-    match o with
+    group @@ match o with
     | OT t -> p_t t
     | OS s -> p_s s
     | OQ q -> p_q q
   and p_s (s : sigma) : document =
-    match s with
+    group @@ match s with
     | SConcrete l ->
       if List.length l > 0 then
         p_sigma_prefix l ^^ !^" :: *"
@@ -1900,84 +1904,85 @@ end = struct
         p_sigma_prefix l ^^ !^" :: " ^^ !^z
       else !^z
   and p_sigma_prefix (p : sigma_prefix) : document =
-    nest 2 (separate
-              (break 1 ^^ !^":: ")
-              (List.map ~f:p_t p))
+    group @@ nest 2 @@ separate_map (break 1 ^^ !^":: ") p_t p
   and p_q (q : q) : document =
-    match q with
+    group @@ match q with
     | QR r -> !^r
-    | QI i -> !^(string_of_int i)
+    | QI i -> p_nat i
     | QEpsilon s -> !^s
     | QEnd (t,s) ->
       !^"end" ^^ lbrace ^^ nest 2 (p_t t ^^ semi ^^
                                    p_s s ^^ rbrace)
     | QOut -> !^"out"
   and p_u (u : u) : document =
-    match u with
+    group @@ match u with
     | UW (_,w) -> p_w w
     | UR (_,r) -> !^r
     | UPack (_,t',u,a,t) -> pack_h t' (p_u u) a t
     | UFold (_,a,t,u) -> fold_h a t (p_u u)
     | UApp (_,u,os) -> app_h (p_u u) os
   and p_psi (p : psi_elem) : document =
-    match p with
-    | PTuple ps -> nest 2 (langle ^^
-                           separate_map (comma ^^ break 1) p_t ps ^^
-                           rangle)
-    | PBlock (d,c,s,q) ->
-      nest 2 (!^"forall" ^^ p_delta d ^^ dot ^^ break 0 ^^
-              nest 1 (lbrace ^^ p_chi c ^^ semi ^^ break 1 ^^ p_s s ^^ rbrace) ^^ space ^^ p_q q)
+    group @@ match p with
+    | PTuple ps -> nest 2 @@ angles @@ separate_map (comma ^^ break 1) p_t ps
+    | PBlock (d,c,s,q) -> nest 2 (
+        !^"forall" ^^ p_delta d ^^ dot ^^ break 0
+        ^^ (nest 1 @@ braces @@ (p_chi c ^^ semi ^^ break 1 ^^ p_s s))
+        ^^ space ^^ p_q q
+      )
   and p_h (h : h) : document =
-    match h with
+    group @@ match h with
     | HCode (d,c,s,q,is) ->
-      nest 2 (!^"code " ^^ p_delta d ^^ nest 1 (align (lbrace ^^ p_chi c ^^ semi ^^
-              break 1 ^^ p_s s ^^ rbrace)) ^^ space ^^
-              p_q q ^^ dot ^^ break 0 ^^ p_instruction_sequence is)
-    | HTuple (ws) -> langle ^^ separate_map (comma ^^ break 1) p_w ws ^^ rangle
+      nest 2 (
+        !^"code " ^^ p_delta d
+        ^^ (nest 1 @@ align @@ braces (p_chi c ^^ semi ^^ break 1 ^^ p_s s))
+        ^^ space
+        ^^ p_q q ^^ dot ^^ break 0 ^^ p_instruction_sequence is
+      )
+    | HTuple (ws) -> angles @@ separate_map (comma ^^ break 1) p_w ws
   and p_mut (m : mut) : document =
-    match m with
+    group @@ match m with
     | Box -> !^"box"
     | Ref -> !^"ref"
   and p_delta (d : delta) : document =
-    lbracket ^^
-    align (separate_map (comma ^^ break 1)
-             (function | DAlpha a | DZeta a | DEpsilon a -> !^a) d)
-    ^^ rbracket
+    let p_elem (DAlpha a | DZeta a | DEpsilon a) = !^a in
+    group @@ brackets @@ align @@ separate_map (comma ^^ break 1) p_elem d
   and p_chi (c : chi) : document =
-    align (group (separate_map (comma ^^ break 1)
-                    (fun (r,t) -> !^r ^^ space ^^ colon ^^ space ^^ align (p_t t)) c))
+    let p_decl (r, t) = !^r ^^ space ^^ colon ^^ space ^^ align (p_t t) in
+    group @@ align @@ separate_map (comma ^^ break 1) p_decl c
   and p_instr (i : instr) : document =
-    nest 2 (match i with
-    | Iaop(_,a,r1,r2,u) -> p_aop a ^^ space ^^ !^r1 ^^ comma ^^ space ^^ !^r2 ^^ comma ^^ space ^^ p_u u
-    | Ibnz(_,r,u) -> !^"bnz " ^^ !^r ^^ comma ^^ space ^^ p_u u
-    | Ild(_,r1,r2,n) -> !^"ld " ^^ !^r1 ^^ comma ^^ space ^^ !^r2 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket
-    | Ist(_,r1,n,r2) -> !^"st " ^^ !^r1 ^^ lbracket ^^ !^(string_of_int n) ^^ rbracket ^^ comma ^^ space ^^ !^r2
-    | Iralloc(_,r,n) -> !^"ralloc " ^^ !^r ^^ comma ^^ space  ^^ !^(string_of_int n)
-    | Iballoc(_,r,n) -> !^"balloc " ^^ !^r ^^ comma ^^ !^(string_of_int n)
-    | Imv(_,r,u) -> !^"mv " ^^ !^r ^^ comma ^^ space  ^^ p_u u
+    group @@ nest 2 @@ match i with
+    | Iaop(_,a,r1,r2,u) -> p_aop a ^^ space ^^ args [!^r1; !^r2; p_u u]
+    | Ibnz(_,r,u) -> !^"bnz " ^^ args [!^r; p_u u]
+    | Ild(_,r1,r2,n) -> !^"ld " ^^ args [!^r1; !^r2 ^^ brackets (p_nat n)]
+    | Ist(_,r1,n,r2) -> !^"st " ^^ args [!^r1 ^^ brackets (p_nat n); !^r2]
+    | Iralloc(_,r,n) -> !^"ralloc " ^^ args [!^r; p_nat n]
+    | Iballoc(_,r,n) -> !^"balloc " ^^ args[!^r; p_nat n]
+    | Imv(_,r,u) -> !^"mv " ^^ args [!^r; p_u u]
     | Iunpack(_,a,r,u) ->
-      !^"unpack "
-      ^^ langle ^^ !^a ^^ comma ^^ space ^^ !^r ^^ rangle ^^ comma ^^ space
-      ^^ p_u u
-    | Iunfold(_,r,u) -> !^"unfold " ^^ !^r ^^ comma ^^ space ^^ p_u u
-    | Isalloc (_,n) -> !^"salloc " ^^ !^(string_of_int n)
-    | Isfree  (_,n) -> !^"sfree " ^^ !^(string_of_int n)
-    | Isld(_,r,n) -> !^"sld " ^^ !^r ^^ comma ^^ space ^^ !^(string_of_int n)
-    | Isst(_,n,r) -> !^"sst " ^^ !^(string_of_int n) ^^ comma ^^ space ^^ !^r
-    | Ijmp (_,u) -> !^"jmp " ^^ p_u u
-    | Icall(_,u,s,q) -> !^"call " ^^ p_u u ^^ lbrace ^^ p_s s ^^ comma ^^ space ^^ p_q q ^^ rbrace
-    | Iret(_,r1,r2) -> !^"ret " ^^ !^r1 ^^ space ^^ lbrace ^^ !^r2 ^^ rbrace
-    | Ihalt(_,t,s,r) -> !^"halt " ^^ p_t t ^^ comma ^^ space ^^ p_s s ^^ space ^^ lbrace ^^ !^r ^^ rbrace
-    | Iprotect(_,sp, z) -> !^"protect " ^^ p_sigma_prefix sp ^^ comma ^^ space ^^ !^z
+      !^"unpack " ^^ args [angles (!^a ^^ comma ^^ space ^^ !^r); p_u u]
+    | Iunfold(_,r,u) -> !^"unfold " ^^ args [!^r; p_u u]
+    | Isalloc (_,n) -> !^"salloc " ^^ args [p_nat n]
+    | Isfree  (_,n) -> !^"sfree " ^^ args [p_nat n]
+    | Isld(_,r,n) -> !^"sld " ^^ args [!^r; p_nat n]
+    | Isst(_,n,r) -> !^"sst " ^^ args [p_nat n; !^r]
+    | Ijmp (_,u) -> !^"jmp " ^^ args [p_u u]
+    | Icall(_,u,s,q) -> !^"call " ^^ args [
+        p_u u ^^ space ^^ braces (p_s s ^^ comma ^^ space ^^ p_q q);
+      ]
+    | Iret(_,r1,r2) -> !^"ret " ^^ args [!^r1 ^^ space ^^ braces !^r2]
+    | Ihalt(_,t,s,r) -> !^"halt " ^^ args [p_t t; p_s s ^^ space ^^ braces !^r]
+    | Iprotect(_,sp, z) -> !^"protect " ^^ args [p_sigma_prefix sp; !^z]
     | Iimport(_,r,z,s,t,e) ->
-      !^"import "
-      ^^ !^r ^^ comma ^^ space
-      ^^ !^z ^^ space ^^ !^"as" ^^ space ^^ p_s s ^^ comma ^^ space
-      ^^ FP.p_t t ^^ space ^^ !^ "TF" ^^ lbrace ^^ FP.p_exp e ^^ rbrace)
+      !^"import " ^^ args [
+        !^r;
+        !^z ^^ space ^^ !^"as" ^^ space ^^ p_s s;
+        FP.p_t t ^^ space ^^ !^ "TF" ^^ (braces @@ align @@ FP.p_exp e);
+      ]
   and p_instruction_sequence (is : instr list) : document =
-    lbracket ^^ align (group (separate_map (semi ^^ break 1) p_instr is ^^ rbracket))
+    group (lbracket ^^ align
+             (group (separate_map (semi ^^ break 1) p_instr is ^^ rbracket)))
   and p_aop (a : aop) : document =
-    match a with
+    group @@ match a with
     | Add -> !^"add"
     | Sub -> !^"sub"
     | Mult -> !^"mul"
@@ -1990,18 +1995,20 @@ end = struct
     p_sequence_map p_binding m
   and p_stackm (m : stackm) : document =
     if List.length m > 0 then
-      nest 2 (separate_map (!^" ::" ^^ break 1) p_w m ^^ !^" :: *")
+      group @@ nest 2 (separate_map (!^" ::" ^^ break 1) p_w m ^^ !^" :: *")
     else !^"*"
   and p_component ((l,is,h) : component) : document =
-    nest 2 (lparen ^^ p_instruction_sequence is ^^ comma ^^
-            break 1 ^^ p_heapm h ^^ rparen)
+    group @@ nest 2 (
+      lparen ^^ p_instruction_sequence is ^^ comma ^^ break 1
+      ^^ p_heapm h ^^ rparen
+    )
   and p_context (c : context) : document =
-    match c with
+    group @@ match c with
     | CComponentEmpty (_, CHoleI) | CComponentHeap (_, CHoleC) -> !^"[.]"
     | CComponentEmpty (_, CImportI (_,r,z,s,t,c,is)) ->
-      group (!^"import " ^^ !^r ^^ comma ^^ !^z ^^ !^" as " ^^ p_s s ^^ comma ^^
-             FP.p_t t ^^ lbrace ^^ FP.p_context c ^^ rbrace ^^ semi ^^
-             break 1 ^^ separate_map (semi ^^ break 1) p_instr is)
+      !^"import " ^^ args [!^r; !^z ^^ !^" as " ^^ p_s s;
+           FP.p_t t ^^ lbrace ^^ FP.p_context c ^^ rbrace ^^ semi ^^ break 1
+           ^^ separate_map (semi ^^ break 1) p_instr is]
 
   and pack_h t' d a t =
     !^"pack " ^^
