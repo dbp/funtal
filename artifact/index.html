@@ -87,6 +87,7 @@
       <p>
         <strong>Additional examples:</strong>
         <a href="#" id="simple">Simple TAL</a>
+        | <a href="#" id="omega">Omega</a>
       </p>
 
       <p>
@@ -143,7 +144,9 @@
       ],
       meta:
       { dontIndentStates: ["start"]
-        }});
+      }});
+
+      window.highlighted_lines = [];
 
       window.codemirror = CodeMirror.fromTextArea(document.getElementById("input"), {
       lineNumbers: true,
@@ -160,7 +163,8 @@
       n.className = "error-marker";
       n.setAttribute("title", msg);
       window.codemirror.setGutterMarker(line-1, "errors", n);
-      window.codemirror.addLineClass(line-1, "text", "error-line");
+      window.codemirror.addLineClass(line-1, "wrap", "error-line");
+      window.highlighted_lines.push(line-1);
       }
 
       var holder = document.getElementById("error");
@@ -170,6 +174,9 @@
       window.clearerrors = function() {
       window.codemirror.clearGutter("errors");
       document.getElementById("error").innerHTML = "";
+      for (var i = 0; i < window.highlighted_lines.length; i++) {
+                          window.codemirror.removeLineClass(window.highlighted_lines[i],"wrap");
+                          }
       }
     </script>
     <script type="text/javascript" src="web.js"></script>

@@ -24,6 +24,11 @@ FT [int, ?] (
   [])
 |}
 
+let omega = {|
+  (\(f : mu a. (a) -> a).((unfold f) f))
+  (fold (mu a. (a) -> a) \(f : mu a. (a) -> a).((unfold f) f))
+  |}
+
 let higher_order = Ftal.F.show_exp Examples.higher_order
 let factorial_f = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_f, [F.EInt (dummy_loc, 3)])))
 let factorial_t = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_t, [F.EInt (dummy_loc, 3)])))
@@ -161,6 +166,7 @@ let _ =
   set_click "many" (H.handler many);
   hide_machine ();
   set_click "simple" (ehandle simple);
+  set_click "omega" (ehandle omega);
   set_click "call_to_call" (ehandle call_to_call);
   set_click "higher_order" (ehandle higher_order);
   set_click "blocks_1" (ehandle blocks_1);
