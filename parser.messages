@@ -825,7 +825,7 @@ f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET LPAREN RPAREN DOT U
 
 Parsing a stack-modifying lambda-expression
 "lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
-"lam [<stack-prefix>] [<stack-prefix>] (<args>)." so far an expect an
+"lam [<stack-prefix>] [<stack-prefix>] (<args>)." so far and expect an
 expression, the body of the lambda.
 
 f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET LPAREN RPAREN Z_IDENTIFIER 
@@ -999,7 +999,8 @@ f_expression_eof: LAMBDA LBRACKET UNIT DOUBLECOLON Z_IDENTIFIER
 ## value_type DOUBLECOLON 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We expect a stack prefix "<type> :: <type> :: ...",
+for example "int :: unit ::" or the empty prefix "::".
 
 f_expression_eof: LAMBDA LBRACKET UNIT Z_IDENTIFIER 
 ##
@@ -1012,7 +1013,8 @@ f_expression_eof: LAMBDA LBRACKET UNIT Z_IDENTIFIER
 ## value_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We expect a stack prefix "<type> :: <type> :: ...",
+for example "int :: unit ::" or "::".
 
 f_expression_eof: LAMBDA LBRACKET Z_IDENTIFIER 
 ##
@@ -1024,7 +1026,10 @@ f_expression_eof: LAMBDA LBRACKET Z_IDENTIFIER
 ## LAMBDA LBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying lambda-expression
+"lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
+"lam [" so far and expect a stack prefix, for example "int :: unit ::"
+or the empty prefix "::".
 
 f_expression_eof: LAMBDA LPAREN RPAREN DOT UNPACK 
 ##
@@ -1036,7 +1041,8 @@ f_expression_eof: LAMBDA LPAREN RPAREN DOT UNPACK
 ## LAMBDA f_telescope DOT 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a lambda-expression "lam (<args>). <expr>", we parsed
+"lam (<args>)." and expect an expression, the body of the lambda.
 
 f_expression_eof: LAMBDA LPAREN RPAREN Z_IDENTIFIER 
 ##
@@ -1048,7 +1054,8 @@ f_expression_eof: LAMBDA LPAREN RPAREN Z_IDENTIFIER
 ## LAMBDA f_telescope 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a lambda-expression "lam (<args>). <expr>", we parsed
+"lam (<args>)" and expect a dot followed by the body of the lambda.
 
 f_expression_eof: LAMBDA LPAREN UNPACK 
 ##
