@@ -279,7 +279,11 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN Z_IDENTIFIER
 ## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a function type, we have parsed "(<type>, <type>...)" so far. We
+expect either:
+- an arrow "->", for a function type "(<type>, <type>...) -> <type>".
+- an stack prefix, for example "[int::]", for a stack-modifying function type
+  "(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>] <type>"
 
 f_expression_eof: FT LBRACKET LPAREN UNPACK 
 ##
@@ -292,7 +296,9 @@ f_expression_eof: FT LBRACKET LPAREN UNPACK
 ## LPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a type, we have parsed an opening parenthesis "(" so
+far. Please write a complete type, for example "(int)" or an arrow
+type "(int)->int".
 
 f_expression_eof: FT LBRACKET LPAREN Z_IDENTIFIER COMMA UNPACK 
 ##
@@ -304,7 +310,9 @@ f_expression_eof: FT LBRACKET LPAREN Z_IDENTIFIER COMMA UNPACK
 ## f_type COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a sequence of types "<type>, <type>..., we have parsed the
+beginning of a sequence "<type>," so far, and expect another type, for
+example "int".
 
 f_expression_eof: FT LBRACKET LPAREN Z_IDENTIFIER RANGLE 
 ##
@@ -324,7 +332,12 @@ f_expression_eof: FT LBRACKET LPAREN Z_IDENTIFIER RANGLE
 ## In state 205, spurious reduction of production loption(separated_nonempty_list(COMMA,f_type)) -> separated_nonempty_list(COMMA,f_type) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a function type, we have parsed "(<type>, <type>..." so
+far. We expect a more comma-separated types, or closing parenthesis
+")", and then either
+- an arrow "->", for a function type "(<type>, <type>...) -> <type>".
+- an stack prefix, for example "[int::]", for a stack-modifying function type
+  "(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>] <type>"
 
 f_expression_eof: FT LBRACKET LPAREN Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -337,7 +350,9 @@ f_expression_eof: FT LBRACKET LPAREN Z_IDENTIFIER Z_IDENTIFIER
 ## f_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a sequence of types "<type>, <type>..., we have parsed a type
+so far, and expect a comma followed by more types, or the end of the
+sequence.
 
 f_expression_eof: FT LBRACKET UNPACK 
 ##
@@ -349,7 +364,9 @@ f_expression_eof: FT LBRACKET UNPACK
 ## FT LBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a boundary expression
+"FT[<type>, <stack-typing?>] <compoment>", we parsed "FT[" so far
+and expect the return type of the boundary, for example "int".
 
 f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA UNIT DOUBLECOLON UNPACK 
 ##
@@ -361,7 +378,10 @@ f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA UNIT DOUBLECOLON UNPACK
 ## value_type DOUBLECOLON 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack typing "<type> :: <type> ::.. [ <variable> | * ]", we
+parsed a stack prefix "<type> :: <type> ::..." so far, and expect
+either a stack type variable, for example "z", or the end-of-stack
+symbol "*".
 
 f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA UNIT Z_IDENTIFIER 
 ##
@@ -373,7 +393,9 @@ f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA UNIT Z_IDENTIFIER
 ## value_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack typing "<type> :: <type> ::.. [ <variable> | * ]", we
+parsed a stack prefix "<type> :: <type>" so far, and expect the
+separator symbol "::".
 
 f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA UNPACK 
 ##
@@ -385,7 +407,9 @@ f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA UNPACK
 ## FT LBRACKET f_type COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a boundary expression
+"FT[<type>, <stack-typing?>] <compoment>", we parsed "FT[<type>,"
+so far and expect a stack typing, for example "int :: *".
 
 f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA Z_IDENTIFIER RBRACKET Z_IDENTIFIER 
 ##
@@ -397,7 +421,10 @@ f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA Z_IDENTIFIER RBRACKET Z_IDENTIF
 ## FT LBRACKET f_type COMMA stack_typing_annot RBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a boundary expression
+"FT[<type>, <stack-typing?>] <compoment>", we parsed
+"FT[<type>,<stack-typing?>]" so far, and expect a TAL component,
+for example "( [mv r1, 0; halt int, * {r1}], [l -> <1>] )".
 
 f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -409,7 +436,9 @@ f_expression_eof: FT LBRACKET Z_IDENTIFIER COMMA Z_IDENTIFIER Z_IDENTIFIER
 ## FT LBRACKET f_type COMMA stack_typing_annot 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a boundary expression
+"FT[<type>, <stack-typing?>] <compoment>", we parsed
+"FT[<type>, <stack-typing?>" so far, and expect a closing bracket "]".
 
 f_expression_eof: FT LBRACKET Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -421,7 +450,10 @@ f_expression_eof: FT LBRACKET Z_IDENTIFIER Z_IDENTIFIER
 ## FT LBRACKET f_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a boundary expression
+"FT[<type>, <stack-typing?>] <compoment>", we parsed "FT[<type>" so
+far, and expect a comma followed by a stack typing, for example
+", int :: unit" or ", ?".
 
 f_expression_eof: FT Z_IDENTIFIER 
 ##
@@ -433,7 +465,10 @@ f_expression_eof: FT Z_IDENTIFIER
 ## FT 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a boundary expression
+"FT[<type>, <stack-typing?>] <compoment>", we parsed "FT" and expect
+a type and a stack typing, for example "[int, int :: z]" or
+"[int, ?]".
 
 f_expression_eof: IF0 UNPACK 
 ##
@@ -445,7 +480,9 @@ f_expression_eof: IF0 UNPACK
 ## IF0 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a conditional expression "if0 <expr> <expr> <expr>", we parsed
+the keyword "if0" and expect an expression of integer type -- we
+branch of whether the value is 0 or not.
 
 f_expression_eof: IF0 Z_IDENTIFIER UNPACK 
 ##
@@ -457,7 +494,9 @@ f_expression_eof: IF0 Z_IDENTIFIER UNPACK
 ## IF0 f_simple_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a conditional expression "if0 <expr> <expr> <expr>", we parsed
+"if0 <expr>" and expect two expressions, the first to evaluate if the
+condition expression evalutes to 0, and the second otherwise.
 
 f_expression_eof: IF0 Z_IDENTIFIER Z_IDENTIFIER UNPACK 
 ##
@@ -468,6 +507,10 @@ f_expression_eof: IF0 Z_IDENTIFIER Z_IDENTIFIER UNPACK
 ## The known suffix of the stack is as follows:
 ## IF0 f_simple_expression f_simple_expression 
 ##
+
+Parsing a conditional expression "if0 <expr> <expr> <expr>", we parsed
+"if0 <expr> <expr>" and expect an expression to evaluate if the
+condition expression does not evaluate to 0.
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
@@ -481,7 +524,9 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGIST
 ## decl(register,value_type) COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a register typing "<register>:<type>, <register>:<type>..."
+we parsed a comma and wait for a "<register>:<type>" declaration, for
+example "ra:int".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGISTER COLON A_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -494,7 +539,8 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGIST
 ## decl(register,value_type) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a register typing "<register>:<type>, <register>:<type>..."
+we parsed a "<register>:<type>" declaration and expect a comma ",".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGISTER COLON Z_IDENTIFIER 
 ##
@@ -506,7 +552,8 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGIST
 ## register COLON 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a register typing "<register>:<type>, <register>:<type>..."
+we parsed a register and expect a type, for example "int".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGISTER Z_IDENTIFIER 
 ##
@@ -518,7 +565,8 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGIST
 ## register 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a register typing "<register>:<type>, <register>:<type>..."
+we parsed a register and expect a colon ":", followed by a type.
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICOLON UNPACK 
 ##
@@ -530,7 +578,11 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICO
 ## FORALL type_env DOT LBRACE simple_register_typing SEMICOLON 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the type of a heap code block
+"forall [<type-env>]. {<register-typing>; <stack-typing>} <return-marker>",
+we parsed
+"forall [<type-env>]. {<register-typing>;" so far and expect a stack typing,
+for example "int :: unit :: z".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICOLON Z_IDENTIFIER RBRACE Z_IDENTIFIER 
 ##
@@ -542,7 +594,15 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICO
 ## FORALL type_env DOT LBRACE simple_register_typing SEMICOLON stack_typing RBRACE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the type of a heap code block
+"forall [<type-env>]. {<register-typing>; <stack-typing>} <return-marker>",
+we parsed "forall [<type-env>]. {<register-typing>; <stack-typing>}"
+so far and expect a return marker, that is either:
+- a register "r1",
+- an integer "3",
+- a return variable "e",
+- the end marker "end {<type>; <stack-typing>}" or
+- the cross-language marker "out".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICOLON Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -554,7 +614,10 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICO
 ## FORALL type_env DOT LBRACE simple_register_typing SEMICOLON stack_typing 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the type of a heap code block
+"forall [<type-env>]. {<register-typing>; <stack-typing>} <return-marker>",
+we parsed "forall [<type-env>]. {<register-typing>; <stack-typing>" so
+far and expect a closing brace followed by a return marker.
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE Z_IDENTIFIER 
 ##
@@ -566,7 +629,10 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE Z_IDEN
 ## FORALL type_env DOT LBRACE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the type of a heap code block
+"forall [<type-env>]. {<register-typing>; <stack-typing>} <return-marker>",
+we parsed "forall [" so far and expect a type environment, for example
+"a, e2, z']".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT Z_IDENTIFIER 
 ##
@@ -578,7 +644,10 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT Z_IDENTIFIER
 ## FORALL type_env DOT 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the type of a heap code block
+"forall [<type-env>]. {<register-typing>; <stack-typing>} <return-marker>",
+we parsed the "forall" keyword and expect a type environment, for example
+"[a, e2, z']".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET Z_IDENTIFIER 
 ##
