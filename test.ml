@@ -2,7 +2,6 @@ open OUnit2;;
 open Ftal;;
 open Examples;;
 let f_expr str = Parse.parse_string Parser.f_expression_eof str
-let f_type str = Parse.parse_string Parser.f_type_eof str
 
 let roundtrip ?source comp =
   let orig, roundtrip =
@@ -53,13 +52,7 @@ let test1_ty _ = assert_equal
     (FTAL.tc
        (FTAL.default_context TAL.QOut)
        (FTAL.FC (f_expr "1 + 1")))
-    (FTAL.FT (f_type "int"), TAL.SConcrete []);;
-
-let test_parse_variables_1 _ =
-  let open TAL in
-  assert_equal
-    (Parse.parse_string Parser.type_env_eof "[a1, e2, za3]")
-    [DAlpha "a1"; DEpsilon "e2"; DZeta "za3"]
+    (FTAL.FT F.TInt, TAL.SConcrete []);;
 
 let test2 _ =
   assert_eint
@@ -676,7 +669,6 @@ let suite = "FTAL evaluations" >:::
               "F: 1 + 1 = 2 (2)" >:: test2;
               "F: (lam x. x + x) 1 = 2" >:: test_f_app;
               "parse (5)" >:: test_parse5;
-              "parse type-level variables" >:: test_parse_variables_1;
               "F: fact 3 = 6" >:: test_factorial_f;
               "F: fact : int -> int" >:: test_factorial_f_ty;
               "TAL: mv r1,1;halt r1 : int" >:: test_mv_ty;
