@@ -604,6 +604,7 @@ let test_examples _ =
   assert_roundtrip_f Examples.profiling_1;
   *)
   assert_roundtrip_c Examples.call_to_call;
+  assert_roundtrip_f Examples.higher_order;
   ()
 
 let suite = "FTAL evaluations" >:::
