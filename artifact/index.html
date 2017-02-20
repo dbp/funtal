@@ -185,7 +185,37 @@
           <td>Greek letters and quantifiers are replaced by english keywords.</td>
         </tr>
 
+        <tr>
+          <td><code>&bullet;</code></td>
+          <td><code>*</code></td>
+          <td>The concrete stack symbol <code>&bullet;</code> is written <code>*</code>.</td>
+        </tr>
 
+        <tr>
+          <td><code>u[&omega;]</code></td>
+          <td><code>u[&omega;, &omega;...]</code></td>
+          <td>TAL instantiation is n-ary. (This was mentioned as syntactic sugar.)</td>
+        </tr>
+
+        <tr>
+          <td><code>{&chi;; &sigma;}<sup>q</sup></code></td>
+          <td><code>{&chi;; &sigma;} q</code></td>
+          <td>The return marker superscript is just written in line.</td>
+        </tr>
+
+        <tr>
+          <td><code>&lambda;<sup>&phi;</sup><sub>&phi;</sub>(x:&tau;...).t</code></td>
+          <td><code>lam[&phi;][&phi;](x:&tau;...).e</code>,
+              <code>(&tau;...) [&phi;] -> [&phi;] &tau;</code></td>
+          <td>The stack prefixes of stack-modifying functions are bracketed, in line.</td>
+        </tr>
+
+        <tr>
+          <td><code>unpack &lt;&alpha;, r<sub>d</sub>&gt; u</code></td>
+          <td><code>unpack &lt;&alpha;, r<sub>d</sub>&gt;, u</code></td>
+          <td>The TAL instruction <code>unpack</code> has comma-separated argument,
+            for consistency with other instructions.</td>
+        </tr>
       </table>
 
 
