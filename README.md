@@ -1,6 +1,8 @@
 SETUP:
    - install opam, and ocaml 4.03
-   - opam install oasis menhir pprint ppx_deriving ounit js_of_ocaml
+   - make install-deps
+     (if this were to fail,
+      see the local `opam` file for dependencies)
 
 RUN TESTS:
    - make test
