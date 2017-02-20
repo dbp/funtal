@@ -2,3 +2,5 @@ setup.data
 setup.log
 *.byte
 artifact/web.js
+_build
+*.native

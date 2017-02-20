@@ -36,6 +36,16 @@ ul {
   line-height: 1.5em;
 }
 
+td,th {
+  padding: 5px;
+  vertical-align: top;
+  text-align: left;
+}
+
+td:last-child {
+  width: 300px;
+}
+
 hr {
   border: 0;
   border-top: 1px solid #ccc;

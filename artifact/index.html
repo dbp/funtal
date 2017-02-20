@@ -36,53 +36,42 @@
 
       <h2>Artifact: a FunTAL type-checker and small-step machine.</h2>
       <h3>Daniel Patterson and Gabriel Scherer.</h3>
+      <h4>Source code and build instructions: <a href="https://github.com/dbp/funtal">github.com/dbp/funtal</a></h4>
 
       <p>
-        We present a type-checker and small-step machine semantics for
-        FunTAL. We include <strong>well-typed, runnable examples from the
-          paper</strong>, as well as a few smaller examples to start with.
+        We present a type-checker and stepper for the FunTAL machine
+          semantics. We include <strong>well-typed, runnable examples
+          from
+          the <a href="https://dbp.io/pubs/2017/funtal.pdf">paper</a></strong>,
+          as well as a few smaller examples to start with.
       </p>
 
       <p>With our artifact you write programs and then type-check /
         load them into a FunTAL machine. The machine shows the
-        registers, stack, and heap. It is a small-step machine and
-        at each step shows the redex and the context.
+        registers, stack, and heap. At each step shows the redex and
+        the context.
       </p>
 
       <p><strong>Note:</strong> there are some syntactic differences
-        from the presentation in the paper, primarily to reduce
-        ambiguity in the grammar, and secondarily to make the
-        type-checking algorithm syntax-directed. You can see these changes
-        in the examples as part of this artifact, but we summarize them
-        here for completeness:</p>
-
-      <ul>
-        <li>TAL components are a bracketed sequence of
-          instructions and a bracketed sequence of heap bindings,
-          i.e., <code>([instr; ...],[l -> h, ...])</code></li>
-        <li><code>FT</code> boundary terms use brackets to specify
-          types, rather than superscripts.</li>
-        <li><code>import</code> specifies types by ...</li>
-        <li><code>FT</code> terms must now specify the stack that
-          they expect when the TAL code within finishes. If the TAL
-          code will not modify the stack, you can
-          write <code>?</code>.</li>
-        <li>We restrict type variables (in Fun and TAL) to start
-          with <code>a</code>, stack variables to start
-          with <code>z</code> and return marker variables to start
-          with <code>e</code>.</li>
-        <li>More changes...</li>
-      </ul>
+        from the presentation in
+        the <a href="https://dbp.io/pubs/2017/funtal.pdf">paper</a>,
+        which nonetheless we expect will be the primary reference for
+        the language. These changes were made to eliminate the
+        necessity of unicode, reduce ambiguity in the grammar, and
+        make the type-checking algorithm syntax-directed. We summarize
+        these changes at the bottom of this page.</p>
 
       <p>
-        <strong>Examples from paper:</strong>
-        <a href="#" id="call_to_call">Call to call</a>
-        | <a href="#" id="higher_order">Higher Order</a>
-        | <a href="#" id="blocks_1">Blocks 1</a>
-        | <a href="#" id="blocks_2">Blocks 2</a>
-        | <a href="#" id="factorial_f">Factorial (functional)</a>
-        | <a href="#" id="factorial_t">Factorial (imperative)</a>
+        <strong>Examples from <a href="https://dbp.io/pubs/2017/funtal.pdf">paper</a>:</strong>
       </p>
+      <ul>
+        <li><a href="#" id="call_to_call">Call to call</a> (Fig. 3 &amp; 4, pg. 6)</li>
+        <li><a href="#" id="higher_order">Higher Order</a> (Fig. 11 &amp; 12, pg. 9)</li>
+        <li><a href="#" id="blocks_1">Blocks 1</a> (Fig. 16, top, pg. 11)</li>
+        <li><a href="#" id="blocks_2">Blocks 2</a> (Fig. 16, bottom, pg. 11)</li>
+        <li><a href="#" id="factorial_f">Factorial (functional)</a> (Fig. 17, top, pg. 12)</li>
+        <li><a href="#" id="factorial_t">Factorial (imperative)</a> (Fig. 17, bottom, pg. 12)</li>
+      </ul>
 
       <p>
         <strong>Additional examples:</strong>
@@ -119,7 +108,6 @@
           </div>
           <hr/>
           <h5>Registers:</h5>
-          </p>
           <pre id="registers"></pre>
           <hr/>
           <h5>Stack:</h5>
@@ -135,6 +123,62 @@
           <pre id="heap"></pre>
         </div>
       </div>
+
+      <br/><br/>
+
+      <h3>Syntactic differences from the <a href="https://dbp.io/pubs/2017/funtal.pdf">paper</a>:</h3>
+
+
+      <table>
+        <tr><th>Paper</th><th>Artifact</th><th>Description</th></tr>
+        <tr>
+          <td><code>(instr; ..., l &rarr; h, ...)</code></td>
+          <td><code>([instr; ...],[l -> h, ...])</code></td>
+          <td>TAL components use brackets around instructions and heap fragment.</td>
+        </tr>
+
+        <tr>
+          <td><code><sup>&tau;</sup>FT e</code></td>
+          <td><code>FT[t,s] e</code></td>
+          <td><code>FT</code> (TAL inside, Fun outside) boundary
+          specify stack <code>s</code> after running.</td>
+        </tr>
+
+        <tr>
+          <td><code><sup>&tau;</sup>FT e</code></td>
+          <td><code>FT[t,?] e</code></td>
+          <td><code>FT</code> boundary can use <code>?</code> to indicate
+          that <code>e</code> will not modify, thus can be
+          inferred.</td>
+        </tr>
+
+        <tr>
+          <td><code>import r,<sup>&sigma;</sup>TF<sup>&tau;</sup> e</code></td>
+          <td><code>import r1, z as s, t TF{e};</code></td>
+          <td><code>import</code> binds the stack <code>s</code> on
+          return as <code>z</code> with Fun expression <code>e</code> of
+          type <code>t</code>.</td>
+        </tr>
+
+        <tr>
+          <td><code>&alpha;, &zeta;, &epsilon;</code></td>
+          <td><code>a1, z21, e5</code></td>
+          <td>Type variables (in Fun and TAL) must begin
+          with <code>a</code>, stack variables with <code>z</code>,
+          and return marker variables with <code>e</code>.</td>
+        </tr>
+
+        <tr>
+          <td><code>&middot; | &tau; :: ... </code></td>
+          <td><code>:: | t :: ...</code></td>
+          <td>Empty stack prefixes (in protect, stack modifying
+          lambdas) are written as <code>::</code>.</td>
+        </tr>
+
+
+      </table>
+
+
       <div class="footer">
         Powered by OCaml and js_of_ocaml.
       </div>
