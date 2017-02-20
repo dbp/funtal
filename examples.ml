@@ -3,20 +3,14 @@ open Ftal;;
 
 (* Factorial Two Ways *)
 
-let factorial_f =
-  let f = F.(ELam (dummy_loc, [("f", TRec ("a", TArrow ([TVar "a"; TInt], TInt)));
-                    ("x1", TInt)],
-                   EIf0 (dummy_loc, EVar (dummy_loc, "x1"),
-                         EInt (dummy_loc, 1),
-                         EBinop (dummy_loc, EVar (dummy_loc, "x1"),
-                                 BTimes,
-                                 EApp (dummy_loc, EUnfold (dummy_loc, EVar (dummy_loc, "f")),
-                                       [EVar (dummy_loc, "f"); EBinop (dummy_loc, EVar (dummy_loc, "x1"), BMinus, EInt (dummy_loc, 1))]))))) in
-  F.(ELam (dummy_loc, [("x2", TInt)],
-           EApp (dummy_loc, f, [EFold (dummy_loc, "b",
-                            TArrow ([TVar "b"; TInt], TInt),
-                            f);
-                     EVar (dummy_loc, "x2")])))
+let factorial_f = Parse.parse_string Parser.f_expression_eof {|
+  \(x2:int).
+    (\ (f:mu a.(a, int) -> int, x1:int).
+        if0 x1 1 (x1*((unfold f) f (x1-1))))
+      (fold (mu b.(b, int) -> int) \ (f:mu a.(a, int) -> int, x1:int).
+          if0 x1 1 (x1*((unfold f) f (x1-1))))
+      x2
+|}
 
 let factorial_t' =
   let lf = FTAL.gen_sym ~pref:"l" () in

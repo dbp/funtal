@@ -102,9 +102,9 @@ let test_f_app _ =
     2
 
 let test_factorial_f _ =
-  assert_equal
-    (snd (F.stepn 100 (empty, F.EApp (dummy_loc, factorial_f, [F.EInt (dummy_loc, 3)]))))
-    (F.EInt (dummy_loc, 6))
+  assert_eint
+    (snd (F.stepn 300 (empty, F.EApp (dummy_loc, factorial_f, [F.EInt (dummy_loc, 3)]))))
+    6
 
 let test_mv_ty _ =
   assert_equal
