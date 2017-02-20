@@ -64,7 +64,7 @@ code {
 }
 
 .error-line {
-  border-bottom: 1px solid #8B0000 !important;
+  background: rgba(255,0,0,0.1) !important;
 }
 
 .buttons {

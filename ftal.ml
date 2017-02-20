@@ -286,7 +286,7 @@ end = struct
         | EVar (l,i), TAL.QOut ->
           begin match List.Assoc.find (get_env context) i with
             | Some v -> (FT v, get_stack context)
-            | None -> raise (TypeError ("Variable not in scope", l))
+            | None -> raise (TypeError ("Variable '" ^ i ^ "' not in scope.", l))
           end
         | EUnit l, TAL.QOut  -> (FT TUnit, get_stack context)
         | EInt _, TAL.QOut -> (FT TInt, get_stack context)

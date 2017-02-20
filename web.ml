@@ -31,6 +31,25 @@ let call_to_call = Ftal.(F.show_exp (F.(EBoundary (dummy_loc, TInt, None, Exampl
 let blocks_1 = Ftal.F.show_exp Examples.blocks_1
 let blocks_2 = Ftal.F.show_exp Examples.blocks_2
 
+let parse_error = {| FT [int, ?] (
+  [mv r1, 1;
+   add r1, r1, 1
+   halt int, * {r1}],
+  [])
+|}
+let type_error = {|
+(\(x2:int).
+  (\(f:mu a.(a,
+        int) -> int, x1:int).
+    if0 x1
+      ()
+      (x1*((unfold f) f (x1-1)))) (fold (mu b.(b,
+          int) -> int) (\(f:mu a.(a,
+            int) -> int, x1:int).
+        if0 x1
+          1
+          (x1*((unfold f) f (x1-1)))))
+    x2) 3 |}
 
 let set_error ln m =
   let _ = Js.Unsafe.((coerce global)##seterror (Js.number_of_float (float_of_int ln)) (Js.string m)) in
@@ -148,5 +167,7 @@ let _ =
   set_click "blocks_2" (ehandle blocks_2);
   set_click "factorial_f" (ehandle factorial_f);
   set_click "factorial_t" (ehandle factorial_t);
+  set_click "parse_error" (ehandle parse_error);
+  set_click "type_error" (ehandle type_error);
   set_editor simple;
   ()
