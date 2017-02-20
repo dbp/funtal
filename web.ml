@@ -79,8 +79,8 @@ let hide_machine _ =
 let show_machine _ =
   H.((getElementById "machine")##removeAttribute (Js.string "hidden"))
 let set_text i t =
-  let open H in
-  (getElementById i)##.innerHTML := Js.string t
+  let _ = Js.Unsafe.((coerce global)##settext (Js.string i) (Js.string t)) in
+  ()
 let set_editor t =
   let open Js in
   clear_errors ();
