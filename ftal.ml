@@ -2048,10 +2048,14 @@ end = struct
     | ETuple(_,es) -> langle ^^ group (separate_map (comma ^^ break 1) p_exp es) ^^ rangle
     | EPi(_,n,e) -> !^"pi" ^^ space ^^ !^(string_of_int n) ^^ lparen ^^ p_exp e ^^ rparen
     | EBoundary(_,t,ms,c) ->
-      !^"FT" ^^ lbracket ^^ p_t t ^^ comma ^^ space ^^
-      (match ms with
-       | None -> !^"?"
-       | Some s -> TALP.p_s s) ^^ rbracket ^^ break 0 ^^ TALP.p_component c
+      let p_ms = function
+        | None -> !^"?"
+        | Some s -> TALP.p_s s in
+      nest 2 (
+        !^"FT"
+        ^^ (brackets @@ align @@ group (p_t t ^^ comma ^^ break 1 ^^ p_ms ms))
+        ^^ break 0 ^^ TALP.p_component c
+      )
     | e -> group (lparen ^^ p_exp e ^^ rparen)
 
   and p_app_exp = function
@@ -2097,11 +2101,8 @@ end = struct
     lbracket ^^ TALP.p_sigma_prefix s ^^ rbracket
 
   and p_telescope ps =
-    group
-      (lparen
-       ^^ separate_map (comma ^^ space)
-         (fun (p,t) -> group (!^p ^^ colon ^^ p_t t)) ps
-       ^^ rparen)
+    let p_binding (p, t) = group (!^p ^^ colon ^^ align (p_t t)) in
+    group @@ align @@ parens (separate_map (comma ^^ space) p_binding ps)
 
   and p_binop (b : binop) : document =
     match b with
