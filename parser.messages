@@ -1067,7 +1067,10 @@ f_expression_eof: LAMBDA LPAREN UNPACK
 ## LPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the arguments of lambda-expression
+"(<var>:<type>, <var>:<type>...)", we parsed the opening parenthesis
+"(" so far and expect a term variable and its type, for example
+"x:int".
 
 f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER COLON A_IDENTIFIER COMMA UNPACK 
 ##
@@ -1079,7 +1082,9 @@ f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER COLON A_IDENTIFIER COMMA UNPACK
 ## decl(f_term_variable,f_type) COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the arguments of lambda-expression
+"(<var>:<type>, <var>:<type>...)", we parsed a comma "," and expect
+more arguments, for example "x:int".
 
 f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER COLON A_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -1092,7 +1097,9 @@ f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER COLON A_IDENTIFIER Z_IDENTIFIER
 ## decl(f_term_variable,f_type) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the arguments of lambda-expression
+"(<var>:<type>, <var>:<type>...)", we parsed a comma "," and expect a closing
+parenthesis or more arguments, for example ", x:int, y:(int)->int)".
 
 f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER COLON UNPACK 
 ##
@@ -1104,7 +1111,9 @@ f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER COLON UNPACK
 ## f_term_variable COLON 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the arguments of lambda-expression
+"(<var>:<type>, <var>:<type>...)", we parsed "<var>:" so far and
+expect a type, for example "int".
 
 f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -1116,7 +1125,9 @@ f_expression_eof: LAMBDA LPAREN Z_IDENTIFIER Z_IDENTIFIER
 ## f_term_variable 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the arguments of lambda-expression
+"(<var>:<type>, <var>:<type>...)", we parsed a variable and
+expect the symbol ":" followed by a type, for example ": int".
 
 f_expression_eof: LAMBDA Z_IDENTIFIER 
 ##
@@ -1129,7 +1140,10 @@ f_expression_eof: LAMBDA Z_IDENTIFIER
 ## LAMBDA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a lambda-expression, we parsed the "lam" keyword and expect:
+- a parenthesis "(", for a pure lambda-expression "lam (x:int, y:unit). e"
+- or stack prefix, for a stack-modifying lambda-expression
+  "lam [<stack-prefix>][<stack-prefix>](x:int, y:unit). e".
 
 f_expression_eof: LANGLE UNPACK 
 ##
