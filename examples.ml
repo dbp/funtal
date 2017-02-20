@@ -126,12 +126,11 @@ FT[(((int) -> int) -> int) -> int, ?]
                sst 0, r2;
                sst 1, ra;
                mv ra, lgret[z1, e1];
-               call r1 {box forall[].{r1 : int; z3} e1 :: z1, 0}],
+               call r1 {box forall[].{r1 : int; z1} e1 :: z1, 0}],
        lh -> box code [z2, e2]{ra : box forall[].{r1 : int; z2} e2;
                               int :: z2} ra.
                [sld r1, 0; sfree 1; mul r1, r1, 2; ret ra {r1}],
-       lgret -> box code [z3, e3]{ra : box forall[].{r1 : int; z3} e3,
-                                  r1 : int;
+       lgret -> box code [z3, e3]{r1 : int;
                                  box forall[].{r1 : int; z3} e3 :: z3} 0.
                   [sld ra, 0; sfree 1; ret ra {r1}]])
   (lam (h:(int) -> int). h 1)
@@ -144,7 +143,7 @@ let call_to_call = Parse.parse_string Parser.component_eof {|
                           z1} ra.
            [salloc 1;
             sst 0, ra;
-            mv ra, l2ret;
+            mv ra, l2ret[z1,e1];
             call l2 {box forall[].{r1 : int; z1} e1 :: z1, 0}],
    l1ret -> box code []{r1 : int; *} end{int;*}.[halt int, * {r1}],
    l2 -> box code [z2, e2]{ra : box forall[].{r1 : int; z2} e2;
@@ -154,8 +153,8 @@ let call_to_call = Parse.parse_string Parser.component_eof {|
                               ra : box forall[].{r1 : int; z3} e3;
                              z3} ra.
               [mul r1, r1, 2; ret ra {r1}],
-   l2ret -> box code []{r1 : int;
-                       box forall[].{r1 : int; *} end{int;*} :: *} 0.
+   l2ret -> box code [z4,e4]{r1 : int;
+                       box forall[].{r1 : int; z4} e4 :: z4} 0.
               [sld ra, 0; sfree 1; ret ra {r1}]])
 |}
 

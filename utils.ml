@@ -10,7 +10,7 @@ module List' = struct
       | [] -> []
     let find_exn l k = List.assoc k l
     let find l k = try Some (find_exn l k) with Not_found -> None
-    let add l k v = (k,v)::l
+    let add l k v = (k,v) :: remove l k
     let mem l k = List.mem_assoc k l
   end
 

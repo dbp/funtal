@@ -437,6 +437,109 @@ let test_call_tl_ty_exc4 _ =
        (FTAL.default_context TAL.QOut)
        (FTAL.FC call_tl_exc4))
 
+let call_st =
+  F.EBoundary (dummy_loc, F.TInt, None,
+    tal_comp
+      "([mv ra, lh;
+         call l {*, end{int; *}}],
+        [l -> box code [z1, e1]
+               {ra: box forall[]. {r1:int; z1} e1; z1} ra.
+               [salloc 1;
+                sst 0, ra;
+                mv ra, l1h[z1,e1];
+                call l1 {box forall[]. {r1:int; z1} e1 :: z1, 0}],
+         l1 -> box code [z2, e]
+               {ra: box forall[]. {r1:int; z2} e; z2} ra.
+               [mv r1, 0;
+                ret ra {r1}],
+         l1h -> box code [z3,e3] {r1:int; box forall[]. {r1:int; z3} e3 :: z3} 0.
+                    [sld ra, 0; sfree 1; ret ra {r1}],
+         lh -> box code [] {r1:int; *} end{int; *}.
+                    [halt int, * {r1}]])")
+
+let test_call_st _ =
+  assert_eint (snd (F.stepn 30 (empty, call_st))) 0
+
+let test_call_st_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC call_st))
+    (FTAL.FT F.TInt, TAL.SConcrete [])
+
+let call_st_exc =
+  F.EBoundary (dummy_loc, F.TInt, None,
+    tal_comp
+      "([mv ra, lh;
+         call l {*, end{int; *}}],
+        [l -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; z} ra.
+               [salloc 1;
+                sst 0, ra;
+                mv ra, l1h;
+                call l1 {*, 0}],
+         l1 -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; z} ra.
+               [mv r1, 0;
+                ret ra {r1}],
+         l1h -> box code [] {r1:int; box forall[]. {r1:int; *} e :: *} 0. [sld ra, 0; sfree 1; ret ra {r1}],
+         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
+
+let test_call_st_ty_exc _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC call_st_exc))
+
+let call_st_exc2 =
+   F.EBoundary (dummy_loc, F.TInt, None,
+    tal_comp
+      "([mv ra, lh;
+         call l {*, end{int; *}}],
+        [l -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; z} ra.
+               [salloc 1;
+                sst 0, ra;
+                mv ra, l1h;
+                call l1 {box forall[]. {r1:int; z} e :: *, 0}],
+         l1 -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e, r1: int; z} ra.
+               [mv r1, 0;
+                ret ra {r1}],
+         l1h -> box code [] {r1:int; box forall[]. {r1:int; *} e :: *} 0. [sld ra, 0; sfree 1; ret ra {r1}],
+         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
+
+
+let test_call_st_ty_exc2 _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC call_st_exc2))
+
+let call_st_exc3 =
+  F.EBoundary (dummy_loc, F.TInt, None,
+    tal_comp
+      "([mv ra, lh;
+         call l {*, end{int; *}}],
+        [l -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; z} ra.
+               [salloc 1;
+                sst 0, ra;
+                mv ra, l1h;
+                call l1 {*, 0}],
+         l1 -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; z} ra.
+               [mv r1, 0;
+                ret ra {r1}],
+         l1h -> box code [] {r1:int; box forall[]. {r1:int; *} e :: *} 0. [sld ra, 0; sfree 1; ret ra {r1}],
+         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
+
+let test_call_st_ty_exc3 _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC call_st_exc3))
+
 
 let test_call_to_call _ =
   assert_eint
@@ -646,6 +749,11 @@ let suite = "FTAL evaluations" >:::
               "TAL: simple call exc 2" >:: test_call_tl_ty_exc2;
               "TAL: simple call exc 3" >:: test_call_tl_ty_exc3;
               "TAL: simple call exc 4" >:: test_call_tl_ty_exc4;
+              "TAL: nested call = 0" >:: test_call_st;
+              "TAL: nested call : int" >:: test_call_st_ty;
+              "TAL: nested call exc" >:: test_call_st_ty_exc;
+              "TAL: nested call exc2" >:: test_call_st_ty_exc2;
+              "TAL: nested call exc3" >:: test_call_st_ty_exc3;
               "TAL: call to call = 2" >:: test_call_to_call;
               "TAL: call to call : int" >:: test_call_to_call_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;
