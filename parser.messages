@@ -214,7 +214,7 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW Z_IDENTIFIER
 Parsing a stack-modifying function type
 "(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
 "(<type>, <type>...) [<stack>]->" and now expect a bracketed stack
-prefix, for exmaple "[unit :: int]".
+prefix, for example "[unit :: int]".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET Z_IDENTIFIER 
 ##
@@ -226,7 +226,9 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET Z_IDENTIFIER
 ## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying function type
+"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
+"(<type>, <type>...) [<stack>]" and now expect an arrow "->".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET UNIT COMMA 
 ##
@@ -246,7 +248,10 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET UNIT COMMA
 ## In state 176, spurious reduction of production stack_prefix -> loption(separated_nonempty_list(DOUBLECOLON,value_type)) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+
+Parsing a stack-modifying function type
+"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
+"(<type>, <type>...) [<stack>" and now expect a closing bracket "]".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET Z_IDENTIFIER 
 ##
