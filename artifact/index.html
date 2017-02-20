@@ -136,22 +136,23 @@
         <tr>
           <td><code>(&iota;; ..., l &rarr; h, ...)</code></td>
           <td><code>([instr; ...],[l -> h, ...])</code></td>
-          <td>TAL components use brackets around instructions and heap fragment.</td>
+          <td>TAL components use brackets around instructions and the heap fragment.</td>
         </tr>
 
         <tr>
           <td><code><sup>&tau;</sup>FT e</code></td>
           <td><code>FT[t,s] e</code></td>
-          <td><code>FT</code> (TAL inside, Fun outside) boundary
-          specify stack <code>s</code> after running.</td>
+          <td><code>FT</code> (TAL inside, Fun outside) boundaries
+          have a stack typing <code>s</code> specifying the shape of the
+          stack after they return.</td>
         </tr>
 
         <tr>
           <td><code><sup>&tau;</sup>FT e</code></td>
           <td><code>FT[t,?] e</code></td>
-          <td><code>FT</code> boundary can use <code>?</code> to indicate
-          that <code>e</code> will not modify, thus can be
-          inferred.</td>
+          <td><code>FT</code> boundaries can use <code>?</code> to indicate
+          that <code>e</code> will not modify the stack, and that the
+          return stack typing can thus be inferred.</td>
         </tr>
 
         <tr>
@@ -165,9 +166,9 @@
         <tr>
           <td><code>&alpha;, &zeta;, &epsilon;</code></td>
           <td><code>a1, z21, e5</code></td>
-          <td>Type variables (in Fun and TAL) must begin
-          with <code>a</code>, stack variables with <code>z</code>,
-          and return marker variables with <code>e</code>.</td>
+          <td>TAL type variables must begin with <code>a</code>, stack
+          variables with <code>z</code>, and return marker variables
+          with <code>e</code>.</td>
         </tr>
 
         <tr>
@@ -181,7 +182,7 @@
         <tr>
           <td><code>&forall;, &mu;, &lambda;, &#8707;, &bullet;</code></td>
           <td><code>forall, mu, lam, exists, *</code></td>
-          <td>Greek letters replaced with english.</td>
+          <td>Greek letters and quantifiers are replaced by english keywords.</td>
         </tr>
 
 
