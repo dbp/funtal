@@ -39,3 +39,7 @@ configure:
 .PHONY: build doc test all install uninstall reinstall clean distclean configure
 
 # OASIS_STOP
+
+install-deps:
+	opam pin add funtal . --no-action # tell opam about a local "funtal" package
+	opam install --deps-only funtal   # then install its dependencies
