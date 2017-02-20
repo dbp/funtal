@@ -79,7 +79,7 @@ rule token = parse
   | "+" { PLUS }
   | "-" { MINUS }
   | "*" { TIMES }
-  | "\\"  { LAMBDA }
+  | "lam"  { LAMBDA }
   | "->" { ARROW }
   | "?" { QUESTION }
   | "FT" { FT }

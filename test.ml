@@ -55,31 +55,6 @@ let test1_ty _ = assert_equal
        (FTAL.FC (f_expr "1 + 1")))
     (FTAL.FT (f_type "int"), TAL.SConcrete []);;
 
-(* let test_parse1 _ = assert_equal *)
-(*   (Parse.parse_string Parser.component_eof {| *)
-(* ( *)
-(*      [mv r1, 1; *)
-(*       add r1, r1, 1; *)
-(*       halt int, * {r1}] *)
-(* , *)
-(*      [] *)
-(* ) *)
-(* |}) *)
-(*   TAL.([Imv ("r1", UW (WInt 1)); *)
-(*         Iaop (Add, "r1", "r1", UW (WInt 1)); *)
-(*         Ihalt (TInt, SConcrete [], "r1")], []) *)
-
-(* let test_parse2 _ = assert_equal *)
-(*   (f_expr "1 + 1") *)
-(*   (F.EBinop (F.EInt 1, F.BPlus, F.EInt 1)) *)
-
-(* let test_parse3 _ = assert_equal *)
-(*   (\* using {|...|} instead of "..." allows to avoid backslash-escapes *\) *)
-(*   (f_expr {| (\(x:int). x + x) 1 |}) *)
-(*   F.(EApp *)
-(*        (ELam ([("x", TInt)], EBinop (EVar "x", BPlus, EVar "x")), *)
-(*         [EInt 1])) *)
-
 let test_parse_variables_1 _ =
   let open TAL in
   assert_equal
@@ -98,13 +73,13 @@ let test2 _ =
 
 let test_f_app _ =
   assert_eint
-    (snd (F.stepn 10 (empty, f_expr "(\\(x:int). x + x) 1")))
+    (snd (F.stepn 10 (empty, f_expr "(lam (x:int). x + x) 1")))
     2
 
 let test_factorial_f _ =
-  assert_equal
-    (snd (F.stepn 100 (empty, F.EApp (dummy_loc, factorial_f, [F.EInt (dummy_loc, 3)]))))
-    (F.EInt (dummy_loc, 6))
+  assert_eint
+    (snd (F.stepn 300 (empty, F.EApp (dummy_loc, factorial_f, [F.EInt (dummy_loc, 3)]))))
+    6
 
 let test_mv_ty _ =
   assert_equal
@@ -255,29 +230,6 @@ let test_st_ty _ =
                      [l -> ref <1>]
                    )")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
-
-(* let test_parse4 _ = assert_equal *)
-(*     TAL.([Imv ("r1", UW (WInt 1)); *)
-(*           Isalloc 1; *)
-(*           Isst (0, "r1"); *)
-(*           Iralloc ("r2", 1); *)
-(*           Imv ("r1", UW (WInt 10)); *)
-(*           Ist ("r2", 0, "r1"); *)
-(*           Ild ("r3", "r2", 0); *)
-(*           Ihalt (TInt, SConcrete [], "r3")], *)
-(*          []) *)
-(*     (tal_comp *)
-(*        "([ *)
-(*            mv r1, 1; *)
-(*            salloc 1; *)
-(*            sst 0, r1; *)
-(*            ralloc r2, 1; *)
-(*            mv r1, 10; *)
-(*            st r2[0], r1; *)
-(*            ld r3, r2[0]; *)
-(*            halt int, * {r3}; *)
-(*        ], [])") *)
-
 
 let test_ralloc_ty _ =
   assert_equal
@@ -788,11 +740,7 @@ let suite = "FTAL evaluations" >:::
               "F: 1 + 1 = 2" >:: test1;
               "F: 1 + 1 : int" >:: test1_ty;
               "F: 1 + 1 = 2 (2)" >:: test2;
-              "F: (\\x -> x + x) 1 = 2" >:: test_f_app;
-              (* "parse: 1 + 1 = 2" >:: test_parse1; *)
-              (* "parse (2)" >:: test_parse2; *)
-              (* "parse (3)" >:: test_parse3; *)
-              (* "parse (4)" >:: test_parse4; *)
+              "F: (lam x. x + x) 1 = 2" >:: test_f_app;
               "parse (5)" >:: test_parse5;
               "parse type-level variables" >:: test_parse_variables_1;
               "F: fact 3 = 6" >:: test_factorial_f;
@@ -838,12 +786,12 @@ let suite = "FTAL evaluations" >:::
               "TAL: int -> int" >:: test_factorial_t_ty;
               "TAL: higher order = 2" >:: test_higher_order;
               "TAL: higher order : int" >:: test_higher_order_ty;
-              "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;
-              "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 : int" >:: test_closures_ty;
-              "TAL(1block): (\\x -> x + 2)3 = 5" >:: test_blocks1;
-              "TAL(1block): (\\x -> x + 2)3 : int" >:: test_blocks1_ty;
-              "TAL(2blocks): (\\x -> x + 2)3 = 5" >:: test_blocks2;
-              "TAL(2blocks): (\\x -> x + 2)3 : int" >:: test_blocks2_ty;
+              "FTAL: (lam x. FT(TF(lam y. x - y)) 1) 3 = 2" >:: test_closures;
+              "FTAL: (lam x. FT(TF(lam y. x - y)) 1) 3 : int" >:: test_closures_ty;
+              "TAL(1block): (lam x. x + 2)3 = 5" >:: test_blocks1;
+              "TAL(1block): (lam x. x + 2)3 : int" >:: test_blocks1_ty;
+              "TAL(2blocks): (lam x. x + 2)3 = 5" >:: test_blocks2;
+              "TAL(2blocks): (lam x. x + 2)3 : int" >:: test_blocks2_ty;
               "REF: r = ref 1; r := 20; !r = 20" >:: test_ref1;
               (* "REF: r = ref 1; r := 20; !r : int" >:: test_ref1_ty; *)
               "REF: r = ref 1; r := 20; r := !r + 5; !r = 25" >:: test_ref2;
