@@ -44,7 +44,7 @@ let factorial_t' =
 let factorial_t = Parse.parse_string Parser.f_expression_eof {|
 lam (x:int).
   FT[(int) -> int, ?]
-    ([protect , z2;
+    ([protect ::, z2;
       mv r1, lf0;
       halt
         box forall[z2, e3].
@@ -70,7 +70,7 @@ lam (x:int).
 let blocks_1 = Parse.parse_string Parser.f_expression_eof {|
 lam (x:int).
   FT[(int) -> int, ?]
-    ([protect , z2;
+    ([protect ::, z2;
       mv r1, l2;
       halt
         box forall[z3, e4].
@@ -86,7 +86,7 @@ lam (x:int).
 let blocks_2 = Parse.parse_string Parser.f_expression_eof {|
 lam (x:int).
   FT[(int) -> int, ?]
-    ([protect , z2;
+    ([protect ::, z2;
       mv r1, l2;
       halt
         box forall[z4, e5].
@@ -162,11 +162,11 @@ let ref_settyp = F.(TArrowMod ([TInt], [TAL.(TTupleRef [TInt])], [TAL.(TTupleRef
 let ref_gettyp = F.(TArrowMod ([], [TAL.(TTupleRef [TInt])], [TAL.(TTupleRef [TInt])], TInt))
 
 let with_ref = Parse.parse_string Parser.f_expression_eof {|
-lam (init:int, k:((int)[ref <int>] -> [ref <int>]unit,
-                   ()[ref <int>] -> [ref <int>]int) -> int).
+lam (init:int, k:((int)[ref <int> :: ] -> [ref <int>::]unit,
+                   ()[ref <int>::] -> [ref <int>::]int) -> int).
   (lam (_:unit, res:int, _:unit). res)
     FT[unit, ref <int> :: z]
-      ([protect , z;
+      ([protect ::, z;
         salloc 1;
         import r1, z_ as z, int TF{init};
         sst 0, r1;
@@ -177,7 +177,7 @@ lam (init:int, k:((int)[ref <int>] -> [ref <int>]unit,
         halt unit, ref <int> :: z {r1}],
         [])
     (k
-      (lam [ref <int>][ref <int>](x:int).
+      (lam [ref <int>::][ref <int>::](x:int).
         FT[unit,
            ref <int>
              :: box forall[z12, e13].
@@ -215,7 +215,7 @@ lam (init:int, k:((int)[ref <int>] -> [ref <int>]unit,
                          {ra : box forall[].{r1 : int; ref <int> :: z16} e17;
                           ref <int> :: z16} ra :: z12} ra :: z1 {r1}],
               []))
-      (lam [ref <int>][ref <int>]().
+      (lam [ref <int>::][ref <int>::]().
         FT[int,
            ref <int>
              :: box forall[z12, e13].
@@ -241,7 +241,7 @@ lam (init:int, k:((int)[ref <int>] -> [ref <int>]unit,
                           ref <int> :: z16} ra :: z12} ra :: z1 {r2}],
               [])))
     FT[unit, z]
-      ([protect ref <int>, z; sfree 1; mv r1, (); halt unit, z {r1}],
+      ([protect ref <int>::, z; sfree 1; mv r1, (); halt unit, z {r1}],
         [])
 |}
 
