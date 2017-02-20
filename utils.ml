@@ -99,3 +99,22 @@ let global_replace c replacement str =
     else Buffer.add_string buf replacement
   done;
   Buffer.contents buf
+
+
+
+module Debug = struct
+
+  let log cls msg =
+    try
+      let _ = Sys.getenv "DEBUG" in
+      let t = Unix.localtime (Unix.time ()) in
+      let open Unix in
+      let (hr, min, sec, day, month, year) = (t.tm_hour, t.tm_min, t.tm_sec, t.tm_mday, t.tm_mon, t.tm_year) in
+      let pref = Printf.sprintf "%04d-%02d-%02d %02d:%02d:%02d (%s): " (1900 + year) (month + 1) day hr min sec cls in
+      let msg_indented =
+        let indent = "\n" ^ String.init (String.length pref) (fun _ -> ' ') in
+        global_replace '\n' indent msg in
+      print_endline (pref ^ msg_indented)
+    with Not_found -> ()
+
+end
