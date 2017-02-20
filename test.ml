@@ -551,17 +551,18 @@ let test_ft_factorial_t_ty _ =
 
 let test_examples _ =
   let assert_roundtrip_f fexpr =
-    let pretty = Ftal.F.show_exp fexpr in
-    let reparsed = Parse.parse_string Parser.f_expression_eof pretty in
-    assert_equal fexpr reparsed in
+    let reparsed = Parse.parse_string Parser.f_expression_eof (Ftal.F.show_exp fexpr) in
+    let rereparsed = Parse.parse_string Parser.f_expression_eof (Ftal.F.show_exp reparsed) in
+    assert_equal reparsed rereparsed in
   let assert_roundtrip_c comp =
-    let pretty =
+    let show_comp comp =
       let doc = Ftal.TALP.p_component comp in
       let buf = Buffer.create 123 in
       PPrintEngine.ToBuffer.pretty 0.8 80 buf doc;
       Buffer.contents buf in
-    let reparsed = Parse.parse_string Parser.component_eof pretty in
-    assert_equal comp reparsed in
+    let reparsed = Parse.parse_string Parser.component_eof (show_comp comp) in
+    let rereparsed = Parse.parse_string Parser.component_eof (show_comp reparsed) in
+    assert_equal reparsed rereparsed in
   assert_roundtrip_f Examples.factorial_f;
   assert_roundtrip_f Examples.factorial_t;
   assert_roundtrip_f Examples.blocks_1;
