@@ -12,8 +12,8 @@ let factorial_f = Parse.parse_string Parser.f_expression_eof {|
 |}
 
 let factorial_t' =
-  let lf = FTAL.gen_sym ~pref:"l" () in
-  let la = FTAL.gen_sym ~pref:"l" () in
+  let lf = FTAL.gen_sym ~pref:"lf" () in
+  let la = FTAL.gen_sym ~pref:"la" () in
   let h = [(lf, TAL.(Box, HCode ([DZeta "z3"; DEpsilon "e"],
                             [("ra", TBox (PBlock ([],
                                                   [("r1", TInt)],
@@ -41,17 +41,30 @@ let factorial_t' =
                              Ihalt (dummy_loc, TInt, SAbstract ([],  "z4"), "r1")])))] in
   (TAL.WLoc (dummy_loc, lf), h)
 
-let factorial_t =
-  let (l, h) = factorial_t' in
-  F.(ELam (dummy_loc, [("x", TInt)],
-           EApp (dummy_loc, EBoundary (dummy_loc, TArrow ([TInt], TInt), None,
-                            TAL.(dummy_loc, [Iprotect (dummy_loc, [], "z2");
-                                  Imv (dummy_loc, "r1", UW (dummy_loc, l));
-                                  Ihalt (dummy_loc, FTAL.tytrans (TArrow ([TInt], TInt)),
-                                         SAbstract ([], "z2"),
-                                         "r1")], h)
-),
-                 [EVar (dummy_loc, "x")])))
+let factorial_t = Parse.parse_string Parser.f_expression_eof {|
+lam (x:int).
+  FT[(int) -> int, ?]
+    ([protect , z2;
+      mv r1, lf0;
+      halt
+        box forall[z2, e3].
+          {ra : box forall[].{r1 : int; z2} e3;
+           int :: z2} ra,
+        z2 {r1}],
+      [lf0 -> box code [z3, e]{ra : box forall[].{r1 : int; z3} e;
+                              int :: z3} ra.
+                [sld r7, 0; mv r1, 1; bnz r7, la1[z3]; sfree 1; ret ra {r1}],
+       la1 -> box code [z4]{r1 : int,
+                            r7 : int,
+                            ra : box forall[].{r1 : int; z3} e;
+                           int :: z3} ra.
+                [mul r1, r1, r7;
+                 sub r7, r7, 1;
+                 bnz r7, la1[z1];
+                 sfree 1;
+                 halt int, z4 {r1}]])
+    x
+|}
 (* Different number of basic blocks *)
 
 let blocks_1 =
