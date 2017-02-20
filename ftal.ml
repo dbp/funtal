@@ -633,8 +633,30 @@ end = struct
     | [Icall(l,u,s,QI i')], QI i ->
       begin match tc_u context u with
         | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
-          (* TODO(dbp 2017-02-17): Add other constraints *)
-          ()
+          let pref_len = stack_pref_length (get_stack context) - stack_pref_length s in
+          if pref_len < 0 then
+            raise (TypeError ("Icall: protected suffix is longer than current stack", l))
+          else if not (s_eq hats (SAbstract (stack_take (get_stack context) pref_len, z))) then
+            raise (TypeError ("Icall: stack prefix on block being jumped to does not match current stack. Current stack prefix: " ^ show_sigma_prefix (stack_take (get_stack context) pref_len) ^ ", but specified prefix is: " ^ show_sigma_prefix (stack_take hats pref_len), l))
+          else if i < pref_len then
+            raise (TypeError ("Icall: return marker is not in protected suffix of stack", l))
+          else
+            begin match ret_addr_type (set_stack (set_reg context hatc) hats) hatq with
+              | Some (TBox (PBlock (_, _,hats', QEpsilon e))) ->
+                let new_pref_len = stack_pref_length hats' in
+                if i' <> i + new_pref_len - pref_len then
+                  raise (TypeError ("Icall: return marker does not end up at specified position on stack", l))
+                else begin match hats' with
+                  | SAbstract (_, z') when z = z' ->
+                    if not (register_subset (TAL.chi_sub (EMarker (e, QI i')) (chi_sub (SType (z, s)) hatc)) (get_reg context)) then
+                      raise (TypeError ("Icall: current registers not compatible with what block expects. Current: " ^ show_chi (get_reg context) ^ " but block expects " ^ show_chi (TAL.chi_sub (EMarker (e, QI i')) (chi_sub (SType (z, s)) hatc)) , l))
+                    else
+                      ()
+                  | _ ->
+                    raise (TypeError ("Icall: block being returned to does not protect suffix", l))
+                end
+              | _ -> raise (TypeError ("Icall: block being jumped to does not return to block with right type", l))
+            end
         | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", l))
       end
 
@@ -658,11 +680,14 @@ end = struct
       if tc_u context u = type_sub (TType (s, TRec (s, t))) t
       then TRec (s,t)
       else raise (TypeError ("Ill-typed fold", l))
-    | UApp (l,u, os) ->
+    | UApp (l, u, os) ->
       begin match tc_u context u with
         | TBox (PBlock (d,c,s,q)) ->
           let (ds,dr) = List.split_n d (List.length os) in
-          List.fold_left ~f:(fun t' p -> type_sub p t') ~init:(TBox (PBlock (dr,c,s,q))) (type_zip ds os)
+          List.fold_left
+            ~f:(fun t' p -> type_sub p t')
+            ~init:(TBox (PBlock (dr,c,s,q)))
+            (type_zip ds os)
         | _ -> raise (TypeError ("Can't apply non-block to types", l))
       end
 
@@ -1142,6 +1167,7 @@ and TAL : sig
   val pp_psi : Format.formatter -> psi -> unit
   val psi_elem_eq : psi_elem -> psi_elem -> bool
   val show_psi_elem : psi_elem -> string
+  val show_chi : chi -> string
 
   type omega =
       OT of t
@@ -1304,9 +1330,11 @@ end = struct
   and chi = (reg * t) list
 
   let show_sigma s = Printer.(r (TALP.p_s s))
+  let show_sigma_prefix s = Printer.(r (TALP.p_sigma_prefix s))
   let show t = Printer.(r (TALP.p_t t))
   let show_psi_elem p = Printer.(r (TALP.p_psi p))
   let show_q q = Printer.(r (TALP.p_q q))
+  let show_chi c = Printer.(r (TALP.p_chi c))
 
   let ret_type context q = match q with
     | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
@@ -1396,6 +1424,7 @@ end = struct
       HCode of delta * chi * sigma * q * instr list
     | HTuple of w list
   [@@deriving show]
+  let show_h h = Printer.(r (TALP.p_h h))
 
   type heapm = (loc * (mut * h)) list
   [@@deriving show]
@@ -1847,6 +1876,7 @@ end and TALP : sig
     val p_sigma_prefix : TAL.sigma_prefix -> document
     val p_q : TAL.q -> document
     val p_u : TAL.u -> document
+    val p_h : TAL.h -> document
     val p_psi : TAL.psi_elem -> document
     val p_delta : TAL.delta -> document
     val p_chi : TAL.chi -> document
