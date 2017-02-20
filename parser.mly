@@ -40,11 +40,11 @@
       function below, which partially projects into word values. *)
    exception LowerValueError of u
    let rec lower_value : u -> w = function
-     | UW w -> w
-     | UR _ as u -> raise (LowerValueError u)
-     | UPack (t, u, s, t') -> WPack (t, lower_value u, s, t')
-     | UFold (s, t, u) -> WFold (s, t, lower_value u)
-     | UApp (u, omegas) -> WApp (lower_value u, omegas)
+     | UW (_,w) -> w
+     | UR (_,_) as u -> raise (LowerValueError u)
+     | UPack (l, t, u, s, t') -> WPack (l, t, lower_value u, s, t')
+     | UFold (l, s, t, u) -> WFold (l, s, t, lower_value u)
+     | UApp (l, u, omegas) -> WApp (l, lower_value u, omegas)
 %}
 
 
@@ -80,37 +80,37 @@ f_type:
   f_mu_type: MU alpha=f_type_variable DOT tau=f_type { (alpha, tau) }
 
 f_simple_expression:
-| x=f_term_variable { F.EVar x }
-| LPAREN RPAREN { F.EUnit }
-| n=nat { F.EInt n }
-| es=tuple(f_expression) { F.ETuple es }
-| PI n=nat LPAREN e=f_expression RPAREN { F.EPi (n, e) }
+| x=f_term_variable { F.EVar (cpos $startpos, x) }
+| LPAREN RPAREN { F.EUnit (cpos $startpos)}
+| n=nat { F.EInt (cpos $startpos, n) }
+| es=tuple(f_expression) { F.ETuple (cpos $startpos, es) }
+| PI n=nat LPAREN e=f_expression RPAREN { F.EPi (cpos $startpos, n, e) }
 | FT LBRACKET tau=f_type COMMA sigma=stack_typing_annot RBRACKET c=component
-  { F.EBoundary (tau, sigma, c) }
+  { F.EBoundary (cpos $startpos, tau, sigma, c) }
 | LPAREN e=f_expression RPAREN { e }
 
 f_app_expression:
 | e=f_simple_expression { e }
-| e=f_simple_expression args=nonempty_list(f_simple_expression) { F.EApp (e, args) }
+| e=f_simple_expression args=nonempty_list(f_simple_expression) { F.EApp (cpos $startpos, e, args) }
 
 f_arith_expression:
-| MINUS n=nat { F.EInt (-n) }
-| e1=f_arith_expression op=infixop e2=f_arith_expression { F.EBinop (e1, op, e2) }
+| MINUS n=nat { F.EInt (cpos $startpos,(-n)) }
+| e1=f_arith_expression op=infixop e2=f_arith_expression { F.EBinop (cpos $startpos, e1, op, e2) }
 | e=f_app_expression { e }
 
 f_expression:
 | IF0 p=f_simple_expression e1=f_simple_expression e2=f_simple_expression
-  { F.EIf0 (p, e1, e2) }
+  { F.EIf0 (cpos $startpos, p, e1, e2) }
 | LAMBDA args=f_telescope DOT body=f_expression
-  { F.ELam (args, body) }
+  { F.ELam (cpos $startpos, args, body) }
 | LAMBDA
   LBRACKET sin=stack_prefix RBRACKET
   LBRACKET sout=stack_prefix RBRACKET
   args=f_telescope DOT body=f_expression
-  { F.ELamMod (args, sin, sout, body) }
+  { F.ELamMod (cpos $startpos, args, sin, sout, body) }
 | FOLD mu=mayparened(f_mu_type) e=f_expression
-  { let (alpha, tau) = mu in F.EFold (alpha, tau, e) }
-| UNFOLD e=f_expression { F.EUnfold e }
+  { let (alpha, tau) = mu in F.EFold (cpos $startpos, alpha, tau, e) }
+| UNFOLD e=f_expression { F.EUnfold (cpos $startpos, e) }
 | e=f_arith_expression { e }
 
   stack_typing_annot:
@@ -149,20 +149,20 @@ word_value: w=small_value { lower_value w }
 
 simple_small_value:
 | LPAREN u=small_value RPAREN { u }
-| LPAREN RPAREN { UW WUnit }
-| n=nat { UW (WInt n) }
-| l=location { UW (WLoc l) }
-| r=register { UR r }
+| LPAREN RPAREN { UW (cpos $startpos, WUnit (cpos $startpos)) }
+| n=nat { UW (cpos $startpos, WInt (cpos $startpos, n)) }
+| l=location { UW (cpos $startpos, WLoc (cpos $startpos, l)) }
+| r=register { UR (cpos $startpos, r) }
 | p=pack(small_value)
-  { let (tau, u, alpha, tau') = p in UPack (tau, u, alpha, tau') }
+  { let (tau, u, alpha, tau') = p in UPack (cpos $startpos, tau, u, alpha, tau') }
 
 small_value:
-| MINUS n=nat { UW (WInt (-n)) }
+| MINUS n=nat { UW (cpos $startpos, WInt (cpos $startpos, (-n))) }
 | u=simple_small_value { u }
 | f=fold(small_value)
-  { let (alpha, tau, u) = f in UFold (alpha, tau, u) }
+  { let (alpha, tau, u) = f in UFold (cpos $startpos, alpha, tau, u) }
 | a=app(simple_small_value)
-  { let (u, omega) = a in UApp (u, omega) }
+  { let (u, omega) = a in UApp (cpos $startpos, u, omega) }
 
   fold(value):
   | FOLD mu=mayparened(mu_type) v=value
@@ -266,46 +266,46 @@ simple_instruction_sequence:
 
 final_instruction:
 | JMP u=small_value
-  { Ijmp u }
+  { Ijmp (cpos $startpos, u) }
 | CALL u=small_value LBRACE sigma=stack_typing COMMA q=return_marker RBRACE
-  { Icall (u, sigma, q) }
+  { Icall (cpos $startpos, u, sigma, q) }
 | RET r=register rr=bracereg
-  { Iret (r, rr) }
+  { Iret (cpos $startpos, r, rr) }
 | HALT tau=value_type COMMA sigma=stack_typing rr=bracereg
-  { Ihalt (tau, sigma, rr) }
+  { Ihalt (cpos $startpos, tau, sigma, rr) }
 
 single_instruction:
 | op=aop rd=register COMMA rs=register COMMA u=small_value
-  { Iaop (op, rd, rs, u) }
+  { Iaop (cpos $startpos, op, rd, rs, u) }
 | BNZ r=register COMMA u=small_value
-  { Ibnz (r, u) }
+  { Ibnz (cpos $startpos, r, u) }
 | LD rd=register COMMA rs=register i=bracketpos
-  { Ild (rd, rs, i) }
+  { Ild (cpos $startpos, rd, rs, i) }
 | ST rd=register i=bracketpos COMMA rs=register
-  { Ist (rd, i, rs) }
+  { Ist (cpos $startpos, rd, i, rs) }
 | RALLOC rd=register COMMA n=nat
-  { Iralloc (rd, n) }
+  { Iralloc (cpos $startpos, rd, n) }
 | BALLOC rd=register COMMA n=nat
-  { Iballoc (rd, n) }
+  { Iballoc (cpos $startpos, rd, n) }
 | MV rd=register COMMA u=small_value
-  { Imv (rd, u) }
+  { Imv (cpos $startpos, rd, u) }
 | SALLOC n=nat
-  { Isalloc n }
+  { Isalloc (cpos $startpos, n) }
 | SFREE n=nat
-  { Isfree n }
+  { Isfree (cpos $startpos, n) }
 | SLD rd=register COMMA i=nat
-  { Isld (rd, i) }
+  { Isld (cpos $startpos, rd, i) }
 | SST i=nat COMMA rs=register
-  { Isst (i, rs) }
+  { Isst (cpos $startpos, i, rs) }
 | UNPACK LANGLE alpha=type_variable COMMA rd=register RANGLE COMMA u=small_value
-  { Iunpack (alpha, rd, u) }
+  { Iunpack (cpos $startpos, alpha, rd, u) }
 | UNFOLD rd=register COMMA u=small_value
-  { Iunfold (rd, u) }
+  { Iunfold (cpos $startpos, rd, u) }
 | IMPORT r=register COMMA zeta=stack_typing_variable
   AS sigma=stack_typing COMMA tau=f_type TF LBRACE e=f_expression RBRACE
-  { Iimport (r, zeta, sigma, tau, e) }
+  { Iimport (cpos $startpos, r, zeta, sigma, tau, e) }
 | PROTECT phi=stack_prefix COMMA zeta=stack_typing_variable
-  { Iprotect (phi, zeta) }
+  { Iprotect (cpos $startpos,phi, zeta) }
 
   aop:
   | ADD { Add }
@@ -360,5 +360,3 @@ tuple(elem):
 
 %inline angled(elem):
 | LANGLE x=elem RANGLE {x}
-
-

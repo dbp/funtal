@@ -25,9 +25,9 @@ FT [int, ?] (
 |}
 
 let higher_order = Ftal.F.show_exp Examples.higher_order
-let factorial_f = Ftal.F.(show_exp (EApp (Examples.factorial_f, [EInt 3])))
-let factorial_t = Ftal.F.(show_exp (EApp (Examples.factorial_t, [EInt 3])))
-let call_to_call = Ftal.F.show_exp (Ftal.F.(EBoundary (TInt, None, Examples.call_to_call)))
+let factorial_f = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_f, [F.EInt (dummy_loc, 3)])))
+let factorial_t = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_t, [F.EInt (dummy_loc, 3)])))
+let call_to_call = Ftal.(F.show_exp (F.(EBoundary (dummy_loc, TInt, None, Examples.call_to_call))))
 let blocks_1 = Ftal.F.show_exp Examples.blocks_1
 let blocks_2 = Ftal.F.show_exp Examples.blocks_2
 
@@ -61,7 +61,7 @@ let set_click i h =
   ()
 
 let _ =
-  let hist = ref ((Ftal.F.EUnit, ([],[],[])), []) in
+  let hist = ref ((Ftal.F.EUnit Ftal.dummy_loc, ([],[],[])), []) in
   let refresh _ =
     let ((e, (h,r,s)), past) = !hist in
     let _ = match Ftal.F.decomp e with
