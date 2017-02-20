@@ -164,64 +164,26 @@ let higher_order =
            [g]))
 
 
-let call_to_call =
-  let h = TAL.[
-      ("l1", (Box, HCode ([DZeta "z1"; DEpsilon "e1"],
-                    [("ra", TBox (PBlock ([],
-                                          [("r1", TInt)],
-                                          SAbstract ([], "z1"),
-                                          QEpsilon "e1")))],
-                    SAbstract ([], "z1"),
-                    QR "ra",
-                          [Isalloc (dummy_loc, 1);
-                           Isst (dummy_loc, 0, "ra");
-                           Imv (dummy_loc, "ra", UW (dummy_loc, WLoc (dummy_loc, "l2ret")));
-                     Icall (dummy_loc, UW (dummy_loc, WLoc (dummy_loc, "l2")),
-                            SAbstract ([TBox (PBlock ([],
-                                                      [("r1", TInt)],
-                                                      SAbstract ([], "z1"),
-                                                      QEpsilon "e1"))],
-                                       "z1"),
-                            QI 0)])));
-      ("l1ret", (Box, HCode ([],
-                       [("r1", TInt)],
-                       SConcrete [],
-                       QEnd (TInt, SConcrete []),
-                       [Ihalt (dummy_loc, TInt, SConcrete [], "r1")])));
-      ("l2", (Box, HCode ([DZeta "z2"; DEpsilon "e2"],
-                    [("ra", TBox (PBlock ([],
-                                          [("r1", TInt)],
-                                          SAbstract ([], "z2"),
-                                          QEpsilon "e2")))],
-                    SAbstract ([], "z2"),
-                    QR "ra",
-                    [Imv (dummy_loc, "r1", UW (dummy_loc, WInt (dummy_loc, 1)));
-                     Ijmp (dummy_loc, UApp (dummy_loc, UW (dummy_loc, WLoc (dummy_loc, "l2aux")),
-                                 [OS (SAbstract ([], "z2"));
-                                  OQ (QEpsilon "e2")]))])));
-      ("l2aux", (Box, HCode ([DZeta "z3"; DEpsilon "e3"],
-                       [("r1", TInt);
-                        ("ra", TBox (PBlock ([],
-                                          [("r1", TInt)],
-                                          SAbstract ([], "z3"),
-                                             QEpsilon "e3")))],
-                       SAbstract ([], "z3"),
-                    QR "ra",
-                       [Iaop (dummy_loc, Mult, "r1", "r1", UW (dummy_loc, WInt (dummy_loc, 2)));
-                        Iret (dummy_loc, "ra", "r1")])));
-      ("l2ret", (Box, HCode ([],
-                       [("r1", TInt)],
-                       SConcrete [TBox (PBlock ([],
-                                                [("r1", TInt)],
-                                                SConcrete [],
-                                                QEnd (TInt, SConcrete [])))],
-                       QI 0,
-                             [Isld (dummy_loc, "ra", 0);
-                              Isfree (dummy_loc, 1);
-                              Iret (dummy_loc, "ra", "r1")])))] in
-  (dummy_loc, TAL.[Imv (dummy_loc, "ra", UW (dummy_loc, WLoc (dummy_loc, "l1ret")));
-        Icall (dummy_loc, UW (dummy_loc, WLoc (dummy_loc, "l1")), SConcrete [], QEnd (TInt, SConcrete []))],
-   h)
+let call_to_call = Parse.parse_string Parser.component_eof {|
+([mv ra, l1ret; call l1 {*, end{int;*}}],
+  [l1 -> box code [z1, e1]{ra : box forall[].{r1 : int; z1} e1;
+                          z1} ra.
+           [salloc 1;
+            sst 0, ra;
+            mv ra, l2ret;
+            call l2 {box forall[].{r1 : int; z1} e1 :: z1, 0}],
+   l1ret -> box code []{r1 : int; *} end{int;*}.[halt int, * {r1}],
+   l2 -> box code [z2, e2]{ra : box forall[].{r1 : int; z2} e2;
+                          z2} ra.
+           [mv r1, 1; jmp l2aux[z2, e2]],
+   l2aux -> box code [z3, e3]{r1 : int,
+                              ra : box forall[].{r1 : int; z3} e3;
+                             z3} ra.
+              [mul r1, r1, 2; ret ra {r1}],
+   l2ret -> box code []{r1 : int;
+                       box forall[].{r1 : int; *} end{int;*} :: *} 0.
+              [sld ra, 0; sfree 1; ret ra {r1}]])
+|}
 
 let ref_settyp = F.(TArrowMod ([TInt], [TAL.(TTupleRef [TInt])], [TAL.(TTupleRef [TInt])], TUnit))
 let ref_gettyp = F.(TArrowMod ([], [TAL.(TTupleRef [TInt])], [TAL.(TTupleRef [TInt])], TInt))
