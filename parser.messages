@@ -512,8 +512,6 @@ Parsing a conditional expression "if0 <expr> <expr> <expr>", we parsed
 "if0 <expr> <expr>" and expect an expression to evaluate if the
 condition expression does not evaluate to 0.
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGISTER COLON A_IDENTIFIER COMMA Z_IDENTIFIER 
 ##
 ## Ends in an error in state: 76.
@@ -646,8 +644,8 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT Z_IDENTIFIER
 
 Parsing the type of a heap code block
 "forall [<type-env>]. {<register-typing>; <stack-typing>} <return-marker>",
-we parsed the "forall" keyword and expect a type environment, for example
-"[a, e2, z']".
+we parsed "forall [<type-env>]" so far and expect a register and stack typing,
+for example "{ r1 : <int>, r2 : <unit>; int :: z2 }".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET Z_IDENTIFIER 
 ##
@@ -659,7 +657,11 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET Z_IDENTIFIER
 ## FORALL type_env 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the type of a heap code block
+"forall [<type-env>]. {<register-typing>; <stack-typing>} <return-marker>",
+we parsed "forall [<type-env>]" so far and expect a dot followed by
+a register and stack typing, for example
+". { r1 : <int>, r2 : <unit>; int :: z2 }".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET UNPACK 
 ##
@@ -671,7 +673,10 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET UNPACK
 ## LBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a typing environment, we parsed the opening bracket "[" so
+far, and expect a comma-separated list of type variables "a", stack
+variables "z" or return marker variables "e", for example
+"[a, e', z2]".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET Z_IDENTIFIER COMMA UNPACK 
 ##
@@ -683,7 +688,9 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET Z_IDENTIFIER COMMA UNPACK
 ## type_env_elem COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a typing environment, we just parsed a comma "," and expect
+a type variable "a", a stack variable "z" or a return marker variable
+"e".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -696,7 +703,8 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET Z_IDENTIFIER Z_IDENTIFIER
 ## type_env_elem 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a typing environment, we expect a closing bracket "]" or
+a comma "," followed by more environment variables.
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL Z_IDENTIFIER 
 ##
@@ -708,7 +716,10 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL Z_IDENTIFIER
 ## FORALL 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the type of a heap code block
+"forall [<type-env>]. {<register-typing>; <stack-typing>} <return-marker>",
+we parsed the "forall" keyword and expect a type environment, for example
+"[a, e2, z']".
 
 f_expression_eof: LAMBDA LBRACKET BOX Z_IDENTIFIER 
 ##
@@ -720,7 +731,9 @@ f_expression_eof: LAMBDA LBRACKET BOX Z_IDENTIFIER
 ## BOX 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a heap value type, we parsed the mutability marker "box" and
+expect a value type, for example "<int, unit>" or
+"forall [a,z] { r1:int; unit::* }. e"
 
 f_expression_eof: LAMBDA LBRACKET EXISTS A_IDENTIFIER DOT Z_IDENTIFIER 
 ##
@@ -732,7 +745,8 @@ f_expression_eof: LAMBDA LBRACKET EXISTS A_IDENTIFIER DOT Z_IDENTIFIER
 ## EXISTS type_variable DOT 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an existential type "exists <variable>. <type>", we parsed
+"exists <variable>." so far and expect a type.
 
 f_expression_eof: LAMBDA LBRACKET EXISTS A_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -744,7 +758,8 @@ f_expression_eof: LAMBDA LBRACKET EXISTS A_IDENTIFIER Z_IDENTIFIER
 ## EXISTS type_variable 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an existential type "exists <variable>. <type>", we parsed
+"exists <variable>" so far and expect a dot "." followed by a type.
 
 f_expression_eof: LAMBDA LBRACKET EXISTS Z_IDENTIFIER 
 ##
@@ -756,7 +771,8 @@ f_expression_eof: LAMBDA LBRACKET EXISTS Z_IDENTIFIER
 ## EXISTS 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an existential type "exists <variable>. <type>", we parsed
+"exists" so far and expect a type variable "a".
 
 f_expression_eof: LAMBDA LBRACKET MU A_IDENTIFIER DOT Z_IDENTIFIER 
 ##
@@ -768,7 +784,8 @@ f_expression_eof: LAMBDA LBRACKET MU A_IDENTIFIER DOT Z_IDENTIFIER
 ## MU type_variable DOT 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an recursive type "mu <variable>. <type>", we parsed
+"mu <variable> ." so far and expect a type.
 
 f_expression_eof: LAMBDA LBRACKET MU A_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -780,7 +797,8 @@ f_expression_eof: LAMBDA LBRACKET MU A_IDENTIFIER Z_IDENTIFIER
 ## MU type_variable 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an recursive type "mu <variable>. <type>", we parsed
+"mu <variable> ." so far and expect a dot followed by a type.
 
 f_expression_eof: LAMBDA LBRACKET MU Z_IDENTIFIER 
 ##
@@ -792,7 +810,8 @@ f_expression_eof: LAMBDA LBRACKET MU Z_IDENTIFIER
 ## MU 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an recursive type "mu <variable>. <type>", we parsed the "mu"
+keyword so far and expect a type variable "a".
 
 f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET LPAREN RPAREN DOT UNPACK 
 ##
@@ -804,7 +823,10 @@ f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET LPAREN RPAREN DOT U
 ## LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET f_telescope DOT 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying lambda-expression
+"lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
+"lam [<stack-prefix>] [<stack-prefix>] (<args>)." so far an expect an
+expression, the body of the lambda.
 
 f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET LPAREN RPAREN Z_IDENTIFIER 
 ##
@@ -816,7 +838,10 @@ f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET LPAREN RPAREN Z_IDE
 ## LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET f_telescope 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying lambda-expression
+"lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
+"lam [<stack-prefix>] [<stack-prefix>] (<args>)" so far an expect a
+dot followed by the lambda body.
 
 f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET Z_IDENTIFIER 
 ##
@@ -828,7 +853,11 @@ f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET Z_IDENTIFIER
 ## LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET stack_prefix RBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying lambda-expression
+"lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
+"lam [<stack-prefix>] [<stack-prefix>]" so far and expect
+a comma-separated list of argument variables with their types, for
+example "(x : int, f: (int,a) -> a)".
 
 f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET UNIT COMMA 
 ##
@@ -848,7 +877,10 @@ f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET UNIT COMMA
 ## In state 176, spurious reduction of production stack_prefix -> loption(separated_nonempty_list(DOUBLECOLON,value_type)) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying lambda-expression
+"lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
+"lam [<stack-prefix>] [<stack-prefix>" so far and expect
+a closing bracket "]".
 
 f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET Z_IDENTIFIER 
 ##
@@ -860,7 +892,10 @@ f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET Z_IDENTIFIER
 ## LAMBDA LBRACKET stack_prefix RBRACKET LBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying lambda-expression
+"lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
+"lam [<stack-prefix>] [" so far and expect a stack prefix,
+for example "a::int::" or "::".
 
 f_expression_eof: LAMBDA LBRACKET RBRACKET Z_IDENTIFIER 
 ##
@@ -872,7 +907,10 @@ f_expression_eof: LAMBDA LBRACKET RBRACKET Z_IDENTIFIER
 ## LAMBDA LBRACKET stack_prefix RBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying lambda-expression
+"lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
+"lam [<stack-prefix>]" so far and expect a bracketed stack prefix,
+for example "[a::int::]" or "[::]".
 
 f_expression_eof: LAMBDA LBRACKET REF LANGLE UNIT COMMA Z_IDENTIFIER 
 ##
@@ -884,7 +922,8 @@ f_expression_eof: LAMBDA LBRACKET REF LANGLE UNIT COMMA Z_IDENTIFIER
 ## value_type COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a sequence of types "<type>, <type>...", we parsed a comma ","
+and expect a TAL type.
 
 f_expression_eof: LAMBDA LBRACKET REF LANGLE UNIT Z_IDENTIFIER 
 ##
@@ -897,7 +936,8 @@ f_expression_eof: LAMBDA LBRACKET REF LANGLE UNIT Z_IDENTIFIER
 ## value_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a sequence of types "<type>, <type>...", we parsed a type
+and expect a comma "," or the end of the sequence.
 
 f_expression_eof: LAMBDA LBRACKET REF LANGLE Z_IDENTIFIER 
 ##
@@ -909,7 +949,9 @@ f_expression_eof: LAMBDA LBRACKET REF LANGLE Z_IDENTIFIER
 ## LANGLE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a tuple type "< <type>, <type>... >", we have parsed the
+opening angle bracket "<" so far and expect a comma-separated list of
+types.
 
 f_expression_eof: LAMBDA LBRACKET REF Z_IDENTIFIER 
 ##
@@ -921,7 +963,9 @@ f_expression_eof: LAMBDA LBRACKET REF Z_IDENTIFIER
 ## REF 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a mutable tuple type "ref < <type>, <type>... >",
+we parsed the "ref" keyword so far and expect a tuple type,
+for example "<int, a, unit>".
 
 f_expression_eof: LAMBDA LBRACKET UNIT COMMA 
 ##
@@ -941,7 +985,9 @@ f_expression_eof: LAMBDA LBRACKET UNIT COMMA
 ## In state 176, spurious reduction of production stack_prefix -> loption(separated_nonempty_list(DOUBLECOLON,value_type)) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying lambda-expression
+"lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
+"lam [<stack-prefix>" so far and expect a closing bracket.
 
 f_expression_eof: LAMBDA LBRACKET UNIT DOUBLECOLON Z_IDENTIFIER 
 ##
