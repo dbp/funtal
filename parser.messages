@@ -8,7 +8,8 @@ f_expression_eof: FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER RPAREN UNPACK
 ## FOLD LPAREN f_mu_type RPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a fold expression of the form "fold <mu-type> <expr>", we have
+parsed "fold <type>" and now expect an expression.
 
 f_expression_eof: FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -20,7 +21,8 @@ f_expression_eof: FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER Z_IDENTIFIER
 ## FOLD LPAREN f_mu_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a fold expression of the form "fold <mu-type> <expr>", we have
+parsed "fold (<mu-type>" and now expect a closing parenthesis.
 
 f_expression_eof: FOLD LPAREN Z_IDENTIFIER 
 ##
@@ -32,7 +34,9 @@ f_expression_eof: FOLD LPAREN Z_IDENTIFIER
 ## FOLD LPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a fold expression of the form "fold <mu-type> <expr>", we have
+parsed "fold (" and now expect a recursive type, for example
+"mu a . (a,int)->int".
 
 f_expression_eof: FOLD MU A_IDENTIFIER DOT A_IDENTIFIER UNPACK 
 ##
@@ -44,7 +48,8 @@ f_expression_eof: FOLD MU A_IDENTIFIER DOT A_IDENTIFIER UNPACK
 ## FOLD f_mu_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a fold expression of the form "fold <mu-type> <expr>", we have
+parsed "fold <mu-type>" and now expect an expression.
 
 f_expression_eof: FOLD MU UNPACK 
 ##
@@ -56,7 +61,8 @@ f_expression_eof: FOLD MU UNPACK
 ## MU 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a recursive type "mu <variable> . <type>", we have parsed "mu"
+and now expect a type variable, for example "a".
 
 f_expression_eof: FOLD MU Z_IDENTIFIER DOT UNPACK 
 ##
@@ -68,7 +74,8 @@ f_expression_eof: FOLD MU Z_IDENTIFIER DOT UNPACK
 ## MU f_type_variable DOT 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a recursive type "mu <variable> . <type>", we have parsed
+"mu <variable> ."  and now expect a type, for example "(int) -> int".
 
 f_expression_eof: FOLD MU Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -80,7 +87,8 @@ f_expression_eof: FOLD MU Z_IDENTIFIER Z_IDENTIFIER
 ## MU f_type_variable 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a recursive type "mu <variable> . <type>", we have parsed
+"mu <variable>" and now expect a dot ".".
 
 f_expression_eof: FOLD Z_IDENTIFIER 
 ##
@@ -93,7 +101,9 @@ f_expression_eof: FOLD Z_IDENTIFIER
 ## FOLD 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a fold expression, we have parsed the "fold" keyword and now
+expect a recursive type "mu <variable> . <type>", for example
+"mu a . (a, int) -> int".
 
 f_expression_eof: FT LBRACKET LANGLE UNPACK 
 ##
@@ -105,7 +115,7 @@ f_expression_eof: FT LBRACKET LANGLE UNPACK
 ## LANGLE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We expect a tuple type, for example "<int, a, unit, (int)->int>".
 
 f_expression_eof: FT LBRACKET LANGLE Z_IDENTIFIER RPAREN 
 ##
@@ -124,7 +134,7 @@ f_expression_eof: FT LBRACKET LANGLE Z_IDENTIFIER RPAREN
 ## In state 205, spurious reduction of production loption(separated_nonempty_list(COMMA,f_type)) -> separated_nonempty_list(COMMA,f_type) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We expect a tuple type, for example "<int, a, unit, (int)->int>".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN ARROW UNPACK 
 ##
@@ -136,7 +146,8 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN ARROW UNPACK
 ## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN ARROW 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a function type "(<type>, <type>...) -> <type>", we have parsed
+"(<type>, "type>...) ->" and now expect a type.
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET RBRACKET UNPACK 
 ##
@@ -148,7 +159,9 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET RBR
 ## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET stack_prefix RBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying function type
+"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
+"(<type>, <type>...) [<stack>]->[<stack>]" and now expect a type.
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET UNIT COMMA 
 ##
@@ -168,7 +181,10 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET UNI
 ## In state 176, spurious reduction of production stack_prefix -> loption(separated_nonempty_list(DOUBLECOLON,value_type)) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying function type
+"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
+"(<type>, <type>...) [<stack>]->[<stack>" and now expect a closing
+bracket "]".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET Z_IDENTIFIER 
 ##
@@ -180,7 +196,10 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET Z_I
 ## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW LBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying function type
+"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
+"(<type>, <type>...) [<stack>]->[" and now expect a stack prefix, for
+exmaple "unit :: int".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW Z_IDENTIFIER 
 ##
@@ -192,7 +211,10 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW Z_IDENTIFIER
 ## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET stack_prefix RBRACKET ARROW 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying function type
+"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
+"(<type>, <type>...) [<stack>]->" and now expect a bracketed stack
+prefix, for exmaple "[unit :: int]".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET Z_IDENTIFIER 
 ##
