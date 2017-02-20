@@ -2040,8 +2040,6 @@ end = struct
     | EInt (_,n) -> !^(string_of_int n)
     | ETuple(_,es) -> langle ^^ group (separate_map (comma ^^ break 1) p_exp es) ^^ rangle
     | EPi(_,n,e) -> !^"pi" ^^ space ^^ !^(string_of_int n) ^^ lparen ^^ p_exp e ^^ rparen
-    | ELam(_,ps, e) -> lparen ^^ !^"\\(" ^^ separate_map (comma ^^ space) (fun (p,t) -> !^p ^^ colon ^^ p_t t) ps ^^ !^")." ^^ break 1 ^^ p_exp e ^^ rparen
-    | ELamMod(_,ps,sin,sout,e) -> lparen ^^ !^"\\" ^^ lbracket ^^ TALP.p_sigma_prefix sin ^^ rbracket ^^ lbracket ^^ TALP.p_sigma_prefix sout ^^ rbracket ^^ !^"(" ^^ separate_map (comma ^^ space) (fun (p,t) -> !^p ^^ colon ^^ p_t t) ps ^^ !^")." ^^ break 1 ^^ p_exp e ^^ rparen
     | EBoundary(_,t,ms,c) ->
       !^"FT" ^^ lbracket ^^ p_t t ^^ comma ^^ space ^^
       (match ms with
@@ -2051,9 +2049,10 @@ end = struct
 
   and p_app_exp = function
     | EApp(_,e,es) ->
-      p_simple_exp e
-      ^^ space
-      ^^ group (separate_map (break 1) p_simple_exp es)
+      group
+        (p_simple_exp e
+         ^^ break 1
+         ^^ group (separate_map (break 1) p_simple_exp es))
     | e -> p_simple_exp e
 
   and p_mul_exp = function
@@ -2068,15 +2067,34 @@ end = struct
   and p_arith_exp e = p_sum_exp e
 
   and p_exp (e : exp) : document =
-    nest 2 (match e with
+    group @@ nest 2 (match e with
     | EIf0(_,et,e1,e2) ->
       !^"if0" ^^ space ^^ p_simple_exp et
       ^^ break 1 ^^ p_simple_exp e1
       ^^ break 1 ^^ p_simple_exp e2
-    | EFold(_,a,t,e) -> !^"fold " ^^ lparen ^^ p_t (TRec (a,t)) ^^ rparen ^^ space ^^ p_exp e
+    | EFold(_,a,t,e) ->
+      !^"fold " ^^ group (lparen ^^ p_t (TRec (a,t)) ^^ rparen) ^^ space ^^ p_exp e
     | EUnfold(_,e) -> !^"unfold " ^^ p_exp e
+    | ELam(_,ps, e) ->
+      !^"\\" ^^ p_telescope ps ^^ !^"." ^^ break 1 ^^ p_exp e
+    | ELamMod(_,ps,sin,sout,e) ->
+      !^"\\"
+      ^^ p_stack_prefix sin
+      ^^ p_stack_prefix sout
+      ^^ p_telescope ps ^^ !^"."
+      ^^ break 1 ^^ p_exp e
     | e -> p_sum_exp e
   )
+
+  and p_stack_prefix s =
+    lbracket ^^ TALP.p_sigma_prefix s ^^ rbracket
+
+  and p_telescope ps =
+    group
+      (lparen
+       ^^ separate_map (comma ^^ space)
+         (fun (p,t) -> group (!^p ^^ colon ^^ p_t t)) ps
+       ^^ rparen)
 
   and p_binop (b : binop) : document =
     match b with
