@@ -2,7 +2,7 @@
 %token BNZ LD ST RALLOC BALLOC MV SALLOC SFREE SLD SST
 %token PACK AS UNPACK FOLD UNFOLD
 %token IMPORT PROTECT
-%token CODE END NIL OUT
+%token CODE END OUT /* NIL */
 %token ADD MUL SUB /* these are the assembly keywords */
 %token PLUS MINUS TIMES /* these are the binary symbols */
 %token FORALL EXISTS MU
@@ -27,9 +27,8 @@
 %start<Ftal.TAL.w> word_value_eof
 %start<Ftal.TAL.u> small_value_eof
 %start<Ftal.TAL.delta> type_env_eof
-*/
-
 %start<Ftal.F.t> f_type_eof
+*/
 %start<Ftal.F.exp> f_expression_eof
 
 %{ open Ftal
@@ -53,14 +52,15 @@
 %%
 
 component_eof: c=component EOF { c }
+/*
 memory_eof: m=memory EOF { m }
 instruction_sequence_eof: i=instruction_sequence EOF { i }
 heap_fragment_eof: h=heap_fragment EOF { h }
 word_value_eof: w=word_value EOF { w }
 small_value_eof: u=small_value EOF { u }
 type_env_eof: delta=type_env EOF { delta }
-
 f_type_eof: tau=f_type EOF { tau }
+*/
 f_expression_eof: e=f_expression EOF { e }
 
 f_type:
@@ -244,15 +244,17 @@ simple_type_env: li=separated_list(COMMA, type_env_elem) { li}
   | zeta=stack_typing_variable { DZeta zeta }
   | epsilon=return_marker_variable { DEpsilon epsilon }
 
+heap_fragment: li=bracketed(simple_heap_fragment) { li }
+simple_heap_fragment: li=separated_list(COMMA, binding(location,heap_value)) { li }
+
+/*
 memory:
 | LPAREN h=heap_fragment SEMICOLON r=register_file SEMICOLON s=stack RPAREN
   { (h, r, s) }
 
-heap_fragment: li=bracketed(simple_heap_fragment) { li }
-simple_heap_fragment: li=separated_list(COMMA, binding(location,heap_value)) { li }
-
 register_file: li=bracketed(simple_register_file) { li }
 simple_register_file: li=separated_list(COMMA, binding(register, word_value)) { li }
+*/
 
   binding(variable, value):
   | x=variable ARROW v=value { (x, v) }
@@ -260,7 +262,9 @@ simple_register_file: li=separated_list(COMMA, binding(register, word_value)) { 
   decl(variable,spec):
   | x=variable COLON s=spec { (x, s) }
 
+/*
 stack: ws=list(w=word_value DOUBLECOLON {w}) NIL { ws }
+*/
 
 instruction_sequence:
 LBRACKET i=simple_instruction_sequence RBRACKET { i }

@@ -53,7 +53,7 @@ rule token = parse
   | ":" { COLON }
   | "::" { DOUBLECOLON }
   | "end" { END }
-  | "nil" { NIL }
+  (* | "nil" { NIL } *)
   | "out" { OUT }
   | "jmp" { JMP }
   | "call" { CALL }
