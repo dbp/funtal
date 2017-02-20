@@ -2076,9 +2076,9 @@ end = struct
       !^"fold " ^^ group (lparen ^^ p_t (TRec (a,t)) ^^ rparen) ^^ space ^^ p_exp e
     | EUnfold(_,e) -> !^"unfold " ^^ p_exp e
     | ELam(_,ps, e) ->
-      !^"\\" ^^ p_telescope ps ^^ !^"." ^^ break 1 ^^ p_exp e
+      !^"lam " ^^ p_telescope ps ^^ !^"." ^^ break 1 ^^ p_exp e
     | ELamMod(_,ps,sin,sout,e) ->
-      !^"\\"
+      !^"lam "
       ^^ p_stack_prefix sin
       ^^ p_stack_prefix sout
       ^^ p_telescope ps ^^ !^"."

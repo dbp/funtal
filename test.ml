@@ -73,7 +73,7 @@ let test2 _ =
 
 let test_f_app _ =
   assert_eint
-    (snd (F.stepn 10 (empty, f_expr "(\\(x:int). x + x) 1")))
+    (snd (F.stepn 10 (empty, f_expr "(lam (x:int). x + x) 1")))
     2
 
 let test_factorial_f _ =
@@ -611,7 +611,7 @@ let suite = "FTAL evaluations" >:::
               "F: 1 + 1 = 2" >:: test1;
               "F: 1 + 1 : int" >:: test1_ty;
               "F: 1 + 1 = 2 (2)" >:: test2;
-              "F: (\\x -> x + x) 1 = 2" >:: test_f_app;
+              "F: (lam x. x + x) 1 = 2" >:: test_f_app;
               "parse (5)" >:: test_parse5;
               "parse type-level variables" >:: test_parse_variables_1;
               "F: fact 3 = 6" >:: test_factorial_f;
@@ -651,12 +651,12 @@ let suite = "FTAL evaluations" >:::
               "TAL: int -> int" >:: test_factorial_t_ty;
               "TAL: higher order = 2" >:: test_higher_order;
               "TAL: higher order : int" >:: test_higher_order_ty;
-              "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 = 2" >:: test_closures;
-              "FTAL: (\\x -> FT(TF(\\y -> x - y)) 1) 3 : int" >:: test_closures_ty;
-              "TAL(1block): (\\x -> x + 2)3 = 5" >:: test_blocks1;
-              "TAL(1block): (\\x -> x + 2)3 : int" >:: test_blocks1_ty;
-              "TAL(2blocks): (\\x -> x + 2)3 = 5" >:: test_blocks2;
-              "TAL(2blocks): (\\x -> x + 2)3 : int" >:: test_blocks2_ty;
+              "FTAL: (lam x. FT(TF(lam y. x - y)) 1) 3 = 2" >:: test_closures;
+              "FTAL: (lam x. FT(TF(lam y. x - y)) 1) 3 : int" >:: test_closures_ty;
+              "TAL(1block): (lam x. x + 2)3 = 5" >:: test_blocks1;
+              "TAL(1block): (lam x. x + 2)3 : int" >:: test_blocks1_ty;
+              "TAL(2blocks): (lam x. x + 2)3 = 5" >:: test_blocks2;
+              "TAL(2blocks): (lam x. x + 2)3 : int" >:: test_blocks2_ty;
               "REF: r = ref 1; r := 20; !r = 20" >:: test_ref1;
               (* "REF: r = ref 1; r := 20; !r : int" >:: test_ref1_ty; *)
               "REF: r = ref 1; r := 20; r := !r + 5; !r = 25" >:: test_ref2;
