@@ -32,7 +32,7 @@ FT [int, ?] (
 let omega = {|
   (lam(f : mu a. (a) -> a).((unfold f) f))
   (fold (mu a. (a) -> a) lam(f : mu a. (a) -> a).((unfold f) f))
-  |}
+|}
 
 let higher_order = Ftal.F.show_exp Examples.higher_order
 let factorial_f = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_f, [F.EInt (dummy_loc, 3)])))
@@ -41,7 +41,8 @@ let call_to_call = Ftal.(F.show_exp (F.(EBoundary (dummy_loc, TInt, None, Exampl
 let blocks_1 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_1, [F.EInt (dummy_loc, 3)])))
 let blocks_2 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_2, [F.EInt (dummy_loc, 3)])))
 
-let parse_error = {| FT [int, ?] (
+let parse_error = {|
+FT [int, ?] (
   [mv r1, 1;
    add r1, r1, 1
    halt int, * {r1}],
@@ -59,7 +60,8 @@ let type_error = {|
         if0 x1
           1
           (x1*((unfold f) f (x1-1)))))
-    x2) 3 |}
+    x2) 3
+|}
 
 let set_error ln m =
   let _ = Js.Unsafe.((coerce global)##seterror (Js.number_of_float (float_of_int ln)) (Js.string m)) in
