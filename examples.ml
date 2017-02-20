@@ -52,7 +52,7 @@ let factorial_t =
   let (l, h) = factorial_t' in
   F.(ELam (dummy_loc, [("x", TInt)],
            EApp (dummy_loc, EBoundary (dummy_loc, TArrow ([TInt], TInt), None,
-                            TAL.([Iprotect (dummy_loc, [], "z2");
+                            TAL.(dummy_loc, [Iprotect (dummy_loc, [], "z2");
                                   Imv (dummy_loc, "r1", UW (dummy_loc, l));
                                   Ihalt (dummy_loc, FTAL.tytrans (TArrow ([TInt], TInt)),
                                          SAbstract ([], "z2"),
@@ -77,7 +77,7 @@ let blocks_1 =
            EApp (dummy_loc, EBoundary
                    (dummy_loc, TArrow ([TInt], TInt),
                     None,
-                    (TAL.([Iprotect (dummy_loc, [], "z2");
+                    (TAL.(dummy_loc, [Iprotect (dummy_loc, [], "z2");
                            Imv (dummy_loc, "r1", UW (dummy_loc, WLoc (dummy_loc, l)));
                            Ihalt (dummy_loc, FTAL.tytrans (TArrow ([TInt], TInt)),
                                   SAbstract ([], "z2"),
@@ -118,7 +118,7 @@ let blocks_2 =
   F.(ELam (dummy_loc, [("x", TInt)],
            EApp (dummy_loc, EBoundary (dummy_loc, TArrow ([TInt], TInt),
                             None,
-                            (TAL.([Iprotect (dummy_loc, [], "z2");
+                            (TAL.(dummy_loc,[Iprotect (dummy_loc, [], "z2");
                                    Imv (dummy_loc, "r1", UW (dummy_loc, WLoc (dummy_loc, l1)));
                                    Ihalt (dummy_loc, FTAL.tytrans (TArrow ([TInt], TInt)),
                                           SAbstract ([], "z2"),
@@ -180,7 +180,7 @@ let higher_order =
                         Iret (dummy_loc, "ra", "r1")])))]) in
   F.(EApp (dummy_loc, EBoundary (dummy_loc, TArrow([tau],TInt),
                       None,
-                      TAL.([Imv(dummy_loc, "r1", UW (dummy_loc, WLoc (dummy_loc, "l")));
+                      TAL.(dummy_loc, [Imv(dummy_loc, "r1", UW (dummy_loc, WLoc (dummy_loc, "l")));
                             Ihalt(dummy_loc, FTAL.tytrans F.(TArrow([tau],TInt)),
                                   SConcrete [],
                                   "r1")],
@@ -243,7 +243,7 @@ let call_to_call =
                              [Isld (dummy_loc, "ra", 0);
                               Isfree (dummy_loc, 1);
                               Iret (dummy_loc, "ra", "r1")])))] in
-  (TAL.[Imv (dummy_loc, "ra", UW (dummy_loc, WLoc (dummy_loc, "l1ret")));
+  (dummy_loc, TAL.[Imv (dummy_loc, "ra", UW (dummy_loc, WLoc (dummy_loc, "l1ret")));
         Icall (dummy_loc, UW (dummy_loc, WLoc (dummy_loc, "l1")), SConcrete [], QEnd (TInt, SConcrete []))],
    h)
 
@@ -260,7 +260,7 @@ let with_ref =
                         ("res", TInt);
                         ("_", TUnit)],
                       EVar (dummy_loc, "res")),
-                 [EBoundary (dummy_loc, TUnit, Some (TAL.(SAbstract ([TTupleRef [TInt]], "z"))), (TAL.([
+                 [EBoundary (dummy_loc, TUnit, Some (TAL.(SAbstract ([TTupleRef [TInt]], "z"))), (TAL.(dummy_loc, [
                       Iprotect (dummy_loc, [], "z");
                       Isalloc (dummy_loc, 1);
                       Iimport (dummy_loc, "r1", "z_", SAbstract ([], "z"), F.TInt, EVar (dummy_loc, "init"));
@@ -276,7 +276,7 @@ let with_ref =
                                   [TAL.(TTupleRef [TInt])],
                                   [TAL.(TTupleRef [TInt])],
                                   (EBoundary (dummy_loc, TUnit, Some stack,
-                                              TAL.([Isld (dummy_loc, "r1", 0);
+                                              TAL.(dummy_loc, [Isld (dummy_loc, "r1", 0);
                                                     Iimport (dummy_loc, "r2", "z_",
                                                              stack,
                                                              F.TInt,
@@ -288,10 +288,10 @@ let with_ref =
                                   [TAL.(TTupleRef [TInt])],
                                   [TAL.(TTupleRef [TInt])],
                                   (EBoundary (dummy_loc, TInt, Some stack,
-                                              TAL.([Isld (dummy_loc, "r1", 0);
+                                              TAL.(dummy_loc, [Isld (dummy_loc, "r1", 0);
                                                     Ild (dummy_loc, "r2", "r1", 0);
                                                     Ihalt (dummy_loc, TInt, stack, "r2")], []))))]);
-                  EBoundary (dummy_loc, TUnit, Some TAL.(SAbstract ([], "z")), (TAL.([
+                  EBoundary (dummy_loc, TUnit, Some TAL.(SAbstract ([], "z")), (TAL.(dummy_loc, [
                       Iprotect (dummy_loc, [TTupleRef [TInt]], "z");
                       Isfree (dummy_loc, 1);
                       Imv (dummy_loc, "r1", UW (dummy_loc, WUnit dummy_loc));

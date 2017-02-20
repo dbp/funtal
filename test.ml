@@ -122,7 +122,7 @@ let test_aop_ty _ =
 
 let assert_raises_typeerror (f : unit -> 'a) : unit =
   FTAL.(try (f (); assert_failure "didn't raise an exception")
-        with TypeError _ | TypeErrorW _ | TypeErrorH _ | TypeErrorU _  -> ())
+        with TypeError _  -> ())
 
 let test_aop_ty_exc _ =
   assert_raises_typeerror
@@ -163,19 +163,19 @@ let test_import_ty_exc2 _ =
   assert_raises_typeerror
     (fun _ -> FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC TAL.([Iimport (dummy_loc, "r1", "z", SConcrete [], F.TUnit, F.EInt (dummy_loc, 1)); Ihalt (dummy_loc, TInt, SConcrete [], "r1")], [])))
+       (FTAL.TC TAL.(dummy_loc, [Iimport (dummy_loc, "r1", "z", SConcrete [], F.TUnit, F.EInt (dummy_loc, 1)); Ihalt (dummy_loc, TInt, SConcrete [], "r1")], [])))
 
 let test_import_ty_exc3 _ =
   assert_raises_typeerror
     (fun _ -> FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
-       (FTAL.TC TAL.([Iimport (dummy_loc, "r1", "z", SConcrete [TUnit], F.TInt, F.EInt (dummy_loc, 1)); Ihalt (dummy_loc, TInt, SConcrete [], "r1")], [])))
+       (FTAL.TC TAL.(dummy_loc, [Iimport (dummy_loc, "r1", "z", SConcrete [TUnit], F.TInt, F.EInt (dummy_loc, 1)); Ihalt (dummy_loc, TInt, SConcrete [], "r1")], [])))
 
 let test_salloc_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit; TUnit]))))
-       (FTAL.TC TAL.([Imv (dummy_loc, "r1", UW (dummy_loc, WInt (dummy_loc, 1))); Isalloc (dummy_loc, 2); Ihalt (dummy_loc, TInt, SConcrete [TUnit; TUnit], "r1")], [])))
+       (FTAL.TC TAL.(dummy_loc, [Imv (dummy_loc, "r1", UW (dummy_loc, WInt (dummy_loc, 1))); Isalloc (dummy_loc, 2); Ihalt (dummy_loc, TInt, SConcrete [TUnit; TUnit], "r1")], [])))
     (FTAL.TT TAL.TInt, TAL.(SConcrete [TUnit; TUnit]))
 
 let test_import_stk_ty _ =
@@ -202,7 +202,7 @@ let test_sst_ty _ =
   assert_equal
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TInt]))))
-       (FTAL.TC TAL.([Imv (dummy_loc, "r1", UW (dummy_loc, WInt (dummy_loc, 1))); Isalloc (dummy_loc, 1); Isst (dummy_loc, 0,"r1"); Ihalt (dummy_loc, TInt, SConcrete [TInt], "r1")],[])))
+       (FTAL.TC TAL.(dummy_loc, [Imv (dummy_loc, "r1", UW (dummy_loc, WInt (dummy_loc, 1))); Isalloc (dummy_loc, 1); Isst (dummy_loc, 0,"r1"); Ihalt (dummy_loc, TInt, SConcrete [TInt], "r1")],[])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TInt])
 
 
@@ -459,7 +459,7 @@ let test_higher_order_ty _ =
 let f_closures =
   F.(ELam (dummy_loc, [("x", TInt)],
                    EApp (dummy_loc, EBoundary (dummy_loc, TArrow ( [TInt], TInt), None,
-                                    ([TAL.Iprotect (dummy_loc, [], "z2");
+                                    (dummy_loc, [TAL.Iprotect (dummy_loc, [], "z2");
                                       TAL.Iimport (dummy_loc, "rf", "_z", TAL.SAbstract ([], "z2"), TArrow ([TInt], TInt), ELam (dummy_loc, [("y", TInt)], EBinop (dummy_loc, EVar (dummy_loc, "x"), BMinus, EVar (dummy_loc, "y"))));
                                       TAL.Ihalt (dummy_loc, FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2"), "rf")], [])),
                          [EInt (dummy_loc, 1)])))
@@ -542,7 +542,7 @@ let test_ft_factorial_t_ty _ =
   let (l, h) = factorial_t' in
   let ((h',_,_),e) = FTAL.ft (F.TArrow ([F.TInt], F.TInt)) l (h,[],[]) in
   let context = FTAL.default_context TAL.QOut in
-  let ht = List.map (fun (l,(m, p)) -> (l, (m, FTAL.tc_h_shallow context TAL.Box p))) h' in
+  let ht = List.map (fun (l,(m, p)) -> (l, (m, FTAL.tc_h_shallow context dummy_loc TAL.Box p))) h' in
   assert_equal
     (FTAL.tc
        (FTAL.set_heap context ht)

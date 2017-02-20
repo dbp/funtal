@@ -314,7 +314,7 @@ single_instruction:
 
 component:
 | LPAREN i=instruction_sequence COMMA h=heap_fragment RPAREN
-  { (i, h) }
+  { (cpos $startpos, i, h) }
 
 type_variable:
 | alpha=A_IDENTIFIER { alpha }

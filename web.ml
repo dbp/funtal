@@ -111,12 +111,9 @@ let _ =
                 set_error line msg;
                 Js.Opt.return Js._false
               end
-          with TypeError (t,_)
-             | TypeErrorW (t,_)
-             | TypeErrorH (t,_,_)
-             | TypeErrorU (t,_)  ->
+          with TypeError (t,l) ->
             begin
-              set_error 0 ("Type Error: " ^ t);
+              set_error l.line ("Type Error: " ^ t);
               hide_machine ();
               Js.Opt.return Js._false
             end
