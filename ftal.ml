@@ -1401,6 +1401,7 @@ end = struct
 
   type component = l * instr list * heapm
   [@@deriving show]
+  let show_component c = Printer.(r (TALP.p_component c))
 
   type context =
       CComponentEmpty of l * contextI
