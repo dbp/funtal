@@ -160,8 +160,8 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET RBR
 ##
 
 Parsing a stack-modifying function type
-"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
-"(<type>, <type>...) [<stack>]->[<stack>]" and now expect a type.
+"(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>] <type>", we have parsed
+"(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>]" and now expect a type.
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET UNIT COMMA 
 ##
@@ -182,8 +182,8 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET UNI
 ##
 
 Parsing a stack-modifying function type
-"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
-"(<type>, <type>...) [<stack>]->[<stack>" and now expect a closing
+"(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>] <type>", we have parsed
+"(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>" and now expect a closing
 bracket "]".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET Z_IDENTIFIER 
@@ -197,8 +197,8 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW LBRACKET Z_I
 ##
 
 Parsing a stack-modifying function type
-"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
-"(<type>, <type>...) [<stack>]->[" and now expect a stack prefix, for
+"(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>] <type>", we have parsed
+"(<type>, <type>...) [<stack-prefix>]->[" and now expect a stack prefix, for
 exmaple "unit :: int".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW Z_IDENTIFIER 
@@ -212,8 +212,8 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET ARROW Z_IDENTIFIER
 ##
 
 Parsing a stack-modifying function type
-"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
-"(<type>, <type>...) [<stack>]->" and now expect a bracketed stack
+"(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>] <type>", we have parsed
+"(<type>, <type>...) [<stack-prefix>]->" and now expect a bracketed stack
 prefix, for example "[unit :: int]".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET Z_IDENTIFIER 
@@ -227,8 +227,8 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET RBRACKET Z_IDENTIFIER
 ##
 
 Parsing a stack-modifying function type
-"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
-"(<type>, <type>...) [<stack>]" and now expect an arrow "->".
+"(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>] <type>", we have parsed
+"(<type>, <type>...) [<stack-prefix>]" and now expect an arrow "->".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET UNIT COMMA 
 ##
@@ -250,8 +250,8 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET UNIT COMMA
 
 
 Parsing a stack-modifying function type
-"(<type>, <type>...) [<stack>]->[<stack>] <type>", we have parsed
-"(<type>, <type>...) [<stack>" and now expect a closing bracket "]".
+"(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>] <type>", we have parsed
+"(<type>, <type>...) [<stack-prefix>" and now expect a closing bracket "]".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET Z_IDENTIFIER 
 ##
@@ -263,7 +263,10 @@ f_expression_eof: FT LBRACKET LPAREN RPAREN LBRACKET Z_IDENTIFIER
 ## LPAREN loption(separated_nonempty_list(COMMA,f_type)) RPAREN LBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a stack-modifying function type
+"(<type>, <type>...) [<stack-prefix>]->[<stack-prefix>] <type>", we
+have parsed "(<type>, <type>...) [" and now expect a stack prefix, for
+example "::" or "int::unit::".
 
 f_expression_eof: FT LBRACKET LPAREN RPAREN Z_IDENTIFIER 
 ##
