@@ -1,0 +1,26 @@
+opam-version: "1.2"
+name: "funtal"
+version: "dev"
+maintainer: "Daniel Patterson <dbp@ccs.neu.edu>"
+authors: ["Daniel Patterson <dbp@ccs.neu.edu>"]
+homepage: "https://github.com/dbp/funtal"
+bug-reports: "https://github.com/dbp/funtal/issues"
+dev-repo: "https://github.com/dbp/funtal.git"
+license: "none for now"
+
+build: [
+  [make]
+]
+depends: [
+  "ocamlfind" {build}
+  "ocamlbuild" {build}
+  "oasis" {build}
+  "menhir"
+  "pprint"
+  "ppx_deriving"
+  "ounit"
+  "js_of_ocaml"
+]
+available: [
+  ocaml-version >= "4.03.0"
+]
