@@ -30,16 +30,16 @@ FT [int, ?] (
 |}
 
 let omega = {|
-  (\(f : mu a. (a) -> a).((unfold f) f))
-  (fold (mu a. (a) -> a) \(f : mu a. (a) -> a).((unfold f) f))
+  (lam(f : mu a. (a) -> a).((unfold f) f))
+  (fold (mu a. (a) -> a) lam(f : mu a. (a) -> a).((unfold f) f))
   |}
 
 let higher_order = Ftal.F.show_exp Examples.higher_order
 let factorial_f = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_f, [F.EInt (dummy_loc, 3)])))
 let factorial_t = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_t, [F.EInt (dummy_loc, 3)])))
 let call_to_call = Ftal.(F.show_exp (F.(EBoundary (dummy_loc, TInt, None, Examples.call_to_call))))
-let blocks_1 = Ftal.F.show_exp Examples.blocks_1
-let blocks_2 = Ftal.F.show_exp Examples.blocks_2
+let blocks_1 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_1, [F.EInt (dummy_loc, 3)])))
+let blocks_2 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_2, [F.EInt (dummy_loc, 3)])))
 
 let parse_error = {| FT [int, ?] (
   [mv r1, 1;
@@ -48,13 +48,13 @@ let parse_error = {| FT [int, ?] (
   [])
 |}
 let type_error = {|
-(\(x2:int).
-  (\(f:mu a.(a,
+(lam(x2:int).
+  (lam(f:mu a.(a,
         int) -> int, x1:int).
     if0 x1
       ()
       (x1*((unfold f) f (x1-1)))) (fold (mu b.(b,
-          int) -> int) (\(f:mu a.(a,
+          int) -> int) (lam(f:mu a.(a,
             int) -> int, x1:int).
         if0 x1
           1

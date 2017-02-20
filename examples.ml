@@ -102,66 +102,39 @@ lam (x:int).
     x
 |}
 
-let higher_order =
-  let tau = F.(TArrow([TArrow([TInt],TInt)], TInt)) in
-  let g = F.(ELam (dummy_loc, [("h", TArrow ([TInt], TInt))], EApp (dummy_loc, EVar (dummy_loc, "h"), [EInt (dummy_loc, 1)]))) in
-  let h = TAL.([
-      ("l", (Box, HCode ([DZeta "z1"; DEpsilon "e1"],
-                   [("ra", TBox (PBlock ([],
-                                         [("r1", TInt)],
-                                         SAbstract ([], "z1"),
-                                         QEpsilon "e1")))],
-                   SAbstract ([FTAL.tytrans tau], "z1"),
-                   QR "ra",
-                   [Isld (dummy_loc, "r1",0);
-                    Isalloc (dummy_loc, 1);
-                    Imv (dummy_loc, "r2", UW (dummy_loc, WLoc (dummy_loc, "lh")));
-                    Isst (dummy_loc, 0, "r2");
-                    Isst (dummy_loc, 1, "ra");
-                    Imv (dummy_loc, "ra", UApp (dummy_loc, UW (dummy_loc, WLoc (dummy_loc, "lgret")), [OS (SAbstract ([], "z1")); OQ (QEpsilon "e1")]));
-                    Icall (dummy_loc, UR (dummy_loc, "r1"),
-                           SAbstract ([TBox
-                                         (PBlock ([],
-                                                  [("r1", TInt)],
-                                                  SAbstract ([], "z3"),
-                                                  QEpsilon "e1"))],
-                                      "z1"),
-                           QI 0)])));
-      ("lh", (Box, HCode ([DZeta "z2"; DEpsilon "e2"],
-                    [("ra", TBox (PBlock ([],
-                                          [("r1", TInt)],
-                                          SAbstract ([], "z2"),
-                                          QEpsilon "e2")))],
-                    SAbstract ([TInt], "z2"),
-                    QR "ra",
-                    [Isld (dummy_loc, "r1",0);
-                     Isfree (dummy_loc, 1);
-                     Iaop (dummy_loc, Mult, "r1", "r1", UW (dummy_loc, WInt (dummy_loc, 2)));
-                     Iret (dummy_loc, "ra", "r1")])));
-      ("lgret", (Box, HCode ([DZeta "z3"; DEpsilon "e3"],
-                       [("ra", TBox (PBlock ([],
-                                             [("r1", TInt)],
-                                             SAbstract ([], "z3"),
-                                             QEpsilon "e3")));
-                        ("r1", TInt)],
-                       SAbstract ([TBox
-                                     (PBlock ([],
-                                              [("r1", TInt)],
-                                              SAbstract ([], "z3"),
-                                              QEpsilon "e3"))],
-                                  "z3"),
-                       QI 0,
-                       [Isld (dummy_loc, "ra", 0);
-                        Isfree (dummy_loc, 1);
-                        Iret (dummy_loc, "ra", "r1")])))]) in
-  F.(EApp (dummy_loc, EBoundary (dummy_loc, TArrow([tau],TInt),
-                      None,
-                      TAL.(dummy_loc, [Imv(dummy_loc, "r1", UW (dummy_loc, WLoc (dummy_loc, "l")));
-                            Ihalt(dummy_loc, FTAL.tytrans F.(TArrow([tau],TInt)),
-                                  SConcrete [],
-                                  "r1")],
-                           h)),
-           [g]))
+let higher_order = Parse.parse_string Parser.f_expression_eof {|
+FT[(((int) -> int) -> int) -> int, ?]
+    ([mv r1, l;
+      halt
+        box forall[z6, e7].
+          {ra : box forall[].{r1 : int; z6} e7;
+           box forall[z8, e9].
+               {ra : box forall[].{r1 : int; z8} e9;
+                box forall[z10, e11].
+                    {ra : box forall[].{r1 : int; z10} e11;
+                     int :: z10} ra :: z8} ra :: z6} ra,
+        * {r1}],
+      [l -> box code [z1, e1]{ra : box forall[].{r1 : int; z1} e1;
+                             box forall[z2, e3].
+                                 {ra : box forall[].{r1 : int; z2} e3;
+                                  box forall[z4, e5].
+                                      {ra : box forall[].{r1 : int; z4} e5;
+                                       int :: z4} ra :: z2} ra :: z1} ra.
+              [sld r1, 0;
+               salloc 1;
+               mv r2, lh;
+               sst 0, r2;
+               sst 1, ra;
+               mv ra, lgret[z1, e1];
+               call r1 {box forall[].{r1 : int; z1} e1 :: z1, 0}],
+       lh -> box code [z2, e2]{ra : box forall[].{r1 : int; z2} e2;
+                              int :: z2} ra.
+               [sld r1, 0; sfree 1; mul r1, r1, 2; ret ra {r1}],
+       lgret -> box code [z3, e3]{r1 : int;
+                                 box forall[].{r1 : int; z3} e3 :: z3} 0.
+                  [sld ra, 0; sfree 1; ret ra {r1}]])
+  (lam (h:(int) -> int). h 1)
+|}
 
 
 let call_to_call = Parse.parse_string Parser.component_eof {|
@@ -170,7 +143,7 @@ let call_to_call = Parse.parse_string Parser.component_eof {|
                           z1} ra.
            [salloc 1;
             sst 0, ra;
-            mv ra, l2ret;
+            mv ra, l2ret[z1,e1];
             call l2 {box forall[].{r1 : int; z1} e1 :: z1, 0}],
    l1ret -> box code []{r1 : int; *} end{int;*}.[halt int, * {r1}],
    l2 -> box code [z2, e2]{ra : box forall[].{r1 : int; z2} e2;
@@ -180,8 +153,8 @@ let call_to_call = Parse.parse_string Parser.component_eof {|
                               ra : box forall[].{r1 : int; z3} e3;
                              z3} ra.
               [mul r1, r1, 2; ret ra {r1}],
-   l2ret -> box code []{r1 : int;
-                       box forall[].{r1 : int; *} end{int;*} :: *} 0.
+   l2ret -> box code [z4,e4]{r1 : int;
+                       box forall[].{r1 : int; z4} e4 :: z4} 0.
               [sld ra, 0; sfree 1; ret ra {r1}]])
 |}
 

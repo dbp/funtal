@@ -503,7 +503,7 @@ let call_st_exc2 =
                 mv ra, l1h;
                 call l1 {box forall[]. {r1:int; z} e :: *, 0}],
          l1 -> box code [z, e]
-               {ra: box forall[]. {r1:int; z} e, r1: unit; z} ra.
+               {ra: box forall[]. {r1:int; z} e, r1: int; z} ra.
                [mv r1, 0;
                 ret ra {r1}],
          l1h -> box code [] {r1:int; box forall[]. {r1:int; *} e :: *} 0. [sld ra, 0; sfree 1; ret ra {r1}],
@@ -516,33 +516,7 @@ let test_call_st_ty_exc2 _ =
        (FTAL.default_context TAL.QOut)
        (FTAL.FC call_st_exc2))
 
-
 let call_st_exc3 =
-  F.EBoundary (dummy_loc, F.TInt, None,
-    tal_comp
-      "([mv ra, lh;
-         call l {*, end{int; *}}],
-        [l -> box code [z, e]
-               {ra: box forall[]. {r1:int; z} e; z} ra.
-               [salloc 1;
-                sst 0, ra;
-                mv ra, l1h;
-                call l1 {box forall[]. {r1:int; z} e :: *, 0}],
-         l1 -> box code [z, e]
-               {ra: box forall[]. {r1:int; z} e, r1 : int; z} ra.
-               [mv r1, 0;
-                ret ra {r1}],
-         l1h -> box code [] {r1:int; box forall[]. {r1:int; *} e :: *} 0. [sld ra, 0; sfree 1; ret ra {r1}],
-         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
-
-
-let test_call_st_ty_exc3 _ =
-  assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context TAL.QOut)
-       (FTAL.FC call_st_exc3))
-
-let call_st_exc4 =
   F.EBoundary (dummy_loc, F.TInt, None,
     tal_comp
       "([mv ra, lh;
@@ -560,11 +534,11 @@ let call_st_exc4 =
          l1h -> box code [] {r1:int; box forall[]. {r1:int; *} e :: *} 0. [sld ra, 0; sfree 1; ret ra {r1}],
          lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
 
-let test_call_st_ty_exc4 _ =
+let test_call_st_ty_exc3 _ =
   assert_raises_typeerror
     (fun _ -> FTAL.tc
        (FTAL.default_context TAL.QOut)
-       (FTAL.FC call_st_exc4))
+       (FTAL.FC call_st_exc3))
 
 
 let test_call_to_call _ =
@@ -733,6 +707,7 @@ let test_examples _ =
   assert_roundtrip_f Examples.profiling_1;
   *)
   assert_roundtrip_c Examples.call_to_call;
+  assert_roundtrip_f Examples.higher_order;
   ()
 
 let suite = "FTAL evaluations" >:::
@@ -779,7 +754,6 @@ let suite = "FTAL evaluations" >:::
               "TAL: nested call exc" >:: test_call_st_ty_exc;
               "TAL: nested call exc2" >:: test_call_st_ty_exc2;
               "TAL: nested call exc3" >:: test_call_st_ty_exc3;
-              "TAL: nested call exc4" >:: test_call_st_ty_exc4;
               "TAL: call to call = 2" >:: test_call_to_call;
               "TAL: call to call : int" >:: test_call_to_call_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;

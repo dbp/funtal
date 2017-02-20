@@ -637,7 +637,7 @@ end = struct
           if pref_len < 0 then
             raise (TypeError ("Icall: protected suffix is longer than current stack", l))
           else if not (s_eq hats (SAbstract (stack_take (get_stack context) pref_len, z))) then
-            raise (TypeError ("Icall: stack prefix on block being jumped to does not match current stack. Current stack prefix: " ^ show_sigma_prefix (stack_take (get_stack context) pref_len) ^ ", but specified prefix is: " ^ show_sigma_prefix (stack_take hats pref_len), l))
+            raise (TypeError ("Icall: stack prefix on block being jumped to does not match current stack. Current stack prefix: " ^ show_sigma_prefix (stack_take (get_stack context) pref_len) ^ ", but block expects: " ^ show_sigma_prefix (stack_take hats (stack_pref_length hats)), l))
           else if i < pref_len then
             raise (TypeError ("Icall: return marker is not in protected suffix of stack", l))
           else
