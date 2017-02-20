@@ -18,10 +18,15 @@ let parse_report_loc parse_fun str =
 
 let simple = {|
 FT [int, ?] (
-  [mv r1, 1;
-   add r1, r1, 1;
-   halt int, * {r1}],
-  [])
+[mv ra, lh;
+ salloc 1; mv r1, 0; sst 0, r1;
+ call l {*, end{int; *}}],
+[l -> box code [z, e]
+          {ra: box forall[]. {r1:int; z} e; int :: z} ra.
+          [sld r1, 0;
+           sfree 1;
+           ret ra {r1}],
+ lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])
 |}
 
 let omega = {|

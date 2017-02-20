@@ -407,6 +407,85 @@ let test_call_tl_ty _ =
        (FTAL.FC call_tl))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
+
+let call_tl_exc =
+  F.EBoundary (dummy_loc, F.TInt, None,
+    tal_comp
+      "([mv ra, lh;
+         call l {*, end{int; *}}],
+        [l -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; int :: z} ra.
+               [sld r1, 0;
+                sfree 1;
+                ret ra {r1}],
+         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
+
+
+let test_call_tl_ty_exc _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC call_tl_exc))
+
+let call_tl_exc2 =
+  F.EBoundary (dummy_loc, F.TInt, None,
+    tal_comp
+      "([mv ra, lh;
+         salloc 1; mv r1, 0; sst 0, r1;
+         call l {*, end{int; *}}],
+        [l -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; int :: z} ra.
+               [sld r1, 0;
+                ret ra {r1}],
+         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
+
+
+let test_call_tl_ty_exc2 _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC call_tl_exc2))
+
+let call_tl_exc3 =
+  F.EBoundary (dummy_loc, F.TInt, None,
+    tal_comp
+      "([mv ra, lh;
+         salloc 1; mv r1, 0; sst 0, r1;
+         call l {int::int::*, end{int; *}}],
+        [l -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e; int :: z} ra.
+               [sld r1, 0; sfree 1;
+                ret ra {r1}],
+         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
+
+
+let test_call_tl_ty_exc3 _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC call_tl_exc3))
+
+
+let call_tl_exc4 =
+  F.EBoundary (dummy_loc, F.TInt, None,
+    tal_comp
+      "([mv ra, lh;
+         salloc 1; mv r1, 0; sst 0, r1;
+         call l {*, end{int; *}}],
+        [l -> box code [z, e]
+               {ra: box forall[]. {r1:int; z} e, r1 : unit; int :: z} ra.
+               [sld r1, 0; sfree 1;
+                ret ra {r1}],
+         lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])")
+
+
+let test_call_tl_ty_exc4 _ =
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC call_tl_exc4))
+
+
 let test_call_to_call _ =
   assert_eint
     (snd (F.stepn 50 (empty, F.EBoundary (dummy_loc, F.TInt, None, call_to_call))))
@@ -419,6 +498,7 @@ let test_call_to_call_ty _ =
        (FTAL.default_context TAL.QOut)
        (FTAL.FC (F.EBoundary (dummy_loc, F.TInt, None, call_to_call))))
     (FTAL.FT F.TInt, TAL.SConcrete [])
+
 
 
 let test_factorial_f_ty _ =
@@ -613,6 +693,10 @@ let suite = "FTAL evaluations" >:::
               "TAL: unfold exc" >:: test_unfold_ty_exc;
               "TAL: simple call = 10" >:: test_call_tl;
               "TAL: simple call : int" >:: test_call_tl_ty;
+              "TAL: simple call exc" >:: test_call_tl_ty_exc;
+              "TAL: simple call exc 2" >:: test_call_tl_ty_exc2;
+              "TAL: simple call exc 3" >:: test_call_tl_ty_exc3;
+              "TAL: simple call exc 4" >:: test_call_tl_ty_exc4;
               "TAL: call to call = 2" >:: test_call_to_call;
               "TAL: call to call : int" >:: test_call_to_call_ty;
               "TAL: fact 3 = 6" >:: test_factorial_t;

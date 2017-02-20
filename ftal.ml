@@ -587,10 +587,8 @@ end = struct
           raise (TypeError ("Ijmp: must jump to a block with the same return marker. Expected " ^ show_q q ^ " but jumping to " ^ show_q q', l))
         | TBox (PBlock ([], c, s, q')) when not (s_eq s (get_stack context)) ->
           raise (TypeError ("Ijmp: must jump to a block expecting the current stack", l))
-        | TBox (PBlock ([], c, s, q')) when not (list_subset (List.map ~f:fst c) (List.map ~f:fst (get_reg context))) ->
-          raise (TypeError ("Ijmp: can't jump to a block expecting more registers set", l))
-        | TBox (PBlock ([], c, s, q')) when not (List.for_all c ~f:(fun (r,t) -> t_eq t (List.Assoc.find_exn (get_reg context) r))) ->
-          raise (TypeError ("Ijmp: current registers not compatible with block", l))
+        | TBox (PBlock ([], c, s, q')) when not (register_subset c (get_reg context)) ->
+          raise (TypeError ("Ijmp: block expects register file that is not compatible with current register file", l))
         | TBox (PBlock ([], c, s, q')) -> ()
         | _ -> raise (TypeError ("Ijmp: can't jump to non-block", l))
       end
@@ -603,11 +601,7 @@ end = struct
           raise (TypeError ("Ibnz: must jump to a block with the same return marker", l))
         | TBox (PBlock ([], c, s, q')) when not (s_eq s (get_stack context)) ->
           raise (TypeError ("Ibnz: must jump to a block expecting the current stack", l))
-        | TBox (PBlock ([], c, s, q')) when not (list_subset (List.map ~f:fst c) (List.map ~f:fst (get_reg context))) ->
-          let _ = print_endline (String.concat "; " (List.map ~f:fst c)) in
-          let _ = print_endline (String.concat "; " (List.map ~f:fst (get_reg context))) in
-          raise (TypeError ("Ibnz: can't jump to a block expecting more registers set", l))
-        | TBox (PBlock ([], c, s, q')) when not (List.for_all c ~f:(fun (r,t) -> t_eq t (List.Assoc.find_exn (get_reg context) r))) ->
+        | TBox (PBlock ([], c, s, q')) when not (register_subset c (get_reg context)) ->
           raise (TypeError ("Ibnz: current registers not compatible with block", l))
         | TBox (PBlock ([], c, s, q')) -> ()
         | _ -> raise (TypeError ("Ibnz: can't jump to non-block", l))
@@ -615,8 +609,25 @@ end = struct
     | [Icall(l,u,s,QEnd(t',s'))], QEnd(t,s'') when t_eq t t' && s_eq s' s'' ->
       begin match tc_u context u with
         | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
-          (* TODO(dbp 2017-02-17): Add other constraints *)
-          ()
+          let pref_len = stack_pref_length (get_stack context) - stack_pref_length s in
+          if pref_len < 0 then
+            raise (TypeError ("Icall: protected suffix is longer than current stack", l))
+          else if not (s_eq hats (SAbstract (stack_take (get_stack context) pref_len, z))) then
+            raise (TypeError ("Icall: stack prefix on block being jumped to does not match current stack", l))
+          else
+            begin match ret_addr_type (set_stack (set_reg context hatc) hats) hatq with
+              | Some (TBox (PBlock (_, _,hats', QEpsilon e))) ->
+                begin match hats' with
+                  | SAbstract (_, z') when z = z' ->
+                    if not (register_subset (TAL.chi_sub (EMarker (e, QEnd(t',s'))) (chi_sub (SType (z, s)) hatc)) (get_reg context)) then
+                      raise (TypeError ("Icall: current registers not compatible with what block expects", l))
+                    else
+                      ()
+                  | _ ->
+                    raise (TypeError ("Icall: block being returned to does not protect suffix", l))
+                end
+              | _ -> raise (TypeError ("Icall: block being jumped to does not return to block with right type", l))
+            end
         | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", l))
       end
     | [Icall(l,u,s,QI i')], QI i ->
@@ -1103,6 +1114,7 @@ and TAL : sig
   and chi = (reg * t) list
 
   val ret_type : FTAL.context -> q -> (FTAL.t * sigma) option
+  val ret_addr_type : FTAL.context -> q -> t option
 
   val stack_cons : t -> sigma -> sigma
   val stack_take : sigma -> int -> sigma_prefix
@@ -1110,6 +1122,9 @@ and TAL : sig
   val stack_pref_length : sigma -> int
   val stack_prepend : sigma_prefix -> sigma -> sigma
   val stack_nth : sigma -> int -> t option
+  val stack_nth_exn : sigma -> int -> t
+
+  val register_subset : chi -> chi -> bool
 
   val show : t -> string
   val pp : Format.formatter -> t -> unit
@@ -1227,6 +1242,8 @@ and TAL : sig
 
   val retmarker_sub : FTAL.substitution -> q -> q
 
+  val chi_sub : FTAL.substitution -> chi -> chi
+
   val type_zip : delta -> omega list -> FTAL.substitution list
 
   val plug : context -> F.ft -> component
@@ -1286,6 +1303,7 @@ end = struct
 
   and chi = (reg * t) list
 
+  let show_sigma s = Printer.(r (TALP.p_s s))
   let show t = Printer.(r (TALP.p_t t))
   let show_psi_elem p = Printer.(r (TALP.p_psi p))
   let show_q q = Printer.(r (TALP.p_q q))
@@ -1301,6 +1319,21 @@ end = struct
       end
     | QEpsilon _ -> None
     | QEnd (t, s) -> Some (FTAL.TT t, s)
+    | QOut -> None
+
+  let ret_addr_type context q = match q with
+    | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
+        | Some (TBox (PBlock ([], [(_,_)], _, _))) ->
+          Some (List.Assoc.find_exn (FTAL.get_reg context) r)
+        | _ -> None
+      end
+    | QI i -> begin match TAL.stack_nth (FTAL.get_stack context) i with
+        | Some (TBox (PBlock ([], [(_,_)], s, _))) ->
+          Some (TAL.stack_nth_exn (FTAL.get_stack context) i)
+        | _ -> None
+      end
+    | QEpsilon _
+    | QEnd _
     | QOut -> None
 
   type omega =
@@ -1393,6 +1426,9 @@ end = struct
 
   let stack_nth s n = match s with
     | SConcrete l | SAbstract (l,_) -> List.nth l n
+
+  let stack_nth_exn s n = match s with
+    | SConcrete l | SAbstract (l,_) -> List.nth_exn l n
 
   let load (h,r,s) h' =
     (* NOTE(dbp 2016-09-08): We should do renaming, but relying, for now, on the fact
@@ -1550,6 +1586,8 @@ end = struct
     | OS s -> OS (stack_sub p s)
     | OQ q -> OQ (retmarker_sub p q)
 
+  and chi_sub p c = List.map ~f:(fun (r,t) -> (r, type_sub p t)) c
+
 
   let option_cons o1 o2 = match o1,o2 with
     | _, None -> None
@@ -1630,6 +1668,9 @@ end = struct
     let s = List.sort ~cmp:(fun (a1,_) (a2,_) -> compare a1 a2) in
     list_for_all2 ~f:(fun (r1,t1) (r2,t2) -> r1 = r1 && t_eq t1 t2) (s c1) (s c2)
 
+  let register_subset c1 c2 =
+    (list_subset (List.map ~f:fst c1) (List.map ~f:fst c2)) &&
+    (List.for_all c1 ~f:(fun (r,t) -> t_eq t (List.Assoc.find_exn c2 r)))
 
 
   let decomp (loc, is, m) =
