@@ -1927,14 +1927,18 @@ end = struct
     group @@ match s with
     | SConcrete l ->
       if List.length l > 0 then
-        p_sigma_prefix l ^^ !^" :: *"
+        p_sigma_prefix l ^^ !^" *"
       else !^"*"
     | SAbstract (l, z) ->
       if List.length l > 0 then
-        p_sigma_prefix l ^^ !^" :: " ^^ !^z
+        p_sigma_prefix l ^^ !^" " ^^ !^z
       else !^z
   and p_sigma_prefix (p : sigma_prefix) : document =
-    group @@ nest 2 @@ separate_map (break 1 ^^ !^":: ") p_t p
+    let rec loop = function
+      | [] -> !^"::"
+      | [t] -> p_t t ^^ !^"::"
+      | t::ts -> p_t t ^^ break 1 ^^ !^":: " ^^ loop ts in
+    group @@ nest 2 @@ loop p
   and p_q (q : q) : document =
     group @@ match q with
     | QR r -> !^r

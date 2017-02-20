@@ -160,7 +160,7 @@ let test_import_stk_ty _ =
        (FTAL.TC (tal_comp "([salloc 3;
                              import r1, z' as unit::*, int TF{
                                FT [int, unit::z'] (
-                                 [protect unit, z;
+                                 [protect unit::, z;
                                   mv r1, 10;
                                   sfree 1;
                                   halt int, z {r1}]

@@ -209,7 +209,12 @@ register_typing: li=bracketed(simple_register_typing) { li }
 simple_register_typing: li=separated_list(COMMA, decl(register, value_type)) { li }
 
 stack_prefix:
-  | taus=separated_list(DOUBLECOLON, value_type) { taus }
+  | DOUBLECOLON { [] }
+  | tau=value_type taus=rest_stack_prefix { tau :: taus }
+
+  rest_stack_prefix:
+  | DOUBLECOLON { [] }
+  | DOUBLECOLON tau=value_type taus=rest_stack_prefix { tau :: taus }
 
 stack_typing:
 | prefix=list(tau=value_type DOUBLECOLON {tau}) finish=stack_typing_end
