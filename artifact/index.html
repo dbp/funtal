@@ -43,13 +43,19 @@
           semantics. We include <strong>well-typed, runnable examples
           from
           the <a href="https://dbp.io/pubs/2017/funtal.pdf">paper</a></strong>,
-          as well as a few smaller examples to start with.
-      </p>
+        as well as a few smaller examples to start with. With our
+        artifact, you write programs and then type-check / load them
+        into a FunTAL machine. At each step, the machine shows the
+        registers, stack, and heap, as well as the redex and the
+        context.</p>
 
-      <p>With our artifact you write programs and then type-check /
-        load them into a FunTAL machine. The machine shows the
-        registers, stack, and heap. At each step shows the redex and
-        the context.
+      <p>
+        <strong>Important:</strong> the programs entered
+        into the editor should be Fun programs at the top; a pure
+        TAL component <code>C</code>
+        can be embedded as <code>FT[t,?]C</code> where <code>t</code> is
+        the return type, as we see in examples below. We do this so
+        that all programs run through the stepper have a return value.
       </p>
 
       <p><strong>Note:</strong> there are some syntactic differences
@@ -66,7 +72,7 @@
       </p>
       <ul>
         <li><a href="#" id="call_to_call">Call to call</a> (Fig. 3 &amp; 4, pg. 6)</li>
-        <li><a href="#" id="higher_order">Higher Order</a> (Fig. 11 &amp; 12, pg. 9)</li>
+        <li><a href="#" id="higher_order">Higher order</a> (Fig. 11 &amp; 12, pg. 9)</li>
         <li><a href="#" id="blocks_1">Blocks 1</a> (Fig. 16, top, pg. 11)</li>
         <li><a href="#" id="blocks_2">Blocks 2</a> (Fig. 16, bottom, pg. 11)</li>
         <li><a href="#" id="factorial_f">Factorial (functional)</a> (Fig. 17, top, pg. 12)</li>
