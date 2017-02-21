@@ -1,20 +1,43 @@
 module H = Dom_html
 
+let position {Lexing.pos_fname; pos_lnum; pos_cnum; pos_bol} =
+  let file = pos_fname in
+  let line = pos_lnum in
+  let character = pos_cnum - pos_bol in
+  (file, line, character)
 
 let parse_report_loc parse_fun str =
   let lexbuf = Lexing.from_string str in
   try `Success (Parse.parse parse_fun lexbuf)
-  with | Parser.Error ->
-    let (_, line, char) = Parse.position lexbuf.Lexing.lex_start_p in
-    `Error (line, "Parser Error: line " ^
-                  string_of_int line ^ ", character " ^
-                  string_of_int char ^ ".")
-       | Lexer.Error (invalid_input, err_pos) ->
+  with Parse.Error err ->
+    begin match err with
+      | Parse.Lexing (invalid_input, err_pos) ->
          let (_, line, char) = Parse.position err_pos in
          `Error (line, "Lexing Error: line " ^
                        string_of_int line ^ ", character " ^
                        string_of_int char ^ ".")
-
+      | Parse.Parsing (message, start_pos, end_pos) ->
+        let _, start_line, start_character = position start_pos in
+        let _, curr_line, curr_character = position end_pos in
+        let open Printf in
+        let lines =
+          if curr_line = start_line
+          then sprintf "line %d" curr_line
+          else sprintf "lines %d-%d" start_line curr_line in
+        let characters =
+          if curr_line = start_line
+          then sprintf "characters %d-%d" start_character curr_character
+          else sprintf "character %d" start_character in
+        let buf = Buffer.create 10 in
+        bprintf buf "Parsing error %s, %s:\n"
+          lines characters;
+        begin match message with
+          | None -> ()
+          | Some error_message ->
+            bprintf buf "\n%s\n" error_message
+        end;
+        `Error (start_line, Buffer.contents buf)
+    end
 
 let simple = {|
 FT [int, ?] (
