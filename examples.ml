@@ -62,7 +62,7 @@ lam (x:int).
                  sub r7, r7, 1;
                  bnz r7, la1[z1];
                  sfree 1;
-                 halt int, z4 {r1}]])
+                 ret ra {r1}]])
     x
 |}
 (* Different number of basic blocks *)
