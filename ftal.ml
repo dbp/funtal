@@ -31,7 +31,7 @@ module rec FTAL : sig
   val default_context : TAL.q -> context
 
   val tc : context -> e -> t * TAL.sigma
-  val tc_is : context -> TAL.instr list -> unit
+  val tc_is : l -> context -> TAL.instr list -> unit
   val tc_w : context -> TAL.w -> TAL.t
   val tc_u : context -> TAL.u -> TAL.t
   val tc_h : context -> l -> TAL.mut -> TAL.h -> TAL.psi_elem
@@ -409,14 +409,14 @@ end = struct
             if not (TAL.psi_elem_eq p' p) then
               raise (TypeError ("component: Uh-oh, got something I didn't understand.", loc)) else ()) h in
       begin
-        tc_is context instrs;
+        tc_is loc context instrs;
         match TAL.ret_type context (get_ret context) with
         | Some s -> s
         | None -> raise (TypeError ("component: return marker invalid: " ^
                                     TAL.show_q (get_ret context) ^ ".", loc))
       end
 
-  and tc_is context instrs : unit =
+  and tc_is (prev_loc : l) context instrs : unit =
     let open TAL in
     match instrs, get_ret context with
     | Iaop (l,op, rd, rs, u)::is, QR r when rd = r ->
@@ -427,7 +427,7 @@ end = struct
         | Some t, _ when t <> TInt -> raise (TypeError (show_aop op ^ ": source register has type " ^
                                                         show t ^ ", not int.", l))
         | _, t when t <> TInt -> raise (TypeError (show_aop op ^ ": operand has type " ^ show t ^ ", not int.", l))
-        | _ -> tc_is (set_reg context (List.Assoc.add (get_reg context) rd TInt)) is
+        | _ -> tc_is l (set_reg context (List.Assoc.add (get_reg context) rd TInt)) is
       end
     | Imv (l,rd,u)::is, QR r when rd = r ->
       raise (TypeError ("mv: can't overwrite current return address in register " ^ rd ^ ".", l))
@@ -435,7 +435,7 @@ end = struct
       let context = match q, u with
         | QR r, UR (_, r') when r = r' -> set_ret context (QR rd)
         | _ -> context in
-      tc_is (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) is
+      tc_is l (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) is
     | Iimport (l,rd,z,s,t,f)::is, QR r when rd = r ->
       raise (TypeError ("import: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, _ when
@@ -453,7 +453,7 @@ end = struct
           raise (TypeError ("import: F expression does not protect abstract stack tail.", l))
         | (FT t',SAbstract (_, z')) when z <> z'  ->
           raise (TypeError ("import: F expression does not preserve abstract stack tail. Should have been " ^ z ^ " but was " ^ z' ^ ".", l))
-        | (FT t',SAbstract (newpref, _)) -> tc_is (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) (stack_prepend newpref suf)) is
+        | (FT t',SAbstract (newpref, _)) -> tc_is l (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) (stack_prepend newpref suf)) is
         | _  -> raise (TypeError ("import: Uh-oh, got something I didn't understand.", l))
       end
     | [Ihalt (l,t,s,r)], QEnd (t',s') when not (t_eq t' t) ->
@@ -474,7 +474,7 @@ end = struct
     | [Ihalt (l,_,_,_)], q ->
       raise (TypeError ("halt: return marker must be end{}, instead is: " ^ show_q q ^ ".", l))
     | Isalloc (l,n) :: is, _ ->
-      tc_is (set_stack context (List.fold_left ~f:(fun s _ -> stack_cons TUnit s)
+      tc_is l (set_stack context (List.fold_left ~f:(fun s _ -> stack_cons TUnit s)
                                   ~init:(get_stack context) (List.init ~f:(fun x -> x) n))) is
     | Isfree (l,n) :: is, QI n' when n > n' ->
       raise (TypeError ("sfree: return marker is at position " ^ string_of_int n' ^ ", so you can't free " ^
@@ -483,10 +483,10 @@ end = struct
       raise (TypeError ("sfree: only " ^ string_of_int (stack_pref_length (get_stack context)) ^
                         " stack cells are exposed, so can't free " ^ string_of_int n ^ ".", l))
     | Isfree (l,n) :: is, QI n' ->
-      tc_is (set_ret (set_stack context (stack_drop (get_stack context) n ))
+      tc_is l (set_ret (set_stack context (stack_drop (get_stack context) n ))
             (QI (n' - n))) is
     | Isfree (l,n) :: is, _ ->
-      tc_is (set_stack context (stack_drop (get_stack context) n )) is
+      tc_is l (set_stack context (stack_drop (get_stack context) n )) is
     | Iprotect (l,pref,v)::is, QI n when n > List.length pref ->
       raise (TypeError ("protect: return marker is at position " ^ string_of_int n ^
                         ", so you can't hide everything past the first " ^
@@ -498,7 +498,7 @@ end = struct
     | Iprotect (l,pref, v)::is, _ ->
       let stail = stack_drop (get_stack context) (List.length pref) in
       let new_q = retmarker_sub (SAbs (stail, v)) (get_ret context) in
-      tc_is (set_ret (set_stack (set_tyenv context (List.append (get_tyenv context) [DZeta v])) (SAbstract (pref, v))) new_q) is
+      tc_is l (set_ret (set_stack (set_tyenv context (List.append (get_tyenv context) [DZeta v])) (SAbstract (pref, v))) new_q) is
     | Isst(l,n,r):: is, _ when stack_pref_length (get_stack context) <= n ->
       raise (TypeError ("sst: only " ^ string_of_int (stack_pref_length (get_stack context)) ^
                         " stack cells are exposed, so can't store at position " ^ string_of_int n ^ ".", l))
@@ -513,7 +513,7 @@ end = struct
             | QR r' when r = r' -> set_ret context (QI n)
             | _ -> context
           in
-          tc_is (set_stack context (stack_prepend (stack_take (get_stack context) n) (stack_cons t (stack_drop (get_stack context) (n+1))))) is
+          tc_is l (set_stack context (stack_prepend (stack_take (get_stack context) n) (stack_cons t (stack_drop (get_stack context) (n+1))))) is
       end
     | Isld(l,rd,n)::is, QR r when r = rd ->
       raise (TypeError ("sld: can't overwrite current return address in register " ^ rd ^ ".", l))
@@ -526,7 +526,7 @@ end = struct
         | QI n' when n = n' -> set_ret context (QR rd)
         | _ -> context
       in
-      tc_is (set_reg context (List.Assoc.add (get_reg context) rd (List.last_exn (stack_take (get_stack context) (n+1))))) is
+      tc_is l (set_reg context (List.Assoc.add (get_reg context) rd (List.last_exn (stack_take (get_stack context) (n+1))))) is
     | Ild(l,rd,rs,n)::is, QR r when r = rd ->
       raise (TypeError ("ld: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Ild(l,rd,rs,n)::is, _ ->
@@ -538,7 +538,7 @@ end = struct
                             string_of_int (List.length ps) ^ ".", l))
         | Some (TBox (PTuple ps)) | Some (TTupleRef ps) ->
           let t = List.nth_exn ps n in
-          tc_is (set_reg context (List.Assoc.add (get_reg context) rd t)) is
+          tc_is l (set_reg context (List.Assoc.add (get_reg context) rd t)) is
         | Some t ->
           raise (TypeError ("ld: can't load from non-tuple of type " ^ show t ^ ".", l))
       end
@@ -559,7 +559,7 @@ end = struct
               if not (TAL.t_eq t t') then
                 raise (TypeError ("st: can't overwrite a position with type "
                                   ^ show t' ^ " with a value of type " ^ show t ^ ".", l))
-              else tc_is context is
+              else tc_is l context is
             | Some (TBox (PTuple _)) ->
               raise (TypeError ("st: can't write to a box (i.e., immutable) tuple.", l))
             | Some t ->
@@ -578,7 +578,7 @@ end = struct
       let q' = match q with
         | QI n' -> QI (n' - n)
         | _ -> q in
-      tc_is (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TTupleRef (stack_take (get_stack context) n)))) (stack_drop (get_stack context) n)) q') is
+      tc_is l (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TTupleRef (stack_take (get_stack context) n)))) (stack_drop (get_stack context) n)) q') is
     | Iballoc (l,rd, n)::is, _ when stack_pref_length (get_stack context) < n ->
       raise (TypeError ("balloc: trying to allocate a tuple of size " ^ string_of_int n ^ " but there are only " ^
                         string_of_int (stack_pref_length (get_stack context))  ^ " visible cells on the stack.", l))
@@ -591,14 +591,14 @@ end = struct
       let q' = match q with
         | QI n' -> QI (n' - n)
         | _ -> q in
-      tc_is (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TBox (PTuple (stack_take (get_stack context) n))))) (stack_drop (get_stack context) n)) q') is
+      tc_is l (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TBox (PTuple (stack_take (get_stack context) n))))) (stack_drop (get_stack context) n)) q') is
     | Iunpack (l,a, rd, u)::is, QR r when rd = r ->
       raise (TypeError ("unpack: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iunpack (l,a, rd, u)::is, _ ->
       begin match tc_u context u with
         | TExists (a', t) ->
           let newt = type_sub (TType (a, TVar a')) t in
-          tc_is (set_reg context (List.Assoc.add (get_reg context) rd newt)) is
+          tc_is l (set_reg context (List.Assoc.add (get_reg context) rd newt)) is
         | t -> raise (TypeError ("unpack: operand is non-existential of type " ^ show t ^ ".", l))
       end
     | Iunfold (l,rd, u)::is, QR r when rd = r ->
@@ -607,7 +607,7 @@ end = struct
       begin match tc_u context u with
         | TRec (a, t) ->
           let t' = type_sub (TType (a, TRec (a,t))) t in
-          tc_is (set_reg context (List.Assoc.add (get_reg context) rd t')) is
+          tc_is l (set_reg context (List.Assoc.add (get_reg context) rd t')) is
         | t -> raise (TypeError ("unfold: operand is non-fold of type " ^ show t ^ ".", l))
       end
     | [Iret (l,rt, rv)], QR r when r = rt ->
@@ -660,7 +660,8 @@ end = struct
             | TBox (PBlock ([], c, s, q')) when not (register_subset c (get_reg context)) ->
               raise (TypeError ("bnz: block being branched to expects register file of type " ^ show_chi c ^
                                 ", but current register file has type " ^ show_chi (get_reg context) ^ ".", l))
-            | TBox (PBlock ([], c, s, q')) -> ()
+            | TBox (PBlock ([], c, s, q')) ->
+              tc_is l context is
             | t -> raise (TypeError ("bnz: can't branch to non-block of type " ^ show t ^ ".", l))
           end
       end
@@ -734,7 +735,7 @@ end = struct
     | (Ijmp(l,_)::_), _ -> raise (TypeError ("jmp: must be the last instruction in a block.", l))
     | [Icall(l,_,_,_)], _ -> raise (TypeError ("call: return marker must be end{} or be on the stack.", l))
     | (Icall(l,_,_,_)::_), _ -> raise (TypeError ("call: must be the last instruction in a block.", l))
-    | [], _ -> raise (TypeError ("Uh-oh! I found an empty block somewhere...", dummy_loc))
+    | [], _ -> raise (TypeError ("reached the end of a block without a jmp, ret, call, or halt.", prev_loc))
 
 
   and tc_u context u = let open TAL in match u with
@@ -790,7 +791,7 @@ end = struct
 
   and tc_h context l mut h = match mut, h with
     | TAL.Box, TAL.HCode (d,c,s,q,is) ->
-      let _ = tc_is (set_ret (set_stack (set_reg (set_tyenv context d) c) s) q) is in
+      let _ = tc_is l (set_ret (set_stack (set_reg (set_tyenv context d) c) s) q) is in
       TAL.PBlock (d,c,s,q)
     | _, TAL.HTuple ws -> TAL.PTuple (List.map ~f:(tc_w context) ws)
     | _ -> raise (TypeError ("Can't have mutable code pointers",l))
