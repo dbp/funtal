@@ -6,13 +6,16 @@ SETUP:
      (if this were to fail, see the local `opam` file for dependencies)
 
 BUILD:
+
     - `make`
 
 EDITOR:
+
     - Open `artifact/index.html` in a browser.
 
 RUN TESTS:
-   - `./test.native`
+
+    - `./test.native`
 
 
 ## Install via docker
@@ -22,8 +25,10 @@ SETUP
     - `docker build -t funtal .`
 
 EDITOR:
+
     - Copy built javascript file: `docker run --rm funtal cat /funtal/artifact/web.js > artifact/web.js`
     - Open `artifact/index.html` in a browser.
 
 RUN TESTS:
-    - `docker run funtal`
+
+   - `docker run funtal`
