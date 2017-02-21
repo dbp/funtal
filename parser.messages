@@ -40,7 +40,7 @@ parsed "fold (" and now expect a recursive type, for example
 
 f_expression_eof: FOLD MU A_IDENTIFIER DOT A_IDENTIFIER UNPACK 
 ##
-## Ends in an error in state: 291.
+## Ends in an error in state: 290.
 ##
 ## f_expression -> FOLD f_mu_type . f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
 ##
@@ -840,7 +840,7 @@ f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET LPAREN RPAREN Z_IDE
 
 Parsing a stack-modifying lambda-expression
 "lam [<stack-prefix>] [<stack-prefix>] (<args>). <expr>", we parsed
-"lam [<stack-prefix>] [<stack-prefix>] (<args>)" so far an expect a
+"lam [<stack-prefix>] [<stack-prefix>] (<args>)" so far and expect a
 dot followed by the lambda body.
 
 f_expression_eof: LAMBDA LBRACKET RBRACKET LBRACKET RBRACKET Z_IDENTIFIER 
@@ -1033,7 +1033,7 @@ or the empty prefix "::".
 
 f_expression_eof: LAMBDA LPAREN RPAREN DOT UNPACK 
 ##
-## Ends in an error in state: 295.
+## Ends in an error in state: 294.
 ##
 ## f_expression -> LAMBDA f_telescope DOT . f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
 ##
@@ -1046,7 +1046,7 @@ Parsing a lambda-expression "lam (<args>). <expr>", we parsed
 
 f_expression_eof: LAMBDA LPAREN RPAREN Z_IDENTIFIER 
 ##
-## Ends in an error in state: 294.
+## Ends in an error in state: 293.
 ##
 ## f_expression -> LAMBDA f_telescope . DOT f_expression [ RPAREN RBRACE RANGLE EOF COMMA ]
 ##
@@ -1155,11 +1155,13 @@ f_expression_eof: LANGLE UNPACK
 ## LANGLE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a tuple expression "< <expr>, <expr>... >", we parsed
+an opening angle backet "<" so far and expect a comma-separated
+list of expressions, for example "1, ()>".
 
 f_expression_eof: LANGLE Z_IDENTIFIER COMMA UNPACK 
 ##
-## Ends in an error in state: 301.
+## Ends in an error in state: 300.
 ##
 ## separated_nonempty_list(COMMA,f_expression) -> f_expression COMMA . separated_nonempty_list(COMMA,f_expression) [ RANGLE ]
 ##
@@ -1167,11 +1169,12 @@ f_expression_eof: LANGLE Z_IDENTIFIER COMMA UNPACK
 ## f_expression COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a tuple expression "< <expr>, <expr>... >", we just parsed
+a comma and expect other comma-separated expressions.
 
 f_expression_eof: LANGLE Z_IDENTIFIER RPAREN 
 ##
-## Ends in an error in state: 300.
+## Ends in an error in state: 299.
 ##
 ## separated_nonempty_list(COMMA,f_expression) -> f_expression . [ RANGLE ]
 ## separated_nonempty_list(COMMA,f_expression) -> f_expression . COMMA separated_nonempty_list(COMMA,f_expression) [ RANGLE ]
@@ -1184,11 +1187,13 @@ f_expression_eof: LANGLE Z_IDENTIFIER RPAREN
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
-## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 289, spurious reduction of production f_arith_expression -> f_app_expression 
 ## In state 283, spurious reduction of production f_expression -> f_arith_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a tuple expression "< <expr>, <expr>... >", we just parsed an
+expression and expect a closing angle bracket ">", or a comma and
+more expressions.
 
 f_expression_eof: LPAREN UNPACK 
 ##
@@ -1201,11 +1206,13 @@ f_expression_eof: LPAREN UNPACK
 ## LPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an expression, we parsed an opening parenthesis "(" and expect
+a sub-expression, or a closing parenthesis ")" to form the unit value
+"()".
 
 f_expression_eof: LPAREN Z_IDENTIFIER RBRACE 
 ##
-## Ends in an error in state: 303.
+## Ends in an error in state: 302.
 ##
 ## f_simple_expression -> LPAREN f_expression . RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
 ##
@@ -1217,26 +1224,26 @@ f_expression_eof: LPAREN Z_IDENTIFIER RBRACE
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
-## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 289, spurious reduction of production f_arith_expression -> f_app_expression 
 ## In state 283, spurious reduction of production f_expression -> f_arith_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an expression, we parsed "( <expr>" so far and expect
+a closing parenthesis ")".
 
 f_expression_eof: MINUS INTEGER Z_IDENTIFIER 
 ##
 ## Ends in an error in state: 283.
 ##
-## f_arith_expression -> f_arith_expression . PLUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-## f_arith_expression -> f_arith_expression . MINUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-## f_arith_expression -> f_arith_expression . TIMES f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression . infixop f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
 ## f_expression -> f_arith_expression . [ RPAREN RBRACE RANGLE EOF COMMA ]
 ##
 ## The known suffix of the stack is as follows:
 ## f_arith_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an arithmetic expression, we expect an infix operator "+", "-"
+or "*", or the end of the expression.
 
 f_expression_eof: MINUS Z_IDENTIFIER 
 ##
@@ -1248,7 +1255,9 @@ f_expression_eof: MINUS Z_IDENTIFIER
 ## MINUS 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an expression, we parsed a unary negation "-" so far, and
+expect an integer literal to form a negative integer literal, such as
+"-3".
 
 f_expression_eof: PI INTEGER LPAREN UNPACK 
 ##
@@ -1260,11 +1269,12 @@ f_expression_eof: PI INTEGER LPAREN UNPACK
 ## PI nat LPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a projection expression "pi <nat> (<expr>)", we parsed "pi
+<nat> (" so far and expect a sub-expression.
 
 f_expression_eof: PI INTEGER LPAREN Z_IDENTIFIER RBRACE 
 ##
-## Ends in an error in state: 305.
+## Ends in an error in state: 304.
 ##
 ## f_simple_expression -> PI nat LPAREN f_expression . RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
 ##
@@ -1276,11 +1286,12 @@ f_expression_eof: PI INTEGER LPAREN Z_IDENTIFIER RBRACE
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
-## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 289, spurious reduction of production f_arith_expression -> f_app_expression 
 ## In state 283, spurious reduction of production f_expression -> f_arith_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a projection expression "pi <nat> (<expr>)", we parsed "pi
+<nat> (<expr>" so far and expect a closing parenthesis.
 
 f_expression_eof: PI INTEGER Z_IDENTIFIER 
 ##
@@ -1292,7 +1303,8 @@ f_expression_eof: PI INTEGER Z_IDENTIFIER
 ## PI nat 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a projection expression "pi <nat> (<expr>)", we parsed "pi
+<nat>" so far and expect an opening parenthesis.
 
 f_expression_eof: PI Z_IDENTIFIER 
 ##
@@ -1304,7 +1316,9 @@ f_expression_eof: PI Z_IDENTIFIER
 ## PI 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a projection expression "pi <nat> (<expr>)", we parsed "pi" so
+far and expect the project index, for example "2", followed by
+a parenthesized expression.
 
 f_expression_eof: UNFOLD UNPACK 
 ##
@@ -1316,11 +1330,12 @@ f_expression_eof: UNFOLD UNPACK
 ## UNFOLD 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an unfold expression "unfold <expr>", we parsed the "unfold"
+keyword and expect an expression.
 
 f_expression_eof: UNPACK 
 ##
-## Ends in an error in state: 385.
+## Ends in an error in state: 384.
 ##
 ## f_expression_eof' -> . f_expression_eof [ # ]
 ##
@@ -1328,46 +1343,44 @@ f_expression_eof: UNPACK
 ## 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We expect a valid F expression.
 
 f_expression_eof: Z_IDENTIFIER MINUS MINUS INTEGER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 290.
+## Ends in an error in state: 288.
 ##
-## f_arith_expression -> f_arith_expression . PLUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-## f_arith_expression -> f_arith_expression . MINUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-## f_arith_expression -> f_arith_expression MINUS f_arith_expression . [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-## f_arith_expression -> f_arith_expression . TIMES f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression . infixop f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression infixop f_arith_expression . [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## f_arith_expression MINUS f_arith_expression 
+## f_arith_expression infixop f_arith_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an arithmetic expression, we expect an infix operator "+", "-"
+or "*", or the end of the expression.
 
 f_expression_eof: Z_IDENTIFIER MINUS UNPACK 
 ##
-## Ends in an error in state: 289.
+## Ends in an error in state: 287.
 ##
-## f_arith_expression -> f_arith_expression MINUS . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression infixop . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## f_arith_expression MINUS 
+## f_arith_expression infixop 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an arithmetic expression, we parsed "<expr> -" so far and
+expect an expression.
 
 f_expression_eof: Z_IDENTIFIER PLUS MINUS INTEGER Z_IDENTIFIER 
 ##
 ## Ends in an error in state: 288.
 ##
-## f_arith_expression -> f_arith_expression . PLUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-## f_arith_expression -> f_arith_expression PLUS f_arith_expression . [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-## f_arith_expression -> f_arith_expression . MINUS f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-## f_arith_expression -> f_arith_expression . TIMES f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression . infixop f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression infixop f_arith_expression . [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## f_arith_expression PLUS f_arith_expression 
+## f_arith_expression infixop f_arith_expression 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1376,17 +1389,17 @@ f_expression_eof: Z_IDENTIFIER PLUS UNPACK
 ##
 ## Ends in an error in state: 287.
 ##
-## f_arith_expression -> f_arith_expression PLUS . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression infixop . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## f_arith_expression PLUS 
+## f_arith_expression infixop 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 f_expression_eof: Z_IDENTIFIER RPAREN 
 ##
-## Ends in an error in state: 387.
+## Ends in an error in state: 386.
 ##
 ## f_expression_eof -> f_expression . EOF [ # ]
 ##
@@ -1398,7 +1411,7 @@ f_expression_eof: Z_IDENTIFIER RPAREN
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
-## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 289, spurious reduction of production f_arith_expression -> f_app_expression 
 ## In state 283, spurious reduction of production f_expression -> f_arith_expression 
 ##
 
@@ -1406,12 +1419,12 @@ f_expression_eof: Z_IDENTIFIER RPAREN
 
 f_expression_eof: Z_IDENTIFIER TIMES UNPACK 
 ##
-## Ends in an error in state: 284.
+## Ends in an error in state: 287.
 ##
-## f_arith_expression -> f_arith_expression TIMES . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
+## f_arith_expression -> f_arith_expression infixop . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## f_arith_expression TIMES 
+## f_arith_expression infixop 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1444,7 +1457,7 @@ f_expression_eof: Z_IDENTIFIER Z_IDENTIFIER UNPACK
 
 component_eof: LPAREN LBRACKET BALLOC REGISTER COMMA Z_IDENTIFIER 
 ##
-## Ends in an error in state: 328.
+## Ends in an error in state: 327.
 ##
 ## single_instruction -> BALLOC register COMMA . nat [ SEMICOLON ]
 ##
@@ -1456,7 +1469,7 @@ component_eof: LPAREN LBRACKET BALLOC REGISTER COMMA Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET BALLOC REGISTER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 327.
+## Ends in an error in state: 326.
 ##
 ## single_instruction -> BALLOC register . COMMA nat [ SEMICOLON ]
 ##
@@ -1468,7 +1481,7 @@ component_eof: LPAREN LBRACKET BALLOC REGISTER Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET BALLOC Z_IDENTIFIER 
 ##
-## Ends in an error in state: 326.
+## Ends in an error in state: 325.
 ##
 ## single_instruction -> BALLOC . register COMMA nat [ SEMICOLON ]
 ##
@@ -1480,7 +1493,7 @@ component_eof: LPAREN LBRACKET BALLOC Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET BNZ REGISTER COMMA UNPACK 
 ##
-## Ends in an error in state: 324.
+## Ends in an error in state: 323.
 ##
 ## single_instruction -> BNZ register COMMA . small_value [ SEMICOLON ]
 ##
@@ -1492,7 +1505,7 @@ component_eof: LPAREN LBRACKET BNZ REGISTER COMMA UNPACK
 
 component_eof: LPAREN LBRACKET BNZ REGISTER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 323.
+## Ends in an error in state: 322.
 ##
 ## single_instruction -> BNZ register . COMMA small_value [ SEMICOLON ]
 ##
@@ -1504,7 +1517,7 @@ component_eof: LPAREN LBRACKET BNZ REGISTER Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET BNZ Z_IDENTIFIER 
 ##
-## Ends in an error in state: 322.
+## Ends in an error in state: 321.
 ##
 ## single_instruction -> BNZ . register COMMA small_value [ SEMICOLON ]
 ##
@@ -1516,7 +1529,7 @@ component_eof: LPAREN LBRACKET BNZ Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET CALL UNPACK 
 ##
-## Ends in an error in state: 315.
+## Ends in an error in state: 314.
 ##
 ## final_instruction -> CALL . small_value LBRACE stack_typing COMMA return_marker RBRACE [ SEMICOLON RBRACKET ]
 ##
@@ -1528,7 +1541,7 @@ component_eof: LPAREN LBRACKET CALL UNPACK
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE UNPACK 
 ##
-## Ends in an error in state: 317.
+## Ends in an error in state: 316.
 ##
 ## final_instruction -> CALL small_value LBRACE . stack_typing COMMA return_marker RBRACE [ SEMICOLON RBRACKET ]
 ##
@@ -1540,7 +1553,7 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE UNPACK
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA REGISTER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 320.
+## Ends in an error in state: 319.
 ##
 ## final_instruction -> CALL small_value LBRACE stack_typing COMMA return_marker . RBRACE [ SEMICOLON RBRACKET ]
 ##
@@ -1552,7 +1565,7 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA REGIS
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA Z_IDENTIFIER 
 ##
-## Ends in an error in state: 319.
+## Ends in an error in state: 318.
 ##
 ## final_instruction -> CALL small_value LBRACE stack_typing COMMA . return_marker RBRACE [ SEMICOLON RBRACKET ]
 ##
@@ -1564,7 +1577,7 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA Z_IDE
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 318.
+## Ends in an error in state: 317.
 ##
 ## final_instruction -> CALL small_value LBRACE stack_typing . COMMA return_marker RBRACE [ SEMICOLON RBRACKET ]
 ##
@@ -1576,7 +1589,7 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER Z_IDENTIFIE
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER SEMICOLON 
 ##
-## Ends in an error in state: 316.
+## Ends in an error in state: 315.
 ##
 ## final_instruction -> CALL small_value . LBRACE stack_typing COMMA return_marker RBRACE [ SEMICOLON RBRACKET ]
 ##
@@ -1594,7 +1607,7 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER SEMICOLON
 
 component_eof: LPAREN LBRACKET HALT UNIT COMMA UNPACK 
 ##
-## Ends in an error in state: 312.
+## Ends in an error in state: 311.
 ##
 ## final_instruction -> HALT value_type COMMA . stack_typing bracereg [ SEMICOLON RBRACKET ]
 ##
@@ -1606,7 +1619,7 @@ component_eof: LPAREN LBRACKET HALT UNIT COMMA UNPACK
 
 component_eof: LPAREN LBRACKET HALT UNIT COMMA Z_IDENTIFIER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 313.
+## Ends in an error in state: 312.
 ##
 ## final_instruction -> HALT value_type COMMA stack_typing . bracereg [ SEMICOLON RBRACKET ]
 ##
@@ -1618,7 +1631,7 @@ component_eof: LPAREN LBRACKET HALT UNIT COMMA Z_IDENTIFIER Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET HALT UNIT Z_IDENTIFIER 
 ##
-## Ends in an error in state: 311.
+## Ends in an error in state: 310.
 ##
 ## final_instruction -> HALT value_type . COMMA stack_typing bracereg [ SEMICOLON RBRACKET ]
 ##
@@ -1630,7 +1643,7 @@ component_eof: LPAREN LBRACKET HALT UNIT Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET HALT Z_IDENTIFIER 
 ##
-## Ends in an error in state: 310.
+## Ends in an error in state: 309.
 ##
 ## final_instruction -> HALT . value_type COMMA stack_typing bracereg [ SEMICOLON RBRACKET ]
 ##
@@ -1690,7 +1703,7 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIE
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF LBRACE Z_IDENTIFIER RPAREN 
 ##
-## Ends in an error in state: 308.
+## Ends in an error in state: 307.
 ##
 ## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression . RBRACE [ SEMICOLON ]
 ##
@@ -1702,7 +1715,7 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIE
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 278, spurious reduction of production f_app_expression -> f_simple_expression 
-## In state 286, spurious reduction of production f_arith_expression -> f_app_expression 
+## In state 289, spurious reduction of production f_arith_expression -> f_app_expression 
 ## In state 283, spurious reduction of production f_expression -> f_arith_expression 
 ##
 
@@ -2129,7 +2142,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET Z_IDENTIFIER Z_IDENTIFI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET RPAREN Z_IDENTIFIER 
 ##
-## Ends in an error in state: 383.
+## Ends in an error in state: 382.
 ##
 ## component_eof -> component . EOF [ # ]
 ##
@@ -2141,7 +2154,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET Z_IDENTIFIER 
 ##
-## Ends in an error in state: 380.
+## Ends in an error in state: 379.
 ##
 ## component -> LPAREN instruction_sequence COMMA heap_fragment . RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
 ##
@@ -2153,7 +2166,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET UNPACK 
 ##
-## Ends in an error in state: 347.
+## Ends in an error in state: 346.
 ##
 ## heap_fragment -> LBRACKET . simple_heap_fragment RBRACKET [ RPAREN ]
 ##
@@ -2165,7 +2178,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET UNPACK
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON UNPACK 
 ##
-## Ends in an error in state: 369.
+## Ends in an error in state: 368.
 ##
 ## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON . stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
 ##
@@ -2177,7 +2190,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON Z_IDENTIFIER RBRACE REGISTER DOT Z_IDENTIFIER 
 ##
-## Ends in an error in state: 373.
+## Ends in an error in state: 372.
 ##
 ## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT . instruction_sequence [ RBRACKET COMMA ]
 ##
@@ -2189,7 +2202,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON Z_IDENTIFIER RBRACE REGISTER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 372.
+## Ends in an error in state: 371.
 ##
 ## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker . DOT instruction_sequence [ RBRACKET COMMA ]
 ##
@@ -2201,7 +2214,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON Z_IDENTIFIER RBRACE Z_IDENTIFIER 
 ##
-## Ends in an error in state: 371.
+## Ends in an error in state: 370.
 ##
 ## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE . return_marker DOT instruction_sequence [ RBRACKET COMMA ]
 ##
@@ -2213,7 +2226,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON Z_IDENTIFIER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 370.
+## Ends in an error in state: 369.
 ##
 ## heap_value -> mutability_annotation CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing . RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
 ##
@@ -2225,7 +2238,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE Z_IDENTIFIER 
 ##
-## Ends in an error in state: 367.
+## Ends in an error in state: 366.
 ##
 ## heap_value -> mutability_annotation CODE type_env LBRACE . simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
 ##
@@ -2237,7 +2250,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET Z_IDENTIFIER 
 ##
-## Ends in an error in state: 366.
+## Ends in an error in state: 365.
 ##
 ## heap_value -> mutability_annotation CODE type_env . LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
 ##
@@ -2249,7 +2262,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE Z_IDENTIFIER 
 ##
-## Ends in an error in state: 365.
+## Ends in an error in state: 364.
 ##
 ## heap_value -> mutability_annotation CODE . type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
 ##
@@ -2261,7 +2274,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE RANGLE COMMA UNPACK 
 ##
-## Ends in an error in state: 378.
+## Ends in an error in state: 377.
 ##
 ## separated_nonempty_list(COMMA,binding(location,heap_value)) -> binding(location,heap_value) COMMA . separated_nonempty_list(COMMA,binding(location,heap_value)) [ RBRACKET ]
 ##
@@ -2273,7 +2286,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE RANGLE Z_IDENTIFIER 
 ##
-## Ends in an error in state: 377.
+## Ends in an error in state: 376.
 ##
 ## separated_nonempty_list(COMMA,binding(location,heap_value)) -> binding(location,heap_value) . [ RBRACKET ]
 ## separated_nonempty_list(COMMA,binding(location,heap_value)) -> binding(location,heap_value) . COMMA separated_nonempty_list(COMMA,binding(location,heap_value)) [ RBRACKET ]
@@ -2286,7 +2299,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE UNPACK 
 ##
-## Ends in an error in state: 357.
+## Ends in an error in state: 356.
 ##
 ## tuple(word_value) -> LANGLE . loption(separated_nonempty_list(COMMA,word_value)) RANGLE [ RBRACKET COMMA ]
 ##
@@ -2298,7 +2311,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE Z_IDENTIFIER COMMA UNPACK 
 ##
-## Ends in an error in state: 359.
+## Ends in an error in state: 358.
 ##
 ## separated_nonempty_list(COMMA,word_value) -> word_value COMMA . separated_nonempty_list(COMMA,word_value) [ RANGLE ]
 ##
@@ -2310,7 +2323,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF LANGLE Z_IDENTIFIER SEMICOLON 
 ##
-## Ends in an error in state: 358.
+## Ends in an error in state: 357.
 ##
 ## separated_nonempty_list(COMMA,word_value) -> word_value . [ RANGLE ]
 ## separated_nonempty_list(COMMA,word_value) -> word_value . COMMA separated_nonempty_list(COMMA,word_value) [ RANGLE ]
@@ -2323,14 +2336,14 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 103, spurious reduction of production small_value -> simple_small_value 
-## In state 360, spurious reduction of production word_value -> small_value 
+## In state 359, spurious reduction of production word_value -> small_value 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF Z_IDENTIFIER 
 ##
-## Ends in an error in state: 356.
+## Ends in an error in state: 355.
 ##
 ## heap_value -> mutability_annotation . CODE type_env LBRACE simple_register_typing SEMICOLON stack_typing RBRACE return_marker DOT instruction_sequence [ RBRACKET COMMA ]
 ## heap_value -> mutability_annotation . tuple(word_value) [ RBRACKET COMMA ]
@@ -2343,7 +2356,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW Z_IDENTIFIER 
 ##
-## Ends in an error in state: 353.
+## Ends in an error in state: 352.
 ##
 ## binding(location,heap_value) -> location ARROW . heap_value [ RBRACKET COMMA ]
 ##
@@ -2355,7 +2368,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 352.
+## Ends in an error in state: 351.
 ##
 ## binding(location,heap_value) -> location . ARROW heap_value [ RBRACKET COMMA ]
 ##
@@ -2367,7 +2380,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTI
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA Z_IDENTIFIER 
 ##
-## Ends in an error in state: 346.
+## Ends in an error in state: 345.
 ##
 ## component -> LPAREN instruction_sequence COMMA . heap_fragment RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
 ##
@@ -2379,7 +2392,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET Z_IDENTIFIER 
 ##
-## Ends in an error in state: 345.
+## Ends in an error in state: 344.
 ##
 ## component -> LPAREN instruction_sequence . COMMA heap_fragment RPAREN [ Z_IDENTIFIER TIMES RPAREN RBRACE RANGLE PLUS PI OTHER_IDENTIFIER MINUS LPAREN LANGLE INTEGER FT E_IDENTIFIER EOF COMMA A_IDENTIFIER ]
 ##
@@ -2391,7 +2404,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RPAREN 
 ##
-## Ends in an error in state: 334.
+## Ends in an error in state: 333.
 ##
 ## simple_instruction_sequence -> final_instruction . option(SEMICOLON) [ RBRACKET ]
 ##
@@ -2410,7 +2423,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RPAREN
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER SEMICOLON Z_IDENTIFIER 
 ##
-## Ends in an error in state: 343.
+## Ends in an error in state: 342.
 ##
 ## instruction_sequence -> LBRACKET simple_instruction_sequence . RBRACKET [ RBRACKET COMMA ]
 ##
@@ -2659,7 +2672,7 @@ component_eof: LPAREN LBRACKET SALLOC Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET SFREE INTEGER SEMICOLON Z_IDENTIFIER 
 ##
-## Ends in an error in state: 332.
+## Ends in an error in state: 331.
 ##
 ## simple_instruction_sequence -> single_instruction SEMICOLON . simple_instruction_sequence [ RBRACKET ]
 ##
@@ -2671,7 +2684,7 @@ component_eof: LPAREN LBRACKET SFREE INTEGER SEMICOLON Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET SFREE INTEGER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 331.
+## Ends in an error in state: 330.
 ##
 ## simple_instruction_sequence -> single_instruction . SEMICOLON simple_instruction_sequence [ RBRACKET ]
 ##
@@ -2839,7 +2852,7 @@ component_eof: LPAREN LBRACKET ST Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET SUB REGISTER COMMA REGISTER COMMA UNPACK 
 ##
-## Ends in an error in state: 341.
+## Ends in an error in state: 340.
 ##
 ## single_instruction -> aop register COMMA register COMMA . small_value [ SEMICOLON ]
 ##
@@ -2851,7 +2864,7 @@ component_eof: LPAREN LBRACKET SUB REGISTER COMMA REGISTER COMMA UNPACK
 
 component_eof: LPAREN LBRACKET SUB REGISTER COMMA REGISTER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 340.
+## Ends in an error in state: 339.
 ##
 ## single_instruction -> aop register COMMA register . COMMA small_value [ SEMICOLON ]
 ##
@@ -2863,7 +2876,7 @@ component_eof: LPAREN LBRACKET SUB REGISTER COMMA REGISTER Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET SUB REGISTER COMMA Z_IDENTIFIER 
 ##
-## Ends in an error in state: 339.
+## Ends in an error in state: 338.
 ##
 ## single_instruction -> aop register COMMA . register COMMA small_value [ SEMICOLON ]
 ##
@@ -2875,7 +2888,7 @@ component_eof: LPAREN LBRACKET SUB REGISTER COMMA Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET SUB REGISTER Z_IDENTIFIER 
 ##
-## Ends in an error in state: 338.
+## Ends in an error in state: 337.
 ##
 ## single_instruction -> aop register . COMMA register COMMA small_value [ SEMICOLON ]
 ##
@@ -2887,7 +2900,7 @@ component_eof: LPAREN LBRACKET SUB REGISTER Z_IDENTIFIER
 
 component_eof: LPAREN LBRACKET SUB Z_IDENTIFIER 
 ##
-## Ends in an error in state: 337.
+## Ends in an error in state: 336.
 ##
 ## single_instruction -> aop . register COMMA register COMMA small_value [ SEMICOLON ]
 ##
