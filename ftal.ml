@@ -438,7 +438,7 @@ end = struct
     | [Ihalt (l,t,s,r)], QEnd (t',s') when not (s_eq s s') ->
       raise (TypeError ("Halt instruction stack doesn't match return marker: " ^ show_sigma s ^ " <> " ^ show_sigma s', l))
     | [Ihalt (l,t,s,r)], QEnd _ when not (s_eq s (get_stack context)) ->
-      raise (TypeError ("Halt instruction annotations don't match current stack: " ^ show_sigma s ^ " <> " ^ show_sigma (get_stack context), l))
+      raise (TypeError ("Halt instruction annotations don't match current stack: Expected " ^ show_sigma s ^ " but got " ^ show_sigma (get_stack context), l))
     | [Ihalt (l,t,s,r)], QEnd _ ->
       begin match List.Assoc.find (get_reg context) r with
         | Some t' when t_eq t t' -> ()

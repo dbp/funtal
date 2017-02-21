@@ -636,43 +636,6 @@ let test_blocks2_ty _ =
        (FTAL.FC (F.EApp (dummy_loc, blocks_2, [F.EInt (dummy_loc, 3)]))))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
-let test_ref1 _ =
-  assert_eint
-    (snd (F.stepn 50 (empty, ref_1)))
-    20
-
-let test_ref1_ty _ =
-  assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
-       (FTAL.FC ref_1))
-    (FTAL.FT F.TInt, TAL.SConcrete [])
-
-let test_ref2 _ =
-  assert_eint
-    (snd (F.stepn 50 (empty, ref_2)))
-    25
-
-let test_ref2_ty _ =
-  assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
-       (FTAL.FC ref_2))
-    (FTAL.FT F.TInt, TAL.SConcrete [])
-
-let test_profiling1 _ =
-  assert_eint
-    (snd (F.stepn 70 (empty, profiling_1)))
-    2
-
-
-let test_profiling1_ty _ =
-  assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
-       (FTAL.FC profiling_1))
-    (FTAL.FT F.TInt, TAL.SConcrete [])
-
 let test_ft_factorial_t_ty _ =
   let (l, h) = factorial_t' in
   let ((h',_,_),e) = FTAL.ft (F.TArrow ([F.TInt], F.TInt)) l (h,[],[]) in
@@ -702,10 +665,6 @@ let test_examples _ =
   assert_roundtrip_f Examples.factorial_t;
   assert_roundtrip_f Examples.blocks_1;
   assert_roundtrip_f Examples.blocks_2;
-  assert_roundtrip_f Examples.with_ref;
-  (* (* profiling_1 uses empty applications, which have no syntax *)
-  assert_roundtrip_f Examples.profiling_1;
-  *)
   assert_roundtrip_c Examples.call_to_call;
   assert_roundtrip_f Examples.higher_order;
   ()
@@ -766,12 +725,6 @@ let suite = "FTAL evaluations" >:::
               "TAL(1block): (lam x. x + 2)3 : int" >:: test_blocks1_ty;
               "TAL(2blocks): (lam x. x + 2)3 = 5" >:: test_blocks2;
               "TAL(2blocks): (lam x. x + 2)3 : int" >:: test_blocks2_ty;
-              "REF: r = ref 1; r := 20; !r = 20" >:: test_ref1;
-              (* "REF: r = ref 1; r := 20; !r : int" >:: test_ref1_ty; *)
-              "REF: r = ref 1; r := 20; r := !r + 5; !r = 25" >:: test_ref2;
-              (* "REF: r = ref 1; r := 20; r := !r + 5; !r : int" >:: test_ref2_ty; *)
-              "PROFILING_1 = 2" >:: test_profiling1;
-              (* "PROFILING_1 : int" >:: test_profiling1_ty; *)
               "FT: factorial : int -> int" >:: test_ft_factorial_t_ty;
               "Example roundtrips" >:: test_examples;
             ]
