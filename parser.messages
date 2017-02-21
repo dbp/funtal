@@ -1436,69 +1436,69 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA UNPACK
 ##
 ## Ends in an error in state: 192.
 ##
-## single_instruction -> IMPORT register COMMA . stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register COMMA . stack_typing AS stack_typing_variable COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## IMPORT register COMMA 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
-we parsed "import <register>," so far and expect a stack variable.
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
+we parsed "import <register>," so far and expect a stack typing.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS UNPACK 
 ##
 ## Ends in an error in state: 194.
 ##
-## single_instruction -> IMPORT register COMMA stack_typing_variable AS . stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register COMMA stack_typing AS . stack_typing_variable COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
-## IMPORT register COMMA stack_typing_variable AS 
+## IMPORT register COMMA stack_typing AS 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
-we parsed "import <register>, <stack variable> as" so far and expect
-a stack typing.
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
+we parsed "import <register>, <stack typing> as" so far and expect
+a stack variable.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA UNPACK 
 ##
 ## Ends in an error in state: 196.
 ##
-## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA . f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register COMMA stack_typing AS stack_typing_variable COMMA . f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
-## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA 
+## IMPORT register COMMA stack_typing AS stack_typing_variable COMMA 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
-we parsed "import <register>, <stack variable> as <stack typing>," so far and expect
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
+we parsed "import <register>, <stack typing> as <stack variable>," so far and expect
 a type.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF LBRACE UNPACK 
 ##
 ## Ends in an error in state: 229.
 ##
-## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE . f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register COMMA stack_typing AS stack_typing_variable COMMA f_type TF LBRACE . f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
-## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE 
+## IMPORT register COMMA stack_typing AS stack_typing_variable COMMA f_type TF LBRACE 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
-we parsed "import <register>, <stack variable> as <stack typing>,
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
+we parsed "import <register>, <stack typing> as <stack variable>,
 <type> TF{" so far and expect a F expression.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF LBRACE Z_IDENTIFIER RPAREN 
 ##
 ## Ends in an error in state: 309.
 ##
-## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression . RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register COMMA stack_typing AS stack_typing_variable COMMA f_type TF LBRACE f_expression . RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
-## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression 
+## IMPORT register COMMA stack_typing AS stack_typing_variable COMMA f_type TF LBRACE f_expression 
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -1510,102 +1510,101 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIE
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
 we parsed
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr>"
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr>"
 so far and expect a closing bracket "}".
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF Z_IDENTIFIER 
 ##
 ## Ends in an error in state: 228.
 ##
-## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF . LBRACE f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register COMMA stack_typing AS stack_typing_variable COMMA f_type TF . LBRACE f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
-## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF 
+## IMPORT register COMMA stack_typing AS stack_typing_variable COMMA f_type TF 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
 we parsed
-"import <register>, <stack variable> as <stack typing>, <type> TF" so
+"import <register>, <stack typing> as <stack variable>, <type> TF" so
 far and expect a bracketed F expression "{ <expr> }".
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER Z_IDENTIFIER 
 ##
 ## Ends in an error in state: 227.
 ##
-## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type . TF LBRACE f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register COMMA stack_typing AS stack_typing_variable COMMA f_type . TF LBRACE f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
-## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type 
+## IMPORT register COMMA stack_typing AS stack_typing_variable COMMA f_type 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
 we parsed
-"import <register>, <stack variable> as <stack typing>, <type>" so far
+"import <register>, <stack typing> as <stack variable>, <type>" so far
 and expect F expression within a boundary "TF{ <expr> }".
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER Z_IDENTIFIER 
 ##
 ## Ends in an error in state: 195.
 ##
-## single_instruction -> IMPORT register COMMA stack_typing_variable AS stack_typing . COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register COMMA stack_typing AS stack_typing_variable . COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
-## IMPORT register COMMA stack_typing_variable AS stack_typing 
+## IMPORT register COMMA stack_typing AS stack_typing_variable 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
 we parsed
-"import <register>, <stack variable> as <stack typing>" so far
+"import <register>, <stack typing> as <stack variable>" so far
 and expect a comma "," followed by a type.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER Z_IDENTIFIER 
 ##
 ## Ends in an error in state: 193.
 ##
-## single_instruction -> IMPORT register COMMA stack_typing_variable . AS stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register COMMA stack_typing . AS stack_typing_variable COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
-## IMPORT register COMMA stack_typing_variable 
+## IMPORT register COMMA stack_typing 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
-we parsed "import <register>, <stack variable>" and expect the "as"
-keyword followed by a stack typing.
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
+we parsed "import <register>, <stack typing>" and expect the "as"
+keyword followed by a stack variable.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER Z_IDENTIFIER 
 ##
 ## Ends in an error in state: 191.
 ##
-## single_instruction -> IMPORT register . COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT register . COMMA stack_typing AS stack_typing_variable COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## IMPORT register 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
 we parsed "import <register>" and expect the binding of a stack typing
-to a start variable, "<stack variable> as <stack typing>" -- don't ask
-me about the order.
+to a start variable, "<stack typing> as <stack variable>".
 
 component_eof: LPAREN LBRACKET IMPORT Z_IDENTIFIER 
 ##
 ## Ends in an error in state: 190.
 ##
-## single_instruction -> IMPORT . register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
+## single_instruction -> IMPORT . register COMMA stack_typing AS stack_typing_variable COMMA f_type TF LBRACE f_expression RBRACE [ SEMICOLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## IMPORT 
 ##
 
 Parsing an import instruction
-"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+"import <register>, <stack typing> as <stack variable>, <type> TF{ <expr> }",
 we parsed the "import" keyword so far and expect the register in which
 to store the imported value.
 
