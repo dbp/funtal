@@ -1,34 +1,36 @@
 ## Install via opam
 
 SETUP:
-   - install opam, and ocaml 4.03
-   - `make install-deps`
-     (if this were to fail, see the local `opam` file for dependencies)
+
+- install opam, and ocaml 4.03
+- `make install-deps`
+  (if this were to fail, see the local `opam` file for dependencies)
 
 BUILD:
 
-    - `make`
+- `make`
 
 EDITOR:
 
-    - Open `artifact/index.html` in a browser.
+- Open `artifact/index.html` in a browser.
 
 RUN TESTS:
 
-    - `./test.native`
+- `./test.native`
 
 
 ## Install via docker
 
 SETUP
-    - install docker
-    - `docker build -t funtal .`
+
+- install docker
+- `docker build -t funtal .`
 
 EDITOR:
 
-    - Copy built javascript file: `docker run --rm funtal cat /funtal/artifact/web.js > artifact/web.js`
-    - Open `artifact/index.html` in a browser.
+- Copy built javascript file: `docker run --rm funtal cat /funtal/artifact/web.js > artifact/web.js`
+- Open `artifact/index.html` in a browser.
 
 RUN TESTS:
 
-   - `docker run funtal`
+- `docker run funtal`
