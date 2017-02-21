@@ -2288,7 +2288,9 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET
 ## LPAREN instruction_sequence COMMA heap_fragment 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a TAL component "( [<instructions>], [<heap fragment>] )", we
+parsed "( [<instructions>], [<heap fragment>]" so far and expect
+a closing parenthesis ")".
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET UNPACK 
 ##
@@ -2300,7 +2302,8 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET UNPACK
 ## LBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We parsed an opening parenthesis "[" so far and expect a heap fragment,
+for example "[]" or "[l1 -> box <1>, l2 -> ref <2, 3>]".
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET Z_IDENTIFIER ARROW REF CODE LBRACKET RBRACKET LBRACE SEMICOLON UNPACK 
 ##
