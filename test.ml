@@ -116,7 +116,7 @@ let test_import_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC
-          (tal_comp "([import r1, z as *, int TF{10}; halt int, * {r1}], [])")))
+          (tal_comp "([import r1, * as z, int TF{10}; halt int, * {r1}], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 
@@ -125,7 +125,7 @@ let test_import_ty_exc _ =
     (fun _ -> FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC
-          (tal_comp "([import r1, z as *, int TF{()}; halt int, * {r1}], [])")))
+          (tal_comp "([import r1, * as z, int TF{()}; halt int, * {r1}], [])")))
 
 let test_import_ty_exc2 _ =
   assert_raises_typeerror
@@ -151,7 +151,7 @@ let test_import_stk_ty _ =
     (FTAL.tc
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
        (FTAL.TC (tal_comp "([salloc 3;
-                             import r1, z' as unit::*, int TF{
+                             import r1, unit::* as z', int TF{
                                FT [int, unit::z'] (
                                  [protect unit::, z;
                                   mv r1, 10;

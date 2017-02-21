@@ -2010,7 +2010,7 @@ end = struct
     | Iimport(_,r,z,s,t,e) ->
       !^"import " ^^ args [
         !^r;
-        !^z ^^ space ^^ !^"as" ^^ space ^^ p_s s;
+        p_s s ^^ space ^^ !^"as" ^^ space ^^ !^z;
         FP.p_t t ^^ space ^^ !^ "TF" ^^ (braces @@ align @@ FP.p_exp e);
       ]
   and p_instruction_sequence (is : instr list) : document =

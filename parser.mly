@@ -312,8 +312,9 @@ single_instruction:
   { Iunpack (cpos $startpos, alpha, rd, u) }
 | UNFOLD rd=register COMMA u=small_value
   { Iunfold (cpos $startpos, rd, u) }
-| IMPORT r=register COMMA zeta=stack_typing_variable
-  AS sigma=stack_typing COMMA tau=f_type TF LBRACE e=f_expression RBRACE
+| IMPORT r=register
+  COMMA sigma=stack_typing AS zeta=stack_typing_variable
+  COMMA tau=f_type TF LBRACE e=f_expression RBRACE
   { Iimport (cpos $startpos, r, zeta, sigma, tau, e) }
 | PROTECT phi=stack_prefix COMMA zeta=stack_typing_variable
   { Iprotect (cpos $startpos,phi, zeta) }

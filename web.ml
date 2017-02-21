@@ -58,7 +58,7 @@ let omega = {|
 |}
 
 let import = {|
-FT [int, ?] ([import r1, z as *, int TF{10}; halt int, * {r1}], [])
+FT [int, ?] ([import r1, * as z, int TF{10}; halt int, * {r1}], [])
 |}
 
 let higher_order = Ftal.F.show_exp Examples.higher_order
