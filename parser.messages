@@ -580,7 +580,7 @@ Parsing the type of a heap code block
 "forall [<type-env>]. {<register-typing>; <stack-typing>} <return-marker>",
 we parsed
 "forall [<type-env>]. {<register-typing>;" so far and expect a stack typing,
-for example "int :: unit :: z".
+for example "int :: unit :: z" or "*".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE SEMICOLON Z_IDENTIFIER RBRACE Z_IDENTIFIER 
 ##
@@ -597,7 +597,7 @@ Parsing the type of a heap code block
 we parsed "forall [<type-env>]. {<register-typing>; <stack-typing>}"
 so far and expect a return marker, that is either:
 - a register "r1",
-- an integer "3",
+- a stack position "3",
 - a return variable "e",
 - the end marker "end {<type>; <stack-typing>}" or
 - the cross-language marker "out".
@@ -1290,8 +1290,8 @@ f_expression_eof: PI INTEGER LPAREN Z_IDENTIFIER RBRACE
 ## In state 283, spurious reduction of production f_expression -> f_arith_expression 
 ##
 
-Parsing a projection expression "pi <nat> (<expr>)", we parsed "pi
-<nat> (<expr>" so far and expect a closing parenthesis.
+Parsing a projection expression "pi <nat> (<expr>)", we parsed
+"pi <nat> (<expr>" so far and expect a closing parenthesis.
 
 f_expression_eof: PI INTEGER Z_IDENTIFIER 
 ##
@@ -1303,8 +1303,8 @@ f_expression_eof: PI INTEGER Z_IDENTIFIER
 ## PI nat 
 ##
 
-Parsing a projection expression "pi <nat> (<expr>)", we parsed "pi
-<nat>" so far and expect an opening parenthesis.
+Parsing a projection expression "pi <nat> (<expr>)", we parsed
+"pi <nat>" so far and expect an opening parenthesis.
 
 f_expression_eof: PI Z_IDENTIFIER 
 ##
@@ -1330,7 +1330,7 @@ f_expression_eof: UNFOLD UNPACK
 ## UNFOLD 
 ##
 
-Parsing an unfold expression "unfold <expr>", we parsed the "unfold"
+Parsing an unfold expression "unfold <expr>", we parsed the "unfold"
 keyword and expect an expression.
 
 f_expression_eof: UNPACK 
@@ -1383,7 +1383,8 @@ f_expression_eof: Z_IDENTIFIER PLUS MINUS INTEGER Z_IDENTIFIER
 ## f_arith_expression infixop f_arith_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an arithmetic expression, we expect an infix operator "+", "-"
+or "*", or the end of the expression.
 
 f_expression_eof: Z_IDENTIFIER PLUS UNPACK 
 ##
@@ -1395,7 +1396,8 @@ f_expression_eof: Z_IDENTIFIER PLUS UNPACK
 ## f_arith_expression infixop 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an arithmetic expression, we parsed "<expr> <op>" so far and
+expect another expression.
 
 f_expression_eof: Z_IDENTIFIER RPAREN 
 ##
@@ -1415,7 +1417,7 @@ f_expression_eof: Z_IDENTIFIER RPAREN
 ## In state 283, spurious reduction of production f_expression -> f_arith_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We expect a valid expression.
 
 f_expression_eof: Z_IDENTIFIER TIMES UNPACK 
 ##
@@ -1427,7 +1429,8 @@ f_expression_eof: Z_IDENTIFIER TIMES UNPACK
 ## f_arith_expression infixop 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an arithmetic expression, we parsed "<expr> <op>" so far and
+expect another expression.
 
 f_expression_eof: Z_IDENTIFIER UNPACK 
 ##
@@ -1440,7 +1443,7 @@ f_expression_eof: Z_IDENTIFIER UNPACK
 ## f_simple_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We expect a valid expression.
 
 f_expression_eof: Z_IDENTIFIER Z_IDENTIFIER UNPACK 
 ##
@@ -1453,7 +1456,7 @@ f_expression_eof: Z_IDENTIFIER Z_IDENTIFIER UNPACK
 ## f_simple_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We expect a valid expression.
 
 component_eof: LPAREN LBRACKET BALLOC REGISTER COMMA Z_IDENTIFIER 
 ##
@@ -1465,7 +1468,8 @@ component_eof: LPAREN LBRACKET BALLOC REGISTER COMMA Z_IDENTIFIER
 ## BALLOC register COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an allocation instruction "balloc <reg>, <nat>;",
+we parsed "balloc <reg>," so far and expect a number.
 
 component_eof: LPAREN LBRACKET BALLOC REGISTER Z_IDENTIFIER 
 ##
@@ -1477,7 +1481,8 @@ component_eof: LPAREN LBRACKET BALLOC REGISTER Z_IDENTIFIER
 ## BALLOC register 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a tuple-allocation instruction "balloc <reg>, <nat>;", we
+parsed "balloc <reg>" so far and expect a comma followed by a number.
 
 component_eof: LPAREN LBRACKET BALLOC Z_IDENTIFIER 
 ##
@@ -1489,7 +1494,9 @@ component_eof: LPAREN LBRACKET BALLOC Z_IDENTIFIER
 ## BALLOC 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a tuple-allocation instruction "balloc <reg>, <nat>;", we
+parsed the "balloc" keyword and expect a register argument: "r1",
+"r2"... "r7" or "ra".
 
 component_eof: LPAREN LBRACKET BNZ REGISTER COMMA UNPACK 
 ##
@@ -1501,7 +1508,8 @@ component_eof: LPAREN LBRACKET BNZ REGISTER COMMA UNPACK
 ## BNZ register COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a conditional jump instruction "bnz <reg>, <value>;", we
+parsed "bnz <reg>," so far and expect a value, for example "1".
 
 component_eof: LPAREN LBRACKET BNZ REGISTER Z_IDENTIFIER 
 ##
@@ -1513,7 +1521,8 @@ component_eof: LPAREN LBRACKET BNZ REGISTER Z_IDENTIFIER
 ## BNZ register 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a conditional jump instruction "bnz <reg>, <value>;", we
+parsed "bnz <reg>" so far and expect a comma ",".
 
 component_eof: LPAREN LBRACKET BNZ Z_IDENTIFIER 
 ##
@@ -1525,7 +1534,9 @@ component_eof: LPAREN LBRACKET BNZ Z_IDENTIFIER
 ## BNZ 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a conditional jump instruction "bnz <reg>, <value>;", we
+parsed the "bnz" keyword so far and expect a register "r1",
+"r2"... "r7" or "ra".
 
 component_eof: LPAREN LBRACKET CALL UNPACK 
 ##
@@ -1537,7 +1548,9 @@ component_eof: LPAREN LBRACKET CALL UNPACK
 ## CALL 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a call instruction
+"call <value> {<stack-typing>, <return-marker>}", we parsed the "call"
+keyword so far and expect a value, for example "ra".
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE UNPACK 
 ##
@@ -1549,7 +1562,10 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE UNPACK
 ## CALL small_value LBRACE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a call instruction
+"call <value> {<stack-typing>, <return-marker>}", we parsed
+"call <value> {" so far and expect a stack typing, for example "z" or
+"int :: *".
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA REGISTER Z_IDENTIFIER 
 ##
@@ -1561,7 +1577,10 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA REGIS
 ## CALL small_value LBRACE stack_typing COMMA return_marker 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a call instruction
+"call <value> {<stack-typing>, <return-marker>}", we parsed
+"call <value> {<stack-typing>, <return-marker>" so far and expect
+a closing brace "}".
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA Z_IDENTIFIER 
 ##
@@ -1573,7 +1592,14 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER COMMA Z_IDE
 ## CALL small_value LBRACE stack_typing COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a call instruction
+"call <value> {<stack-typing>, <return-marker>}", we parsed
+"call <value> {<stack-typing>," so far and expect a return marker, that is either:
+- a register "r1",
+- a stack position "3",
+- a return variable "e",
+- the end marker "end {<type>; <stack-typing>}" or
+- the cross-language marker "out".
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -1585,7 +1611,10 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER LBRACE Z_IDENTIFIER Z_IDENTIFIE
 ## CALL small_value LBRACE stack_typing 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a call instruction
+"call <value> {<stack-typing>, <return-marker>}", we parsed
+"call <value> {<stack-typing>" so far and expect a comma "," followed
+by a return marker.
 
 component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER SEMICOLON 
 ##
@@ -1603,7 +1632,9 @@ component_eof: LPAREN LBRACKET CALL Z_IDENTIFIER SEMICOLON
 ## In state 103, spurious reduction of production small_value -> simple_small_value 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a call instruction
+"call <value> {<stack-typing>, <return-marker>}", we parsed
+"call <value>" so far and expect an opening brace "{".
 
 component_eof: LPAREN LBRACKET HALT UNIT COMMA UNPACK 
 ##
@@ -1615,7 +1646,9 @@ component_eof: LPAREN LBRACKET HALT UNIT COMMA UNPACK
 ## HALT value_type COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a halt instruction "halt <type>, <stack typing> {<register>}", we
+parsed "halt <type>, <stack typing> {<register>}" so far and expect a
+stack typing.
 
 component_eof: LPAREN LBRACKET HALT UNIT COMMA Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -1627,7 +1660,9 @@ component_eof: LPAREN LBRACKET HALT UNIT COMMA Z_IDENTIFIER Z_IDENTIFIER
 ## HALT value_type COMMA stack_typing 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a halt instruction "halt <type>, <stack typing> {<register>}", we
+parsed "halt <type>, <stack typing>" so far and expect an opening brace "{",
+followed by the result register, for example "r1".
 
 component_eof: LPAREN LBRACKET HALT UNIT Z_IDENTIFIER 
 ##
@@ -1639,7 +1674,9 @@ component_eof: LPAREN LBRACKET HALT UNIT Z_IDENTIFIER
 ## HALT value_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a halt instruction "halt <type>, <stack typing> {<register>}", we
+parsed "halt <type>" so far and expect a comma "," followed by the result
+stack typing, for example "int :: z" or "*".
 
 component_eof: LPAREN LBRACKET HALT Z_IDENTIFIER 
 ##
@@ -1651,7 +1688,8 @@ component_eof: LPAREN LBRACKET HALT Z_IDENTIFIER
 ## HALT 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a halt instruction "halt <type>, <stack typing> {<register>}", we
+parsed the "halt" keyword and expect the result type, for example "int".
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA UNPACK 
 ##
@@ -1663,7 +1701,9 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA UNPACK
 ## IMPORT register COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed "import <register>," so far and expect a stack variable.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS UNPACK 
 ##
@@ -1675,7 +1715,10 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS UNPACK
 ## IMPORT register COMMA stack_typing_variable AS 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed "import <register>, <stack variable> as" so far and expect
+a stack typing.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA UNPACK 
 ##
@@ -1687,7 +1730,10 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIE
 ## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed "import <register>, <stack variable> as <stack typing>," so far and expect
+a type.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF LBRACE UNPACK 
 ##
@@ -1699,7 +1745,10 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIE
 ## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF LBRACE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed "import <register>, <stack variable> as <stack typing>,
+<type> TF{" so far and expect a F expression.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF LBRACE Z_IDENTIFIER RPAREN 
 ##
@@ -1719,7 +1768,11 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIE
 ## In state 283, spurious reduction of production f_expression -> f_arith_expression 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr>"
+so far and expect a closing bracket "}".
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER TF Z_IDENTIFIER 
 ##
@@ -1731,7 +1784,11 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIE
 ## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type TF 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed
+"import <register>, <stack variable> as <stack typing>, <type> TF" so
+far and expect a bracketed F expression "{ <expr> }".
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER COMMA Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -1743,7 +1800,11 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIE
 ## IMPORT register COMMA stack_typing_variable AS stack_typing COMMA f_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed
+"import <register>, <stack variable> as <stack typing>, <type>" so far
+and expect F expression within a boundary "TF{ <expr> }".
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -1755,7 +1816,11 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER AS Z_IDENTIFIE
 ## IMPORT register COMMA stack_typing_variable AS stack_typing 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed
+"import <register>, <stack variable> as <stack typing>" so far
+and expect a comma "," followed by a type.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -1767,7 +1832,10 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER COMMA Z_IDENTIFIER Z_IDENTIFIER
 ## IMPORT register COMMA stack_typing_variable 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed "import <register>, <stack variable>" and expect the "as"
+keyword followed by a stack typing.
 
 component_eof: LPAREN LBRACKET IMPORT REGISTER Z_IDENTIFIER 
 ##
@@ -1779,7 +1847,11 @@ component_eof: LPAREN LBRACKET IMPORT REGISTER Z_IDENTIFIER
 ## IMPORT register 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed "import <register>" and expect the binding of a stack typing
+to a start variable, "<stack variable> as <stack typing>" -- don't ask
+me about the order.
 
 component_eof: LPAREN LBRACKET IMPORT Z_IDENTIFIER 
 ##
@@ -1791,7 +1863,10 @@ component_eof: LPAREN LBRACKET IMPORT Z_IDENTIFIER
 ## IMPORT 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an import instruction
+"import <register>, <stack variable> as <stack typing>, <type> TF{ <expr> }",
+we parsed the "import" keyword so far and expect the register in which
+to store the imported value.
 
 component_eof: LPAREN LBRACKET JMP FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER RPAREN UNPACK 
 ##
@@ -1803,7 +1878,9 @@ component_eof: LPAREN LBRACKET JMP FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER 
 ## FOLD LPAREN mu_type RPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a folded value "fold <mu-type> <value>", we have parsed
+"fold <mu-type>" and now expect an assembly value, for example a register
+"r1".
 
 component_eof: LPAREN LBRACKET JMP FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -1815,7 +1892,8 @@ component_eof: LPAREN LBRACKET JMP FOLD LPAREN MU A_IDENTIFIER DOT A_IDENTIFIER 
 ## FOLD LPAREN mu_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a folded value "fold <mu-type> <value>", we have parsed
+"fold (<mu-type>" and now expect a closing parenthesis.
 
 component_eof: LPAREN LBRACKET JMP FOLD LPAREN Z_IDENTIFIER 
 ##
@@ -1827,7 +1905,8 @@ component_eof: LPAREN LBRACKET JMP FOLD LPAREN Z_IDENTIFIER
 ## FOLD LPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a folded value "fold <mu type> <value>", we have parsed "fold ("
+and now expect a type of the form "mu a . tau".
 
 component_eof: LPAREN LBRACKET JMP FOLD MU A_IDENTIFIER DOT A_IDENTIFIER UNPACK 
 ##
@@ -1839,7 +1918,9 @@ component_eof: LPAREN LBRACKET JMP FOLD MU A_IDENTIFIER DOT A_IDENTIFIER UNPACK
 ## FOLD mu_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a folded value "fold <mu type> <value>", we have parsed
+"fold <mu-type>" and now expect an assembly value, for example
+a register "r1".
 
 component_eof: LPAREN LBRACKET JMP FOLD Z_IDENTIFIER 
 ##
@@ -1852,7 +1933,9 @@ component_eof: LPAREN LBRACKET JMP FOLD Z_IDENTIFIER
 ## FOLD 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a folded value "fold <mu type> <value>", we have parsed the
+"fold" keyword and now expect a recursive type of the form
+"mu <variable>. <type>", for example "mu a . int".
 
 component_eof: LPAREN LBRACKET JMP LPAREN UNPACK 
 ##
@@ -1865,7 +1948,8 @@ component_eof: LPAREN LBRACKET JMP LPAREN UNPACK
 ## LPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a TAL value, we parsed an opening parenthesis "(" and expect
+a value, or a closing parenthesis ")" to form the unit value "()".
 
 component_eof: LPAREN LBRACKET JMP LPAREN Z_IDENTIFIER SEMICOLON 
 ##
@@ -1883,7 +1967,8 @@ component_eof: LPAREN LBRACKET JMP LPAREN Z_IDENTIFIER SEMICOLON
 ## In state 103, spurious reduction of production small_value -> simple_small_value 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a TAL value, we parsed "( <value>" so far and expect a closing
+parenthesis ")".
 
 component_eof: LPAREN LBRACKET JMP MINUS Z_IDENTIFIER 
 ##
@@ -1895,7 +1980,8 @@ component_eof: LPAREN LBRACKET JMP MINUS Z_IDENTIFIER
 ## MINUS 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a TAL value, we parsed a unary negation "-" and expect an
+integer to form a negative integer literal such as "-3".
 
 component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA UNPACK 
 ##
@@ -1908,7 +1994,10 @@ component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA UNPACK
 ## PACK LANGLE value_type COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a packed value
+"pack < <type>, <value> > as (exists <var> . <type>)", we parsed
+"pack < <type>," so far and expect a value. A complete example of
+packed value is "pack <int, 1> as (exists a . a)".
 
 component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE AS LPAREN EXISTS A_IDENTIFIER DOT A_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -1920,7 +2009,10 @@ component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE AS
 ## PACK LANGLE value_type COMMA small_value RANGLE AS LPAREN existential_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a packed value
+"pack < <type>, <value> > as (exists <var> . <type>)", we parsed
+"pack < <type>, <value> > as (exists <var> . <type>" so far and expect
+a closing parentehsis.
 
 component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE AS LPAREN Z_IDENTIFIER 
 ##
@@ -1932,7 +2024,10 @@ component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE AS
 ## PACK LANGLE value_type COMMA small_value RANGLE AS LPAREN 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a packed value
+"pack < <type>, <value> > as (exists <var> . <type>)", we parsed
+"pack < <type>, <value> > as (" so far and expect
+an existential type, for example "exists a . <int, a>".
 
 component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE AS Z_IDENTIFIER 
 ##
@@ -1945,7 +2040,10 @@ component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE AS
 ## PACK LANGLE value_type COMMA small_value RANGLE AS 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a packed value
+"pack < <type>, <value> > as (exists <var> . <type>)", we parsed
+"pack < <type>, <value> > as" so far and expect
+an existential type, for example "(exists a . <int, a>)".
 
 component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE Z_IDENTIFIER 
 ##
@@ -1958,7 +2056,10 @@ component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER RANGLE Z_
 ## PACK LANGLE value_type COMMA small_value RANGLE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a packed value
+"pack < <type>, <value> > as (exists <var> . <type>)", we parsed
+"pack < <type>, <value> >" so far and expect the "as" keyword followed
+by an existential type, for example "as (exists a . <int, a>)".
 
 component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER SEMICOLON 
 ##
@@ -1977,7 +2078,10 @@ component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT COMMA Z_IDENTIFIER SEMICOLON
 ## In state 103, spurious reduction of production small_value -> simple_small_value 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a packed value
+"pack < <type>, <value> > as (exists <var> . <type>)", we parsed
+"pack < <type>, <value>" so far and expect a closing angle bracket
+">".
 
 component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT Z_IDENTIFIER 
 ##
@@ -1990,7 +2094,10 @@ component_eof: LPAREN LBRACKET JMP PACK LANGLE UNIT Z_IDENTIFIER
 ## PACK LANGLE value_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a packed value
+"pack < <type>, <value> > as (exists <var> . <type>)", we parsed
+"pack < <type>" so far and expect a comma "," followed by the value to
+pack.
 
 component_eof: LPAREN LBRACKET JMP PACK LANGLE Z_IDENTIFIER 
 ##
@@ -2003,7 +2110,9 @@ component_eof: LPAREN LBRACKET JMP PACK LANGLE Z_IDENTIFIER
 ## PACK LANGLE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a packed value
+"pack < <type>, <value> > as (exists <var> . <type>)", we parsed
+"pack < " so far and expect the type of the value to pack.
 
 component_eof: LPAREN LBRACKET JMP PACK Z_IDENTIFIER 
 ##
@@ -2016,7 +2125,10 @@ component_eof: LPAREN LBRACKET JMP PACK Z_IDENTIFIER
 ## PACK 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a packed value
+"pack < <type>, <value> > as (exists <var> . <type>)", we parsed
+the "pack" keyword so far and expect the type and value to pack,
+for example "< int, 1 >".
 
 component_eof: LPAREN LBRACKET JMP UNPACK 
 ##
@@ -2028,7 +2140,8 @@ component_eof: LPAREN LBRACKET JMP UNPACK
 ## JMP 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing a "jmp <value>" instruction, we parsed the "jmp" keyword and
+expect a TAL value.
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE UNIT SEMICOLON UNPACK 
 ##
@@ -2040,7 +2153,9 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE UNIT SEMICOL
 ## END LBRACE value_type SEMICOLON 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the "end { <type>; <stack typing> }" return marker,
+we parsed "end { <type>;" so far and expect a stack typing,
+for example "int :: z" or "*".
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE UNIT SEMICOLON Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -2052,7 +2167,8 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE UNIT SEMICOL
 ## END LBRACE value_type SEMICOLON stack_typing 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the "end { <type>; <stack typing> }" return marker, we parsed
+"end { <type>; <stack typing>" so far and expect a closing brace "}".
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE UNIT Z_IDENTIFIER 
 ##
@@ -2064,7 +2180,9 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE UNIT Z_IDENT
 ## END LBRACE value_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the "end { <type>; <stack typing> }" return marker, we parsed
+"end { <type>" so far and expect the symbol ";" followed by a stack
+typing.
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE Z_IDENTIFIER 
 ##
@@ -2076,7 +2194,8 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END LBRACE Z_IDENTIFIER
 ## END LBRACE 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the "end { <type>; <stack typing> }" return marker, we parsed
+"end {" so far and expect a return type.
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END Z_IDENTIFIER 
 ##
@@ -2088,7 +2207,9 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET END Z_IDENTIFIER
 ## END 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing the "end { <type>; <stack typing> }" return marker, we parsed
+the "end" keyword so far and expect the return type and stack typing,
+for example "{ int; unit :: * }".
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET UNIT Z_IDENTIFIER 
 ##
@@ -2101,7 +2222,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET UNIT Z_IDENTIFIER
 ## value_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We expect a TAL value type.
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET UNPACK 
 ##
@@ -2113,7 +2234,9 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET UNPACK
 ## simple_small_value LBRACKET 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an instantiation "<value> [ <type>, <type>... ]", we parsed
+"<value> [" and expect a TAL instantiation type, that is either
+a value type, a stack typing or a return marker.
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET Z_IDENTIFIER COMMA UNPACK 
 ##
@@ -2125,7 +2248,9 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET Z_IDENTIFIER COMMA UNPA
 ## type_instantiation COMMA 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an instantiation "<value> [ <type>, <type>... ]", we parsed
+a comma "," and expect a TAL instantiation type, that is either
+a value type, a stack typing or a return marker.
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET Z_IDENTIFIER Z_IDENTIFIER 
 ##
@@ -2138,7 +2263,8 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER LBRACKET Z_IDENTIFIER Z_IDENTIFI
 ## type_instantiation 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Parsing an instantiation "<value> [ <type>, <type>... ]", we parsed an
+instantiation type and expect a comma "," or a closing bracket "]".
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET RPAREN Z_IDENTIFIER 
 ##
@@ -2150,7 +2276,7 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET
 ## component 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+We parsed a complete component and expect nothing else.
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA LBRACKET RBRACKET Z_IDENTIFIER 
 ##
