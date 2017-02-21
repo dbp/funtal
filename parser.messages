@@ -1345,20 +1345,6 @@ f_expression_eof: UNPACK
 
 We expect a valid F expression.
 
-f_expression_eof: Z_IDENTIFIER MINUS MINUS INTEGER Z_IDENTIFIER 
-##
-## Ends in an error in state: 288.
-##
-## f_arith_expression -> f_arith_expression . infixop f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-## f_arith_expression -> f_arith_expression infixop f_arith_expression . [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-##
-## The known suffix of the stack is as follows:
-## f_arith_expression infixop f_arith_expression 
-##
-
-Parsing an arithmetic expression, we expect an infix operator "+", "-"
-or "*", or the end of the expression.
-
 f_expression_eof: Z_IDENTIFIER MINUS UNPACK 
 ##
 ## Ends in an error in state: 287.
@@ -1386,19 +1372,6 @@ f_expression_eof: Z_IDENTIFIER PLUS MINUS INTEGER Z_IDENTIFIER
 Parsing an arithmetic expression, we expect an infix operator "+", "-"
 or "*", or the end of the expression.
 
-f_expression_eof: Z_IDENTIFIER PLUS UNPACK 
-##
-## Ends in an error in state: 287.
-##
-## f_arith_expression -> f_arith_expression infixop . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-##
-## The known suffix of the stack is as follows:
-## f_arith_expression infixop 
-##
-
-Parsing an arithmetic expression, we parsed "<expr> <op>" so far and
-expect another expression.
-
 f_expression_eof: Z_IDENTIFIER RPAREN 
 ##
 ## Ends in an error in state: 386.
@@ -1418,19 +1391,6 @@ f_expression_eof: Z_IDENTIFIER RPAREN
 ##
 
 We expect a valid expression.
-
-f_expression_eof: Z_IDENTIFIER TIMES UNPACK 
-##
-## Ends in an error in state: 287.
-##
-## f_arith_expression -> f_arith_expression infixop . f_arith_expression [ TIMES RPAREN RBRACE RANGLE PLUS MINUS EOF COMMA ]
-##
-## The known suffix of the stack is as follows:
-## f_arith_expression infixop 
-##
-
-Parsing an arithmetic expression, we parsed "<expr> <op>" so far and
-expect another expression.
 
 f_expression_eof: Z_IDENTIFIER UNPACK 
 ##
@@ -2566,7 +2526,9 @@ component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET COMMA Z_IDENTIFIER
 ## LPAREN instruction_sequence COMMA 
 ##
 
-
+Parsing a component "( [<instructions>], [<heap fragment>] )", we
+parsed "( [<instructions>]," so far and expect a heap fragment,
+for example "[]" or "[l1 -> box <1>, l2 -> ref <2, 3>]".
 
 component_eof: LPAREN LBRACKET JMP Z_IDENTIFIER RBRACKET Z_IDENTIFIER 
 ##

@@ -143,7 +143,7 @@ let _ =
       let s = Js.to_string (get_editor ()) in
       Ftal.(FTAL.(
           try
-            match parse_report_loc Parser.f_expression_eof s with
+            match parse_report_loc Parse.f_expression_eof s with
             | `Success e -> begin
                 let _ = tc (default_context TAL.QOut) (FC e) in
                 hist := ((e, ([],[],[])), []);

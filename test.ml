@@ -1,7 +1,7 @@
 open OUnit2;;
 open Ftal;;
 open Examples;;
-let f_expr str = Parse.parse_string Parser.f_expression_eof str
+let f_expr str = Parse.parse_string Parse.f_expression_eof str
 
 let roundtrip ?source comp =
   let orig, roundtrip =
@@ -25,7 +25,7 @@ let roundtrip ?source comp =
   in
   write_source ();
   write_result ();
-  match Parse.parse_file Parser.component_eof roundtrip with
+  match Parse.parse_file Parse.component_eof roundtrip with
   | exception exn ->
     Printf.eprintf "%!\nRountrip failure %S %S%!\n" orig roundtrip;
     comp
@@ -34,7 +34,7 @@ let roundtrip ?source comp =
     roundtripped_comp
 
 let tal_comp str =
-  roundtrip ~source:str (Parse.parse_string Parser.component_eof str)
+  roundtrip ~source:str (Parse.parse_string Parse.component_eof str)
 
 let empty = ([],[],[])
 
@@ -642,8 +642,8 @@ let test_ft_factorial_t_ty _ =
 
 let test_examples _ =
   let assert_roundtrip_f fexpr =
-    let reparsed = Parse.parse_string Parser.f_expression_eof (Ftal.F.show_exp fexpr) in
-    let rereparsed = Parse.parse_string Parser.f_expression_eof (Ftal.F.show_exp reparsed) in
+    let reparsed = Parse.parse_string Parse.f_expression_eof (Ftal.F.show_exp fexpr) in
+    let rereparsed = Parse.parse_string Parse.f_expression_eof (Ftal.F.show_exp reparsed) in
     assert_equal reparsed rereparsed in
   let assert_roundtrip_c comp =
     let show_comp comp =
@@ -651,8 +651,8 @@ let test_examples _ =
       let buf = Buffer.create 123 in
       PPrintEngine.ToBuffer.pretty 0.8 80 buf doc;
       Buffer.contents buf in
-    let reparsed = Parse.parse_string Parser.component_eof (show_comp comp) in
-    let rereparsed = Parse.parse_string Parser.component_eof (show_comp reparsed) in
+    let reparsed = Parse.parse_string Parse.component_eof (show_comp comp) in
+    let rereparsed = Parse.parse_string Parse.component_eof (show_comp reparsed) in
     assert_equal reparsed rereparsed in
   assert_roundtrip_f Examples.factorial_f;
   assert_roundtrip_f Examples.factorial_t;

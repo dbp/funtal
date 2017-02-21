@@ -1,3 +1,12 @@
+(** Parse errors *)
+
+type parse_error =
+  | Lexing of string * Lexing.position
+  | Parsing of message option * Lexing.position * Lexing.position
+and message = string
+
+exception Error of parse_error
+
 (** Parsing error reporting *)
 
 let position {Lexing.pos_fname; pos_lnum; pos_cnum; pos_bol} =
@@ -18,9 +27,9 @@ let nth_line file line =
   with _ -> None
 
 let report_error lexbuf = function
-  | Parser.Error ->
-    let file, start_line, start_character = position lexbuf.Lexing.lex_start_p in
-    let _, curr_line, curr_character = position lexbuf.Lexing.lex_curr_p in
+  | Parsing (message, start_pos, end_pos) ->
+    let file, start_line, start_character = position start_pos in
+    let _, curr_line, curr_character = position end_pos in
     let open Printf in
     let lines =
       if curr_line = start_line
@@ -36,7 +45,11 @@ let report_error lexbuf = function
       | None -> ()
       | Some line -> Printf.eprintf "> %s\n" line;
     end;
-  | Lexer.Error (invalid_input, err_pos) ->
+    begin match message with
+    | None -> ()
+    | Some error_message -> prerr_endline error_message
+    end
+  | Lexing (invalid_input, err_pos) ->
     let file, line, character = position err_pos in
     Printf.eprintf
       "File %S, line %d, character %d, lexing error:\n" file line character;
@@ -45,12 +58,35 @@ let report_error lexbuf = function
       | Some line -> Printf.eprintf "> %s\n" line;
     end;
     Printf.eprintf "Invalid input %S\n%!" invalid_input
-  | exn -> raise exn
 
 (** Parsing functions *)
 
+let f_expression_eof = Parser.Incremental.f_expression_eof
+let component_eof = Parser.Incremental.component_eof
+
 let parse parse_fun lexbuf =
-  parse_fun Lexer.token lexbuf
+  (* see the Menhir manual for the description of
+     error messages support *)
+  let open MenhirLib.General in
+  let module Interp = Parser.MenhirInterpreter in
+  let input = Interp.lexer_lexbuf_to_supplier Lexer.token lexbuf in
+  let success prog = prog in
+  let failure error_state =
+    let env = match[@warning "-4"] error_state with
+      | Interp.HandlingError env -> env
+      | _ -> assert false in
+    match Interp.stack env with
+    | lazy Nil -> assert false
+    | lazy (Cons (Interp.Element (state, _, start_pos, end_pos), _)) ->
+      let message =
+        try Some (Parser_messages.message (Interp.number state)) with
+        | Not_found -> None in
+      raise (Error (Parsing (message, start_pos, end_pos)))
+  in
+  try
+    Interp.loop_handle success failure input
+      (parse_fun lexbuf.Lexing.lex_curr_p)
+  with Lexer.Error (input, pos) -> raise (Error (Lexing (input, pos)))
 
 let parse_string parse_fun str =
   let lexbuf = Lexing.from_string str in
@@ -71,6 +107,6 @@ let parse_file parse_fun path =
     lexbuf
   in
   try parse parse_fun lexbuf
-  with exn ->
-    report_error lexbuf exn;
+  with (Error err) as exn ->
+    report_error lexbuf err;
     raise exn

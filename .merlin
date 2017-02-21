@@ -2,6 +2,7 @@ PKG ppx_deriving.show
 PKG oUnit
 PKG str
 PKG pprint
+PKG menhirLib
 PKG js_of_ocaml
 PKG js_of_ocaml.ppx
 SRC .
