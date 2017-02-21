@@ -434,7 +434,8 @@ f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGIST
 ##
 
 Parsing a register typing "<register>:<type>, <register>:<type>..."
-we parsed a "<register>:<type>" declaration and expect a comma ",".
+we parsed a "<register>:<type>" declaration and expect a comma "," or
+a semicolon ";".
 
 f_expression_eof: LAMBDA LBRACKET BOX FORALL LBRACKET RBRACKET DOT LBRACE REGISTER COLON Z_IDENTIFIER 
 ##
