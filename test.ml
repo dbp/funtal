@@ -1,8 +1,7 @@
 open OUnit2;;
 open Ftal;;
 open Examples;;
-let f_expr str = Parse.parse_string Parser.f_expression_eof str
-let f_type str = Parse.parse_string Parser.f_type_eof str
+let f_expr str = Parse.parse_string Parse.f_expression_eof str
 
 let roundtrip ?source comp =
   let orig, roundtrip =
@@ -26,7 +25,7 @@ let roundtrip ?source comp =
   in
   write_source ();
   write_result ();
-  match Parse.parse_file Parser.component_eof roundtrip with
+  match Parse.parse_file Parse.component_eof roundtrip with
   | exception exn ->
     Printf.eprintf "%!\nRountrip failure %S %S%!\n" orig roundtrip;
     comp
@@ -35,7 +34,7 @@ let roundtrip ?source comp =
     roundtripped_comp
 
 let tal_comp str =
-  roundtrip ~source:str (Parse.parse_string Parser.component_eof str)
+  roundtrip ~source:str (Parse.parse_string Parse.component_eof str)
 
 let empty = ([],[],[])
 
@@ -53,13 +52,7 @@ let test1_ty _ = assert_equal
     (FTAL.tc
        (FTAL.default_context TAL.QOut)
        (FTAL.FC (f_expr "1 + 1")))
-    (FTAL.FT (f_type "int"), TAL.SConcrete []);;
-
-let test_parse_variables_1 _ =
-  let open TAL in
-  assert_equal
-    (Parse.parse_string Parser.type_env_eof "[a1, e2, za3]")
-    [DAlpha "a1"; DEpsilon "e2"; DZeta "za3"]
+    (FTAL.FT F.TInt, TAL.SConcrete []);;
 
 let test2 _ =
   assert_eint
@@ -649,8 +642,8 @@ let test_ft_factorial_t_ty _ =
 
 let test_examples _ =
   let assert_roundtrip_f fexpr =
-    let reparsed = Parse.parse_string Parser.f_expression_eof (Ftal.F.show_exp fexpr) in
-    let rereparsed = Parse.parse_string Parser.f_expression_eof (Ftal.F.show_exp reparsed) in
+    let reparsed = Parse.parse_string Parse.f_expression_eof (Ftal.F.show_exp fexpr) in
+    let rereparsed = Parse.parse_string Parse.f_expression_eof (Ftal.F.show_exp reparsed) in
     assert_equal reparsed rereparsed in
   let assert_roundtrip_c comp =
     let show_comp comp =
@@ -658,8 +651,8 @@ let test_examples _ =
       let buf = Buffer.create 123 in
       PPrintEngine.ToBuffer.pretty 0.8 80 buf doc;
       Buffer.contents buf in
-    let reparsed = Parse.parse_string Parser.component_eof (show_comp comp) in
-    let rereparsed = Parse.parse_string Parser.component_eof (show_comp reparsed) in
+    let reparsed = Parse.parse_string Parse.component_eof (show_comp comp) in
+    let rereparsed = Parse.parse_string Parse.component_eof (show_comp reparsed) in
     assert_equal reparsed rereparsed in
   assert_roundtrip_f Examples.factorial_f;
   assert_roundtrip_f Examples.factorial_t;
@@ -676,7 +669,6 @@ let suite = "FTAL evaluations" >:::
               "F: 1 + 1 = 2 (2)" >:: test2;
               "F: (lam x. x + x) 1 = 2" >:: test_f_app;
               "parse (5)" >:: test_parse5;
-              "parse type-level variables" >:: test_parse_variables_1;
               "F: fact 3 = 6" >:: test_factorial_f;
               "F: fact : int -> int" >:: test_factorial_f_ty;
               "TAL: mv r1,1;halt r1 : int" >:: test_mv_ty;

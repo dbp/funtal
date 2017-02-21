@@ -3,7 +3,7 @@ open Ftal;;
 
 (* Factorial Two Ways *)
 
-let factorial_f = Parse.parse_string Parser.f_expression_eof {|
+let factorial_f = Parse.parse_string Parse.f_expression_eof {|
   lam (x2:int).
     (lam (fact : (mu a.(a, int) -> int, int) -> int).
        fact (fold (mu b.(b, int) -> int) fact) x2)
@@ -41,7 +41,7 @@ let factorial_t' =
                              Ihalt (dummy_loc, TInt, SAbstract ([],  "z4"), "r1")])))] in
   (TAL.WLoc (dummy_loc, lf), h)
 
-let factorial_t = Parse.parse_string Parser.f_expression_eof {|
+let factorial_t = Parse.parse_string Parse.f_expression_eof {|
 lam (x:int).
   FT[(int) -> int, ?]
     ([protect ::, z2;
@@ -67,7 +67,7 @@ lam (x:int).
 |}
 (* Different number of basic blocks *)
 
-let blocks_1 = Parse.parse_string Parser.f_expression_eof {|
+let blocks_1 = Parse.parse_string Parse.f_expression_eof {|
 lam (x:int).
   FT[(int) -> int, ?]
     ([protect ::, z2;
@@ -83,7 +83,7 @@ lam (x:int).
     x
 |}
 
-let blocks_2 = Parse.parse_string Parser.f_expression_eof {|
+let blocks_2 = Parse.parse_string Parse.f_expression_eof {|
 lam (x:int).
   FT[(int) -> int, ?]
     ([protect ::, z2;
@@ -102,7 +102,7 @@ lam (x:int).
     x
 |}
 
-let higher_order = Parse.parse_string Parser.f_expression_eof {|
+let higher_order = Parse.parse_string Parse.f_expression_eof {|
 FT[(((int) -> int) -> int) -> int, ?]
     ([mv r1, l;
       halt
@@ -137,7 +137,7 @@ FT[(((int) -> int) -> int) -> int, ?]
 |}
 
 
-let call_to_call = Parse.parse_string Parser.component_eof {|
+let call_to_call = Parse.parse_string Parse.component_eof {|
 ([mv ra, l1ret; call l1 {*, end{int;*}}],
   [l1 -> box code [z1, e1]{ra : box forall[].{r1 : int; z1} e1;
                           z1} ra.

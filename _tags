@@ -2,4 +2,5 @@
 # OASIS_STOP
 
 true: debug
-true: use_menhir, explain
+true: use_menhir
+<parser.*>: explain, menhir_table

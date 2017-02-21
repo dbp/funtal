@@ -12,11 +12,11 @@ let print_f_expression chan expr =
 
 
 let handle_component_file path =
-  let comp = Parse.parse_file Parser.component_eof path in
+  let comp = Parse.parse_file Parse.component_eof path in
   print_component stdout comp
 
 let handle_f_expression_file path =
-  let expr = Parse.parse_file Parser.f_expression_eof path in
+  let expr = Parse.parse_file Parse.f_expression_eof path in
   print_f_expression stdout expr
 
 let roundtrip_component comp =
