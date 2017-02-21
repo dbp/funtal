@@ -45,7 +45,8 @@
           the <a href="https://dbp.io/pubs/2017/funtal.pdf">paper</a></strong>,
         as well as a few smaller examples to start with. With our
         artifact, you write programs and then type check / load them
-        into a FunTAL machine. At each step, the machine shows the
+        into a FunTAL machine. You can then step forward and backwards
+        through the evaluation. At each step, the machine shows the
         registers, stack, and heap, as well as the redex and the
         context.</p>
 
@@ -272,7 +273,7 @@
        }
 
        function esc(s) {
-         return s.replace(/\</g,"&langle;").replace(/\>/g,"&rangle;");
+         return s.replace(/\</g,"&lt;").replace(/\>/g,"&gt;");
        }
        var holder = document.getElementById("error");
        holder.innerHTML = "<div class='error-marker'></div><span>" + esc(msg) + "</span>";
