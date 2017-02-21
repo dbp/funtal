@@ -280,7 +280,6 @@ end = struct
   let rec tc (context:context) e = match e with
     | FC exp -> begin
         let tc' e = tc context (FC e) in
-        let show_type = show in
         let open F in
         match exp, get_ret context with
         | EVar (l,i), TAL.QOut ->
@@ -290,14 +289,16 @@ end = struct
           end
         | EUnit l, TAL.QOut  -> (FT TUnit, get_stack context)
         | EInt _, TAL.QOut -> (FT TInt, get_stack context)
-        | EBinop (l,e1,_,e2), TAL.QOut ->
+        | EBinop (l,e1,o,e2), TAL.QOut ->
           begin match tc' e1 with
             | (FT TInt, s1) ->
               begin match tc (set_stack context s1) (FC e2) with
                 | (FT TInt, s2) -> (FT TInt, s2)
-                | _ -> raise (TypeError ("Second argument to binop not integer", l))
+                | (FT t, _) -> raise (TypeError (show_binop o ^ ": second argument has type " ^ show t ^ ", not int.", l))
+                | _ -> raise (TypeError (show_binop o ^ ": Uh-oh, got something I didn't understand.", l))
               end
-            | _ -> raise (TypeError ("First argument to binop not integer", l))
+            | (FT t, _) -> raise (TypeError (show_binop o ^ ": first argument has type " ^ show t ^ ", int.", l))
+            | _ -> raise (TypeError (show_binop o ^ ": Uh-oh, got something I didn't understand.", l))
           end
         | EIf0 (l,c,e1,e2), TAL.QOut ->
           begin match tc' c with
@@ -306,20 +307,20 @@ end = struct
                 | FT t1, s2 ->
                   begin match tc (set_stack context s2) (FC e2) with
                     | FT t2, s3 -> if t_eq t1 t2 && TAL.s_eq s2 s3 then (FT t1, s2) else
-                        raise (TypeError ("If branches not same type", l))
-                    | _ -> raise (TypeError ("If else branch not F expression", l))
+                        raise (TypeError ("if: then branch has type " ^ show t1 ^ " but else branch has type " ^ show t2 ^ ".", l))
+                    | _ -> raise (TypeError ("if: Uh-oh, got something I didn't understand.", l))
                   end
-                | _ -> raise (TypeError ("If then branch not F expression", l))
+                | _ -> raise (TypeError ("if: Uh-oh, got something I didn't understand.", l))
               end
-            | _ -> raise (TypeError ("If condition not an integer", l))
+            | _ -> raise (TypeError ("if: test not an int.", l))
           end
         | ELam (l,ps,b), TAL.QOut ->
           let zeta = TAL.SAbstract ([], gen_sym ~pref:"z" ()) in
           begin match tc (set_stack (set_env context (List.append ps (get_env context))) zeta)
                         (FC b) with
           | (FT t, zeta') when zeta = zeta' -> (FT (TArrow (List.map ~f:snd ps, t)), get_stack context)
-          | (FT _, _) -> raise (TypeError ("Function body does not preserve stack", l))
-          | _ -> raise (TypeError ("Function body not F code", l))
+          | (FT _, _) -> raise (TypeError ("lam: body does not preserve stack.", l))
+          | _ -> raise (TypeError ("lam: Uh-oh, got something I didn't understand.", l))
           end
         | ELamMod (l,ps,sin,sout,b), TAL.QOut ->
           let z = gen_sym ~pref:"z" () in
@@ -328,151 +329,185 @@ end = struct
           begin match tc (set_stack (set_env context (List.append ps (get_env context))) zeta)
                         (FC b) with
           | (FT t, zeta') when zeta_out = zeta' -> (FT (TArrow (List.map ~f:snd ps, t)), get_stack context)
-          | (FT _, _) -> raise (TypeError ("Function body manipulates stack in illegal way", l))
-          | _ -> raise (TypeError ("Function body not F code", l))
+          | (FT _, _) -> raise (TypeError ("lam: body manipulates stack in invalid way.", l))
+          | _ -> raise (TypeError ("lam: Uh-oh, got something I didn't understand.", l))
           end
         | EApp (l,f,args), TAL.QOut -> begin match tc' f with
             | FT (TArrow (ps, rv)), s ->
-              let _ = Debug.log "tc app" ("f: " ^ show_type (fst (tc' f))) in
-              let _ = Debug.log "tc app" ("args: " ^ (String.concat ";\n" (List.map ~f:(fun e -> show_type (fst (tc' e))) args))) in
               if List.length ps <> List.length args then
-                raise (TypeError ("Applying function to wrong number of args", l))
+                raise (TypeError ("app: function expected " ^
+                                  string_of_int (List.length ps) ^
+                                  " arguments, but passed " ^
+                                  string_of_int (List.length args) ^ ".", l))
               else
-                (FT rv, List.fold_left ~f:(fun s0 (t,e) -> match tc (set_stack context s0) (FC e) with
+                let i = ref 0 in
+                (FT rv, List.fold_left ~f:(fun s0 (t,e) ->
+                     i := !i + 1;
+                     match tc (set_stack context s0) (FC e) with
                      | FT t', s1 when t_eq t t' -> s1
-                     | FT t', _ -> raise (TypeError ("Argument to application did not have correct type. Expected " ^ show t ^ " but got " ^ show t', l))
-                     | _ -> raise (Failure "Impossible")) ~init:s (List.zip_exn ps args))
-            | t ->
-              let _ = Debug.log "tc gamma" (F.show_gamma (get_env context)) in
-              let _ = Debug.log "tc apply non-function" (F.show_exp f ^ " : " ^ show_type (fst t)) in
-              raise (TypeError ("Applying non-function", l))
+                     | FT t', _ -> raise (TypeError ("app: " ^ string_of_int !i ^
+                                                     "th argument should have type " ^
+                                                     show t ^ " but has type " ^ show t' ^ ".", l))
+                     | _ -> raise (TypeError ("app: Uh-oh, got something I didn't understand.", l))
+                   ) ~init:s (List.zip_exn ps args))
+            | (FT t,_) ->
+              raise (TypeError ("app: got non-function of type " ^ show t ^ ".", l))
+            | _ -> raise (TypeError ("app: Uh-oh, got something I didn't understand.", l))
           end
         | EFold (l,a,t,e), TAL.QOut ->
           begin match tc' e with
             | FT t', s -> if F.t_eq t' (F.type_sub (FTAL.FType (a, TRec (a,t))) t) then (FT (TRec (a,t)), s)
               else
-                let _ = Debug.log "tc fold" (show t' ^ " <>\n" ^ show (F.type_sub (FTAL.FType (a, TRec (a,t))) t)) in
-                raise (TypeError ("Type of fold doesn't match declared type", l))
-            | _ -> raise (TypeError ("Body of fold isn't F expression", l))
+                raise (TypeError ("fold: expected body to have type " ^ show t' ^ ".", l))
+            | _ -> raise (TypeError ("fold: Uh-oh, got something I didn't understand.", l))
           end
         | EUnfold (l,e), TAL.QOut -> begin match tc' e with
             | FT (TRec (a,t)), s -> (FT (F.type_sub (FTAL.FType (a, TRec (a,t))) t), s)
-            | _ -> raise (TypeError ("Unfolding a non recursive type", l))
+            | (FT t, _) -> raise (TypeError ("unfold: body not a recursive type: " ^ show t ^ ".", l))
+            | _ -> raise (TypeError ("unfold: Uh-oh, got something I didn't understand.", l))
           end
         | ETuple (l,es), TAL.QOut ->
           begin match List.fold_left ~f:(fun (l',s0) e -> match tc (set_stack context s0) (FC e) with
               | FT t', s1 -> (List.append l' [t'], s1)
-              | _ -> raise (TypeError ("Tuple element isn't an F expression", l))) ~init:([], get_stack context) es with
+              | _ -> raise (TypeError ("tuple: Uh-oh, got something I didn't understand.", l)))
+              ~init:([], get_stack context) es with
           | l,s -> (FT (TTuple l), s)
           end
-        | EPi (l,n,e'), TAL.QOut -> begin match tc' e' with
+        | EPi (loc,n,e'), TAL.QOut -> begin match tc' e' with
             | FT (TTuple l), s when List.length l > n -> (FT (List.nth_exn l n), s)
-            | _ -> raise (TypeError ("Applying pi to non-tuple, or with too high index", l))
+            | FT (TTuple l), s -> raise (TypeError ("pi: index " ^ string_of_int n
+                                                    ^ " is too high for a tuple of size " ^
+                                                    string_of_int (List.length l) ^ ".", loc))
+            | FT t, _ -> raise (TypeError ("pi: given non-tuple of type " ^ show t ^ ".", loc))
+            | _ -> raise (TypeError ("pi: Uh-oh, got something I didn't understand.", loc))
           end
         | EBoundary (l,t,s,c), TAL.QOut ->
           let s' = Option.value ~default:(get_stack context) s in
           begin match tc (set_ret context (TAL.QEnd (tytrans t, s'))) (TC c) with
-            | TT t0, s0 when TAL.t_eq t0 (tytrans t) && TAL.s_eq s0 s' -> (FT t, s0)
-            | TT t0, s0 -> raise (TypeError ("Boundary with contents not matching type: " ^ TAL.show (tytrans t) ^ " <> " ^ TAL.show t0 ^ " OR " ^ TAL.show_sigma s' ^ " <> " ^ TAL.show_sigma s0, l))
-            | _ -> raise (TypeError ("Boundary with non-TAL inside", l))
+            | TT t0, s0 when not (TAL.t_eq t0 (tytrans t)) ->
+              raise (TypeError ("FT: contents should have had type " ^ show t ^
+                                " which is not equivalent to type " ^ TAL.show t0 ^ ".",l))
+            | TT t0, s0 when not (TAL.s_eq s0 s') ->
+              raise (TypeError ("FT: after running stack should have had type " ^
+                                TAL.show_sigma s' ^ " but instead had type " ^ TAL.show_sigma s0 ^ ".",l))
+            | TT t0, s0 -> (FT t, s0)
+            | _ -> raise (TypeError ("FT: Uh-oh, got something I didn't understand.", l))
           end
-        | _ -> raise (TypeError ("F expression with invalid return marker", F.get_loc exp))
+        | _ -> raise (TypeError ("exp: F expressions must have return marker out.", F.get_loc exp))
       end
     | TC (loc, instrs, h) ->
       let ht = List.map ~f:(fun (l,(m, p)) -> (l, (m, tc_h_shallow context loc m p))) h in
       let context = set_heap context (List.append (get_heap context) ht) in
       let _ = List.iter ~f:(fun (l,(_, v)) ->
+          (* NOTE(dbp 2017-02-20): Since these types are fully
+             specified, these checks shouldn't be able to go wrong.
+             *)
           match List.Assoc.find (get_heap context) l with
-          | None -> raise (TypeError ("Component missing heap annotation for location " ^ l, loc))
+          | None -> raise (TypeError ("component: Uh-oh, got something I didn't understand." ^ l, loc))
           | Some (m,p) ->
             let p' = tc_h context loc m v in
-            if not (TAL.psi_elem_eq p' p) then raise (TypeError ("Component heap typing does not match heap fragment at location " ^ l ^ "; got " ^ TAL.show_psi_elem p' ^ " but expected " ^ TAL.show_psi_elem p, loc)) else ()) h in
+            if not (TAL.psi_elem_eq p' p) then
+              raise (TypeError ("component: Uh-oh, got something I didn't understand.", loc)) else ()) h in
       begin
         tc_is context instrs;
         match TAL.ret_type context (get_ret context) with
         | Some s -> s
-        | None -> raise (TypeError ("Invalid return marker for component: " ^ TAL.show_q (get_ret context), loc))
+        | None -> raise (TypeError ("component: return marker invalid: " ^
+                                    TAL.show_q (get_ret context) ^ ".", loc))
       end
 
   and tc_is context instrs : unit =
     let open TAL in
     match instrs, get_ret context with
     | Iaop (l,op, rd, rs, u)::is, QR r when rd = r ->
-      raise (TypeError ("Iaop writing to register that is current return marker", l))
+      raise (TypeError (show_aop op ^ ": can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iaop (l,op, rd, rs, u)::is, _ ->
       begin match List.Assoc.find (get_reg context) rs, tc_u context u with
-        | None, _ -> raise (TypeError ("Iaop with unbound source register", l))
-        | Some t, _ when t <> TInt -> raise (TypeError ("Iaop with non-integer as source", l))
-        | _, t when t <> TInt -> raise (TypeError ("Iaop with non-integer as target", l))
-        | _ ->
-          tc_is (set_reg context (List.Assoc.add (get_reg context) rd TInt)) is
+        | None, _ -> raise (TypeError (show_aop op ^ ": source register " ^ rs ^ " is empty.", l))
+        | Some t, _ when t <> TInt -> raise (TypeError (show_aop op ^ ": source register has type " ^
+                                                        show t ^ ", not int.", l))
+        | _, t when t <> TInt -> raise (TypeError (show_aop op ^ ": operand has type " ^ show t ^ ", not int.", l))
+        | _ -> tc_is (set_reg context (List.Assoc.add (get_reg context) rd TInt)) is
       end
     | Imv (l,rd,u)::is, QR r when rd = r ->
-      raise (TypeError ("Imv writing to register that is current return marker", l))
+      raise (TypeError ("mv: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Imv (l,rd,u)::is, q ->
       let context = match q, u with
         | QR r, UR (_, r') when r = r' -> set_ret context (QR rd)
         | _ -> context in
       tc_is (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) is
     | Iimport (l,rd,z,s,t,f)::is, QR r when rd = r ->
-      raise (TypeError ("Iimport writing to register that is current return marker", l))
+      raise (TypeError ("import: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, _ when
-        stack_pref_length s > stack_pref_length (get_stack context) || not (s_eq (stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s)) s) ->
-
-      raise (TypeError ("Iimport protected suffix does not match current stack. Suffix: " ^ show_sigma s ^ " but current stack is " ^ show_sigma (get_stack context), l))
+        stack_pref_length s > stack_pref_length (get_stack context) ||
+        not (s_eq (stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s)) s) ->
+      raise (TypeError ("import: protected suffix does not match current stack. Suffix is " ^
+                        show_sigma s ^ ", but current stack is " ^ show_sigma (get_stack context) ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, _ ->
       let pref = stack_take (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in
       let suf = stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in
       begin match tc (set_stack (set_ret context QOut) (SAbstract (pref, z))) (FC f) with
         | (FT t',s') when not (F.t_eq t t') ->
-          raise (TypeError ("Iimport given F expression of the wrong type", l))
+          raise (TypeError ("import: F expression has type " ^ F.show t' ^ ", but should have type " ^ F.show t ^ ".", l))
         | (FT t',SConcrete _)  ->
-          raise (TypeError ("Iimport given F expression that returns stack without abstract tail", l))
+          raise (TypeError ("import: F expression does not protect abstract stack tail.", l))
         | (FT t',SAbstract (_, z')) when z <> z'  ->
-          raise (TypeError ("Iimport given F expression that returns stack with wrong abstract tail", l))
+          raise (TypeError ("import: F expression does not preserve abstract stack tail. Should have been " ^ z ^ " but was " ^ z' ^ ".", l))
         | (FT t',SAbstract (newpref, _)) -> tc_is (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) (stack_prepend newpref suf)) is
-        | _  -> raise (TypeError ("Iimport without F expression within", l))
+        | _  -> raise (TypeError ("import: Uh-oh, got something I didn't understand.", l))
       end
     | [Ihalt (l,t,s,r)], QEnd (t',s') when not (t_eq t' t) ->
-      raise (TypeError ("Halt instruction type doesn't match return marker: " ^ show t ^ " <> " ^ show t', l))
+      raise (TypeError ("halt: specified return type, " ^ show t ^ ", does not match return marker's: " ^ show t' ^ ".", l))
     | [Ihalt (l,t,s,r)], QEnd (t',s') when not (s_eq s s') ->
-      raise (TypeError ("Halt instruction stack doesn't match return marker: " ^ show_sigma s ^ " <> " ^ show_sigma s', l))
+      raise (TypeError ("halt: specified stack, " ^ show_sigma s ^ ", does not match return marker's: " ^ show_sigma s' ^ ".", l))
     | [Ihalt (l,t,s,r)], QEnd _ when not (s_eq s (get_stack context)) ->
-      raise (TypeError ("Halt instruction annotations don't match current stack: Expected " ^ show_sigma s ^ " but got " ^ show_sigma (get_stack context), l))
+      raise (TypeError ("halt: specified stack, " ^ show_sigma s ^
+                        ", does not match current stack: " ^
+                        show_sigma (get_stack context) ^ ".", l))
     | [Ihalt (l,t,s,r)], QEnd _ ->
       begin match List.Assoc.find (get_reg context) r with
         | Some t' when t_eq t t' -> ()
-        | Some t' -> raise (TypeError ("Halting with wrong type in return register. Expected " ^ show t ^ " but got " ^ show t', l))
-        | None -> raise (TypeError ("Halting with nothing in the return register", l))
+        | Some t' -> raise (TypeError ("halt: value in return register " ^ r ^
+                                       " should have type " ^ show t ^ " but instead is " ^ show t' ^ ".", l))
+        | None -> raise (TypeError ("halt: return register " ^ r ^ " is empty.", l))
       end
-    | [Ihalt (l,_,_,_)], _ ->
-      raise (TypeError ("Halting without end return marker", l))
+    | [Ihalt (l,_,_,_)], q ->
+      raise (TypeError ("halt: return marker must be end{}, instead is: " ^ show_q q ^ ".", l))
     | Isalloc (l,n) :: is, _ ->
-      tc_is (set_stack context (List.fold_left ~f:(fun s _ -> stack_cons TUnit s) ~init:(get_stack context) (List.init ~f:(fun x -> x) n))) is
+      tc_is (set_stack context (List.fold_left ~f:(fun s _ -> stack_cons TUnit s)
+                                  ~init:(get_stack context) (List.init ~f:(fun x -> x) n))) is
     | Isfree (l,n) :: is, QI n' when n > n' ->
-      raise (TypeError ("Can't free stack position where return marker points to", l))
+      raise (TypeError ("sfree: return marker is at position " ^ string_of_int n' ^ ", so you can't free " ^
+                        string_of_int n ^ " cells: the return address would be lost.", l))
     | Isfree (l,n) :: is, _ when stack_pref_length (get_stack context) < n ->
-      raise (TypeError ("Can't free more stack than exposed", l))
+      raise (TypeError ("sfree: only " ^ string_of_int (stack_pref_length (get_stack context)) ^
+                        " stack cells are exposed, so can't free " ^ string_of_int n ^ ".", l))
     | Isfree (l,n) :: is, QI n' ->
       tc_is (set_ret (set_stack context (stack_drop (get_stack context) n ))
             (QI (n' - n))) is
     | Isfree (l,n) :: is, _ ->
       tc_is (set_stack context (stack_drop (get_stack context) n )) is
-    | Iprotect (l,pref, v)::is, QI n when n > List.length pref ->
-      raise (TypeError ("Can't protect part of stack that contains return marker", l))
+    | Iprotect (l,pref,v)::is, QI n when n > List.length pref ->
+      raise (TypeError ("protect: return marker is at position " ^ string_of_int n ^
+                        ", so you can't hide everything past the first " ^
+                        string_of_int (List.length pref) ^ " cells: the return address would be hidden.", l))
     | Iprotect (l,pref, v)::is, _ when not (s_pref_eq (stack_take (get_stack context) (List.length pref)) pref) ->
-      raise (TypeError ("Protect prefix doesn't match current stack", l))
+      raise (TypeError ("protect: specified prefix " ^
+                        show_sigma_prefix pref ^ " does not match current stack: " ^
+                        show_sigma (get_stack context) ^ ".", l))
     | Iprotect (l,pref, v)::is, _ ->
       let stail = stack_drop (get_stack context) (List.length pref) in
       let new_q = retmarker_sub (SAbs (stail, v)) (get_ret context) in
       tc_is (set_ret (set_stack (set_tyenv context (List.append (get_tyenv context) [DZeta v])) (SAbstract (pref, v))) new_q) is
     | Isst(l,n,r):: is, _ when stack_pref_length (get_stack context) <= n ->
-      raise (TypeError ("Isst: Can't store past exposed stack", l))
+      raise (TypeError ("sst: only " ^ string_of_int (stack_pref_length (get_stack context)) ^
+                        " stack cells are exposed, so can't store at position " ^ string_of_int n ^ ".", l))
     | Isst(l,n,r):: is, QI n' when n = n' ->
-      raise (TypeError ("Isst: Can't overwrite return marker on stack", l))
+      raise (TypeError ("sst: can't overwrite current return marker at position " ^
+                        string_of_int n' ^ " on the stack.", l))
     | Isst(l,n,r):: is, q ->
       begin match List.Assoc.find (get_reg context) r with
-        | None -> raise (TypeError ("Isst trying to store from empty register", l))
+        | None -> raise (TypeError ("sst: register " ^ r ^ " is empty.", l))
         | Some t ->
           let context = match q with
             | QR r' when r = r' -> set_ret context (QI n)
@@ -481,9 +516,11 @@ end = struct
           tc_is (set_stack context (stack_prepend (stack_take (get_stack context) n) (stack_cons t (stack_drop (get_stack context) (n+1))))) is
       end
     | Isld(l,rd,n)::is, QR r when r = rd ->
-      raise (TypeError ("Isld: Can't overwrite return marker in register", l))
+      raise (TypeError ("sld: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Isld(l,rd,n)::is, _ when stack_pref_length (get_stack context) <= n ->
-      raise (TypeError ("Isld: Can't load from past exposed stack", l))
+      raise (TypeError ("sld: only " ^ string_of_int (stack_pref_length (get_stack context)) ^
+                        " stack cells are exposed, so can't load from position " ^
+                        string_of_int n ^ ".", l))
     | Isld(l,rd,n)::is, q ->
       let context = match q with
         | QI n' when n = n' -> set_ret context (QR rd)
@@ -491,180 +528,213 @@ end = struct
       in
       tc_is (set_reg context (List.Assoc.add (get_reg context) rd (List.last_exn (stack_take (get_stack context) (n+1))))) is
     | Ild(l,rd,rs,n)::is, QR r when r = rd ->
-      raise (TypeError ("Ild: Can't overwrite return marker in register", l))
+      raise (TypeError ("ld: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Ild(l,rd,rs,n)::is, _ ->
       begin match List.Assoc.find (get_reg context) rs with
-        | None -> raise (TypeError ("Ild: trying to load from empty reg", l))
+        | None -> raise (TypeError ("ld: register " ^ rs ^ " is empty.", l))
         | Some (TBox (PTuple ps)) | Some (TTupleRef ps) when n >= List.length ps ->
-          raise (TypeError ("Ild: trying to load from index past end of tuple", l))
+          raise (TypeError ("ld: can't load from index " ^
+                            string_of_int n ^ " from a tuple of length " ^
+                            string_of_int (List.length ps) ^ ".", l))
         | Some (TBox (PTuple ps)) | Some (TTupleRef ps) ->
           let t = List.nth_exn ps n in
           tc_is (set_reg context (List.Assoc.add (get_reg context) rd t)) is
-        | Some _ ->
-          raise (TypeError ("Ild: trying to load from non-tuple", l))
+        | Some t ->
+          raise (TypeError ("ld: can't load from non-tuple of type " ^ show t ^ ".", l))
       end
     | Ist(l,rd, n, rs)::is, QR r when r = rd ->
-      raise (TypeError ("Ist: Can't overwrite return marker in register", l))
+      raise (TypeError ("st: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Ist(l,rd, n, rs)::is, _ ->
       begin match List.Assoc.find (get_reg context) rs with
-        | None -> raise (TypeError ("Ist: trying to load from empty reg", l))
+        | None -> raise (TypeError ("st: source register " ^ rs ^ " is empty.", l))
         | Some t ->
           begin match List.Assoc.find (get_reg context) rd with
-            | None -> raise (TypeError ("Ist: trying to store to empty reg", l))
+            | None -> raise (TypeError ("st: destination register " ^ rd ^ " is empty.", l))
             | Some (TTupleRef ps) when n >= List.length ps ->
-              raise (TypeError ("Ist: trying to store past end of tuple", l))
+              raise (TypeError ("st: can't store at index " ^ string_of_int n ^
+                                "in a tuple of length " ^ string_of_int (List.length ps) ^
+                                ".", l))
             | Some (TTupleRef ps) ->
               let t' = List.nth_exn ps n in
               if not (TAL.t_eq t t') then
-                raise (TypeError ("Ist: trying to store value of wrong type", l))
+                raise (TypeError ("st: can't overwrite a position with type "
+                                  ^ show t' ^ " with a value of type " ^ show t ^ ".", l))
               else tc_is context is
             | Some (TBox (PTuple _)) ->
-              raise (TypeError ("Ist: trying to store to non-ref tuple", l))
-            | Some _ ->
-              raise (TypeError ("Ist: trying to store to non-tuple", l))
+              raise (TypeError ("st: can't write to a box (i.e., immutable) tuple.", l))
+            | Some t ->
+              raise (TypeError ("st: can't store to a non-tuple of type: " ^ show t ^ ".", l))
           end
       end
     | Iralloc (l,rd, n)::is, _ when stack_pref_length (get_stack context) < n ->
-      raise (TypeError ("Iralloc: trying to allocate more than is visible on stack", l))
+      raise (TypeError ("ralloc: trying to allocate a tuple of size " ^ string_of_int n ^ " but there are only " ^
+                        string_of_int (stack_pref_length (get_stack context))  ^ " visible cells on the stack.", l))
     | Iralloc (l,rd,n)::is, QR r when rd = r ->
-      raise (TypeError ("Iralloc: can't overwrite return marker in register", l))
+      raise (TypeError ("ralloc: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iralloc (l,rd,n)::is, QI n' when n' + 1 <= n ->
-      raise (TypeError ("Iralloc: can't move the stack return marker", l))
+      raise (TypeError ("ralloc: current return marker is on stack at position " ^ string_of_int n' ^
+                        ", so allocating a tuple of size " ^ string_of_int n ^ " would move it.", l))
     | Iralloc (l,rd,n)::is, q ->
       let q' = match q with
         | QI n' -> QI (n' - n)
         | _ -> q in
       tc_is (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TTupleRef (stack_take (get_stack context) n)))) (stack_drop (get_stack context) n)) q') is
     | Iballoc (l,rd, n)::is, _ when stack_pref_length (get_stack context) < n ->
-      raise (TypeError ("Iballoc: trying to allocate more than is visible on stack", l))
+      raise (TypeError ("balloc: trying to allocate a tuple of size " ^ string_of_int n ^ " but there are only " ^
+                        string_of_int (stack_pref_length (get_stack context))  ^ " visible cells on the stack.", l))
     | Iballoc (l,rd,n)::is, QR r when rd = r ->
-      raise (TypeError ("Iballoc: can't overwrite return marker in register", l))
+      raise (TypeError ("balloc: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iballoc (l,rd,n)::is, QI n' when n' + 1 <= n ->
-      raise (TypeError ("Iballoc: can't move the stack return marker", l))
+      raise (TypeError ("balloc: current return marker is on stack at position " ^ string_of_int n' ^
+                        ", so allocating a tuple of size " ^ string_of_int n ^ " would move it.", l))
     | Iballoc (l,rd,n)::is, q ->
       let q' = match q with
         | QI n' -> QI (n' - n)
         | _ -> q in
       tc_is (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TBox (PTuple (stack_take (get_stack context) n))))) (stack_drop (get_stack context) n)) q') is
     | Iunpack (l,a, rd, u)::is, QR r when rd = r ->
-      raise (TypeError ("Iunpack: can't overwrite return marker in register", l))
+      raise (TypeError ("unpack: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iunpack (l,a, rd, u)::is, _ ->
       begin match tc_u context u with
         | TExists (a', t) ->
           let newt = type_sub (TType (a, TVar a')) t in
           tc_is (set_reg context (List.Assoc.add (get_reg context) rd newt)) is
-        | _ -> raise (TypeError ("Iunpack: given non-existential", l))
+        | t -> raise (TypeError ("unpack: operand is non-existential of type " ^ show t ^ ".", l))
       end
     | Iunfold (l,rd, u)::is, QR r when rd = r ->
-      raise (TypeError ("Iunfold: can't overwrite return marker in register", l))
+      raise (TypeError ("unfold: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iunfold (l,rd, u)::is, _ ->
       begin match tc_u context u with
         | TRec (a, t) ->
           let t' = type_sub (TType (a, TRec (a,t))) t in
           tc_is (set_reg context (List.Assoc.add (get_reg context) rd t')) is
-        | _ -> raise (TypeError ("Iunfold: given non-fold", l))
+        | t -> raise (TypeError ("unfold: operand is non-fold of type " ^ show t ^ ".", l))
       end
     | [Iret (l,rt, rv)], QR r when r = rt ->
       begin match List.Assoc.find (get_reg context) rt,
                   List.Assoc.find (get_reg context) rv with
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta when ra <> rv ->
-        raise (TypeError ("Iret: return location with wrong register: " ^ ra ^ " <> " ^ rv, l))
+        raise (TypeError ("ret: returning to a block expecting value in register " ^ ra ^ ", not " ^ rv ^ ".", l))
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta when not (t_eq ta t) ->
-        raise (TypeError ("Iret: return location with wrong argument type: " ^ show ta ^ " <> " ^ show t, l))
+        raise (TypeError ("ret: returning to a block expecting value of type " ^ show t ^ ", not " ^ show ta ^ ".", l))
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta when not (s_eq s (get_stack context)) ->
-        raise (TypeError ("Iret: return location with wrong stack type expected: " ^ show_sigma s ^ " but got " ^ show_sigma (get_stack context), l))
+        raise (TypeError ("ret: returning to a block expecting stack of type " ^
+                          show_sigma s ^ " but current stack has type " ^
+                          show_sigma (get_stack context) ^ ".", l))
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta -> ()
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), None ->
-        raise (TypeError ("Iret: return without value of type " ^ show t ^ " in register " ^ ra, l))
-      | _ -> raise (TypeError ("Iret: returning to empty register", l))
+        raise (TypeError ("ret: value register " ^ ra ^ " is empty.", l))
+      | _ -> raise (TypeError ("ret: return address " ^ rt ^ " register empty.", l))
       end
     | [Iret (l,rt, rv)], QR r  ->
-      raise (TypeError ("Iret: not returning to return marker", l))
-    | [Iret (l,rt, rv)], _  ->
-      raise (TypeError ("Iret: can't use if return marker isn't in register", l))
+      raise (TypeError ("ret: return marker says to return to " ^
+                        r ^ ", but trying to return to " ^ rt ^ ".", l))
+    | [Iret (l,rt, rv)], q  ->
+      raise (TypeError ("ret: return marker isn't register " ^ rt ^ ", it's " ^ show_q q ^ ".", l))
     | [Ijmp (l,u)], q -> begin match tc_u context u with
         | TBox (PBlock ([], c, s, q')) when not (q_eq q q') ->
-          raise (TypeError ("Ijmp: must jump to a block with the same return marker. Expected " ^ show_q q ^ " but jumping to " ^ show_q q', l))
+          raise (TypeError ("jmp: current return marker is " ^ show_q q ^
+                            ", but trying to jump to block with return marker " ^ show_q q' ^ ".", l))
         | TBox (PBlock ([], c, s, q')) when not (s_eq s (get_stack context)) ->
-          raise (TypeError ("Ijmp: must jump to a block expecting the current stack", l))
+          raise (TypeError ("jmp: block being jumped to expects stack of type " ^
+                            show_sigma s ^ ", but current stack has type " ^
+                            show_sigma (get_stack context) ^ ".", l))
         | TBox (PBlock ([], c, s, q')) when not (register_subset c (get_reg context)) ->
-          raise (TypeError ("Ijmp: block expects register file that is not compatible with current register file", l))
+          raise (TypeError ("jmp: block being jumped to expects register file of type " ^ show_chi c ^
+                            ", but current register file has type " ^ show_chi (get_reg context) ^ ".", l))
         | TBox (PBlock ([], c, s, q')) -> ()
-        | _ -> raise (TypeError ("Ijmp: can't jump to non-block", l))
+        | t -> raise (TypeError ("jmp: can't jump to non-block of type " ^ show t ^ ".", l))
       end
-    | Ibnz(l,rt,u)::is, _ when List.Assoc.find (get_reg context) rt = None ->
-      raise (TypeError ("Ibnz: test register empty ", l))
-    | Ibnz(l,rt,u)::is, _ when List.Assoc.find (get_reg context) rt <> Some TInt ->
-      raise (TypeError ("Ibnz: test register does not contain an integer", l))
-    | Ibnz(l,rt,u)::is, q -> begin match tc_u context u with
-        | TBox (PBlock ([], c, s, q')) when not (q_eq q q') ->
-          raise (TypeError ("Ibnz: must jump to a block with the same return marker", l))
-        | TBox (PBlock ([], c, s, q')) when not (s_eq s (get_stack context)) ->
-          raise (TypeError ("Ibnz: must jump to a block expecting the current stack", l))
-        | TBox (PBlock ([], c, s, q')) when not (register_subset c (get_reg context)) ->
-          raise (TypeError ("Ibnz: current registers not compatible with block", l))
-        | TBox (PBlock ([], c, s, q')) -> ()
-        | _ -> raise (TypeError ("Ibnz: can't jump to non-block", l))
+    | Ibnz(l,rt,u)::is, q -> begin match List.Assoc.find (get_reg context) rt with
+        | None -> raise (TypeError ("bnz: test register " ^ rt ^ " is empty.", l))
+        | Some t when t <> TInt ->
+          raise (TypeError ("bnz: test register has type " ^ show  t ^ ", not int.", l))
+        | Some t -> begin match tc_u context u with
+            | TBox (PBlock ([], c, s, q')) when not (q_eq q q') ->
+              raise (TypeError ("bnz: current return marker is " ^ show_q q ^
+                                ", but trying to branch to a block with return marker " ^
+                                show_q q' ^ ".", l))
+            | TBox (PBlock ([], c, s, q')) when not (s_eq s (get_stack context)) ->
+              raise (TypeError ("bnz: block being branched to expects stack of type " ^ show_sigma s ^
+                                ", but current stack has type " ^ show_sigma (get_stack context) ^ ".", l))
+            | TBox (PBlock ([], c, s, q')) when not (register_subset c (get_reg context)) ->
+              raise (TypeError ("bnz: block being branched to expects register file of type " ^ show_chi c ^
+                                ", but current register file has type " ^ show_chi (get_reg context) ^ ".", l))
+            | TBox (PBlock ([], c, s, q')) -> ()
+            | t -> raise (TypeError ("bnz: can't branch to non-block of type " ^ show t ^ ".", l))
+          end
       end
     | [Icall(l,u,s,QEnd(t',s'))], QEnd(t,s'') when t_eq t t' && s_eq s' s'' ->
       begin match tc_u context u with
         | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
           let pref_len = stack_pref_length (get_stack context) - stack_pref_length s in
           if pref_len < 0 then
-            raise (TypeError ("Icall: protected suffix is longer than current stack", l))
+            raise (TypeError ("call: can't protect suffix of length " ^ string_of_int (stack_pref_length s) ^
+                              " when current stack only has length " ^ string_of_int (stack_pref_length (get_stack context)) ^ ".", l))
           else if not (s_eq hats (SAbstract (stack_take (get_stack context) pref_len, z))) then
-            raise (TypeError ("Icall: stack prefix on block being jumped to does not match current stack", l))
+            raise (TypeError ("call: block being called expects stack of type " ^ show_sigma hats ^
+                              ", which doesn't match specified prefix.", l))
           else
             begin match ret_addr_type (set_stack (set_reg context hatc) hats) hatq with
               | Some (TBox (PBlock (_, _,hats', QEpsilon e))) ->
                 begin match hats' with
                   | SAbstract (_, z') when z = z' ->
                     if not (register_subset (TAL.chi_sub (EMarker (e, QEnd(t',s'))) (chi_sub (SType (z, s)) hatc)) (get_reg context)) then
-                      raise (TypeError ("Icall: current registers not compatible with what block expects", l))
+                      raise (TypeError ("call: block being called expects register file with type " ^
+                                        show_chi (TAL.chi_sub (EMarker (e, QEnd(t',s'))) (chi_sub (SType (z, s)) hatc)) ^
+                                        " which is not compatible with current register file of type " ^
+                                        show_chi (get_reg context) ^ ".", l))
                     else
                       ()
                   | _ ->
-                    raise (TypeError ("Icall: block being returned to does not protect suffix", l))
+                    raise (TypeError ("call: block that will be returned to does not protect abstract stack suffix " ^ z ^ ".", l))
                 end
-              | _ -> raise (TypeError ("Icall: block being jumped to does not return to block with right type", l))
+              | _ -> raise (TypeError ("call: block being called to does not return to block with abstract return marker.", l))
             end
-        | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", l))
+        | t -> raise (TypeError ("call: block being called does not follow calling convention: " ^ show t ^ ".", l))
       end
     | [Icall(l,u,s,QI i')], QI i ->
       begin match tc_u context u with
         | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
           let pref_len = stack_pref_length (get_stack context) - stack_pref_length s in
           if pref_len < 0 then
-            raise (TypeError ("Icall: protected suffix is longer than current stack", l))
+            raise (TypeError ("call: can't protect suffix of length " ^ string_of_int (stack_pref_length s) ^
+                              " when current stack only has length " ^ string_of_int (stack_pref_length (get_stack context)) ^ ".", l))
           else if not (s_eq hats (SAbstract (stack_take (get_stack context) pref_len, z))) then
-            raise (TypeError ("Icall: stack prefix on block being jumped to does not match current stack. Current stack prefix: " ^ show_sigma_prefix (stack_take (get_stack context) pref_len) ^ ", but block expects: " ^ show_sigma_prefix (stack_take hats (stack_pref_length hats)), l))
+            raise (TypeError ("call: block being called expects stack of type " ^ show_sigma hats ^
+                              ", which doesn't match specified prefix.", l))
           else if i < pref_len then
-            raise (TypeError ("Icall: return marker is not in protected suffix of stack", l))
+            raise (TypeError ("call: return marker is stored at position " ^ string_of_int i ^
+                              " on stack, which will not be in protected tail.", l))
           else
             begin match ret_addr_type (set_stack (set_reg context hatc) hats) hatq with
               | Some (TBox (PBlock (_, _,hats', QEpsilon e))) ->
                 let new_pref_len = stack_pref_length hats' in
                 if i' <> i + new_pref_len - pref_len then
-                  raise (TypeError ("Icall: return marker does not end up at specified position on stack", l))
+                  raise (TypeError ("call: return marker, which started at position " ^ string_of_int i ^
+                                    ", does not end up at specified position on stack.", l))
                 else begin match hats' with
                   | SAbstract (_, z') when z = z' ->
                     if not (register_subset (TAL.chi_sub (EMarker (e, QI i')) (chi_sub (SType (z, s)) hatc)) (get_reg context)) then
-                      raise (TypeError ("Icall: current registers not compatible with what block expects. Current: " ^ show_chi (get_reg context) ^ " but block expects " ^ show_chi (TAL.chi_sub (EMarker (e, QI i')) (chi_sub (SType (z, s)) hatc)) , l))
+                      raise (TypeError ("call: block being called expects register file with type " ^
+                                        show_chi (TAL.chi_sub (EMarker (e, QI i')) (chi_sub (SType (z, s)) hatc)) ^
+                                        " which is not compatible with current register file of type " ^
+                                        show_chi (get_reg context) ^ ".", l))
                     else
                       ()
                   | _ ->
-                    raise (TypeError ("Icall: block being returned to does not protect suffix", l))
+                    raise (TypeError ("call: block that will be returned to does not protect abstract stack suffix " ^ z ^ ".", l))
                 end
-              | _ -> raise (TypeError ("Icall: block being jumped to does not return to block with right type", l))
+              | _ -> raise (TypeError ("call: block being called to does not return to block with abstract return marker.", l))
             end
-        | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", l))
+        | t -> raise (TypeError ("call: block being called does not follow calling convention: " ^ show t ^ ".", l))
       end
-    | (Ihalt(l,_,_,_)::_), _ -> raise (TypeError ("halt: must be the last instruction in a block", l))
-    | (Iret(l,_,_)::_), _ -> raise (TypeError ("ret: must be the last instruction in a block", l))
-    | (Ijmp(l,_)::_), _ -> raise (TypeError ("jmp: must be the last instruction in a block", l))
-    | [Icall(l,_,_,_)], _ -> raise (TypeError ("call: return marker must be end{} or be on the stack", l))
-    | (Icall(l,_,_,_)::_), _ -> raise (TypeError ("call: must be the last instruction in a block", l))
-    | [], _ -> raise (TypeError ("Un-oh! I found an empty block somewhere...", dummy_loc))
+    | (Ihalt(l,_,_,_)::_), _ -> raise (TypeError ("halt: must be the last instruction in a block.", l))
+    | (Iret(l,_,_)::_), _ -> raise (TypeError ("ret: must be the last instruction in a block.", l))
+    | (Ijmp(l,_)::_), _ -> raise (TypeError ("jmp: must be the last instruction in a block.", l))
+    | [Icall(l,_,_,_)], _ -> raise (TypeError ("call: return marker must be end{} or be on the stack.", l))
+    | (Icall(l,_,_,_)::_), _ -> raise (TypeError ("call: must be the last instruction in a block.", l))
+    | [], _ -> raise (TypeError ("Uh-oh! I found an empty block somewhere...", dummy_loc))
 
 
   and tc_u context u = let open TAL in match u with
