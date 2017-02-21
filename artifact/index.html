@@ -136,22 +136,23 @@
         <tr>
           <td><code>(&iota;; ..., l &rarr; h, ...)</code></td>
           <td><code>([instr; ...],[l -> h, ...])</code></td>
-          <td>TAL components use brackets around instructions and heap fragment.</td>
+          <td>TAL components use brackets around instructions and the heap fragment.</td>
         </tr>
 
         <tr>
           <td><code><sup>&tau;</sup>FT e</code></td>
           <td><code>FT[t,s] e</code></td>
-          <td><code>FT</code> (TAL inside, Fun outside) boundary
-          specify stack <code>s</code> after running.</td>
+          <td><code>FT</code> (TAL inside, Fun outside) boundaries
+          have a stack typing <code>s</code> specifying the shape of the
+          stack after they return.</td>
         </tr>
 
         <tr>
           <td><code><sup>&tau;</sup>FT e</code></td>
           <td><code>FT[t,?] e</code></td>
-          <td><code>FT</code> boundary can use <code>?</code> to indicate
-          that <code>e</code> will not modify, thus can be
-          inferred.</td>
+          <td><code>FT</code> boundaries can use <code>?</code> to indicate
+          that <code>e</code> will not modify the stack, and that the
+          return stack typing can thus be inferred.</td>
         </tr>
 
         <tr>
@@ -165,9 +166,9 @@
         <tr>
           <td><code>&alpha;, &zeta;, &epsilon;</code></td>
           <td><code>a1, z21, e5</code></td>
-          <td>Type variables (in Fun and TAL) must begin
-          with <code>a</code>, stack variables with <code>z</code>,
-          and return marker variables with <code>e</code>.</td>
+          <td>TAL type variables must begin with <code>a</code>, stack
+          variables with <code>z</code>, and return marker variables
+          with <code>e</code>.</td>
         </tr>
 
         <tr>
@@ -181,10 +182,40 @@
         <tr>
           <td><code>&forall;, &mu;, &lambda;, &#8707;, &bullet;</code></td>
           <td><code>forall, mu, lam, exists, *</code></td>
-          <td>Greek letters replaced with english.</td>
+          <td>Greek letters and quantifiers are replaced by english keywords.</td>
         </tr>
 
+        <tr>
+          <td><code>&bullet;</code></td>
+          <td><code>*</code></td>
+          <td>The concrete stack symbol <code>&bullet;</code> is written <code>*</code>.</td>
+        </tr>
 
+        <tr>
+          <td><code>u[&omega;]</code></td>
+          <td><code>u[&omega;, &omega;...]</code></td>
+          <td>TAL instantiation is n-ary. (This was mentioned as syntactic sugar.)</td>
+        </tr>
+
+        <tr>
+          <td><code>{&chi;; &sigma;}<sup>q</sup></code></td>
+          <td><code>{&chi;; &sigma;} q</code></td>
+          <td>The return marker superscript is just written in line.</td>
+        </tr>
+
+        <tr>
+          <td><code>&lambda;<sup>&phi;</sup><sub>&phi;</sub>(x:&tau;...).t</code></td>
+          <td><code>lam[&phi;][&phi;](x:&tau;...).e</code>,
+              <code>(&tau;...) [&phi;] -> [&phi;] &tau;</code></td>
+          <td>The stack prefixes of stack-modifying functions are bracketed, in line.</td>
+        </tr>
+
+        <tr>
+          <td><code>unpack &lt;&alpha;, r<sub>d</sub>&gt; u</code></td>
+          <td><code>unpack &lt;&alpha;, r<sub>d</sub>&gt;, u</code></td>
+          <td>The TAL instruction <code>unpack</code> has comma-separated argument,
+            for consistency with other instructions.</td>
+        </tr>
       </table>
 
 
