@@ -45,27 +45,38 @@ let call_to_call = Ftal.(F.show_exp (F.(EBoundary (dummy_loc, TInt, None, Exampl
 let blocks_1 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_1, [F.EInt (dummy_loc, 3)])))
 let blocks_2 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_2, [F.EInt (dummy_loc, 3)])))
 
-let parse_error = {|
+
+let stack_error = {|
 FT [int, ?] (
-  [mv r1, 1;
-   add r1, r1, 1
-   halt int, * {r1}],
-  [])
+[mv ra, lh;
+ salloc 1; mv r1, 0; sst 0, r1;
+ call l {*, end{int; *}}],
+[l -> box code [z, e]
+          {ra: box forall[]. {r1:int; z} e; int :: z} ra.
+          [sld r1, 0;
+           ret ra {r1}],
+ lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])
 |}
-let type_error = {|
-(lam(x2:int).
-  (lam(f:mu a.(a,
-        int) -> int, x1:int).
-    if0 x1
-      ()
-      (x1*((unfold f) f (x1-1)))) (fold (mu b.(b,
-          int) -> int) (lam(f:mu a.(a,
-            int) -> int, x1:int).
-        if0 x1
-          1
-          (x1*((unfold f) f (x1-1)))))
-    x2) 3
-|}
+
+let call_error = {|
+FT[int,?](
+[mv ra, lh;
+ call l {*, end{int; *}}],
+[l -> box code [z1, e1]
+       {ra: box forall[]. {r1:int; z1} e1; z1} ra.
+       [salloc 1;
+        sst 0, ra;
+        mv ra, l1h[z1,e1];
+        call l1 {box forall[]. {r1:int; z1} e1 :: z1, 0}],
+ l1 -> box code [z2, e]
+       {ra: box forall[]. {r1:int; z2} e; z2} ra.
+       [mv r1, 0;
+        jmp ra],
+ l1h -> box code [z3,e3] {r1:int; box forall[]. {r1:int; z3} e3 :: z3} 0.
+            [sld ra, 0; sfree 1; ret ra {r1}],
+ lh -> box code [] {r1:int; *} end{int; *}.
+            [halt int, * {r1}]])
+|} (*jmp ra should be ret ra {r1}],*)
 
 let set_error ln m =
   let _ = Js.Unsafe.((coerce global)##seterror (Js.number_of_float (float_of_int ln)) (Js.string m)) in
@@ -185,7 +196,7 @@ let _ =
   set_click "blocks_2" (ehandle blocks_2);
   set_click "factorial_f" (ehandle factorial_f);
   set_click "factorial_t" (ehandle factorial_t);
-  set_click "parse_error" (ehandle parse_error);
-  set_click "type_error" (ehandle type_error);
+  set_click "stack_error" (ehandle stack_error);
+  set_click "call_error" (ehandle call_error);
   set_editor simple;
   ()
