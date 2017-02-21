@@ -659,11 +659,12 @@ end = struct
             end
         | _ -> raise (TypeError ("Icall: not jumping to correct calling convention block", l))
       end
-
-    (* TODO(dbp 2017-02-18): Add jump instructions with suffixes to
-       make this exhaustive and remove this unhelpful error
-       message. *)
-    | _ -> raise (Failure "Don't know how to type-check")
+    | (Ihalt(l,_,_,_)::_), _ -> raise (TypeError ("halt: must be the last instruction in a block", l))
+    | (Iret(l,_,_)::_), _ -> raise (TypeError ("ret: must be the last instruction in a block", l))
+    | (Ijmp(l,_)::_), _ -> raise (TypeError ("jmp: must be the last instruction in a block", l))
+    | [Icall(l,_,_,_)], _ -> raise (TypeError ("call: return marker must be end{} or be on the stack", l))
+    | (Icall(l,_,_,_)::_), _ -> raise (TypeError ("call: must be the last instruction in a block", l))
+    | [], _ -> raise (TypeError ("Un-oh! I found an empty block somewhere...", dummy_loc))
 
 
   and tc_u context u = let open TAL in match u with
