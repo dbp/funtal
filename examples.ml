@@ -53,14 +53,14 @@ lam (x:int).
         z2 {r1}],
       [lf0 -> box code [z3, e]{ra : box forall[].{r1 : int; z3} e;
                               int :: z3} ra.
-                [sld r7, 0; mv r1, 1; bnz r7, la1[z3]; sfree 1; ret ra {r1}],
-       la1 -> box code [z4]{r1 : int,
+                [sld r7, 0; mv r1, 1; bnz r7, la1[z3,e]; sfree 1; ret ra {r1}],
+       la1 -> box code [z4,e4]{r1 : int,
                             r7 : int,
-                            ra : box forall[].{r1 : int; z3} e;
+                            ra : box forall[].{r1 : int; z3} e4;
                            int :: z3} ra.
                 [mul r1, r1, r7;
                  sub r7, r7, 1;
-                 bnz r7, la1[z1];
+                 bnz r7, la1[z1,e4];
                  sfree 1;
                  ret ra {r1}]])
     x
