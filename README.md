@@ -2,7 +2,7 @@
 
 SETUP:
 
-- install opam, and ocaml 4.03
+- install opam, and via opam, install ocaml 4.03 with `opam init --comp 4.03`.
 - `make install-deps`
   (if this were to fail, see the local `opam` file for dependencies)
 
