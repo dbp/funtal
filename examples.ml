@@ -11,6 +11,33 @@ let factorial_f = Parse.parse_string Parse.f_expression_eof {|
           if0 x1 1 (x1*((unfold f) f (x1-1))))
 |}
 
+
+let with_ref = Parse.parse_string Parse.f_expression_eof {|
+ (lam (init : int, k : ((int) [ref <int>::] -> [ref <int>::] unit,
+                        (unit) [ref <int>::] -> [ref <int>::] int) [ref <int>::]->[ref <int>::] int).
+    FT[int,?] (
+     [protect ::, z; import r1, z as z, int TF{
+      (lam (a : unit, b : int, c : unit). b)
+      (FT[unit, ref <int> :: z] ([salloc 1; import r1, z as z, int TF{init};
+                           sst 0, r1; ralloc r2, 1; salloc 1; sst 0, r2; mv r1, ();
+                           halt unit, ref <int>::z {r1}],[]))
+      (k(lam[ref <int>::][ref <int>::](x : int). FT[unit, ?]
+           ([protect ref <int>::, z; sld r1, 0; import r2, z as z, int TF{x};
+             st r1[0],r2; mv r1,();
+            halt unit, ref <int>::z {r1}], []))
+        (lam[ref <int>::][ref <int>::](x : unit). FT[int, ?]
+            ([protect ref <int>::, z; sld r1, 0; ld r2,r1[0]; 
+             halt int, ref <int>::z {r2}], [])))
+      (FT[unit, z] ([sfree 1; mv r1, (); halt unit, z {r1}],[]))
+    }; halt int, z {r1}]
+    ,[]))
+  10 (lam[ref <int>::][ref <int>::]
+          (set : (int) [ref <int>::] -> [ref <int>::] unit,
+           get : (unit) [ref <int>::] -> [ref <int>::] int).
+    (lam(a:unit,b:unit,c:int).c)(set 3)(set 7)(get ())
+      )
+|}
+
 let factorial_t' =
   let lf = FTAL.gen_sym ~pref:"lf" () in
   let la = FTAL.gen_sym ~pref:"la" () in

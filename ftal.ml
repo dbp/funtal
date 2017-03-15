@@ -328,8 +328,8 @@ end = struct
           let zeta_out = TAL.SAbstract (sout, z) in
           begin match tc (set_stack (set_env context (List.append ps (get_env context))) zeta)
                         (FC b) with
-          | (FT t, zeta') when zeta_out = zeta' -> (FT (TArrow (List.map ~f:snd ps, t)), get_stack context)
-          | (FT _, _) -> raise (TypeError ("lam: body manipulates stack in invalid way.", l))
+          | (FT t, zeta') when zeta_out = zeta' -> (FT (TArrowMod (List.map ~f:snd ps, sin, sout, t)), get_stack context)
+          | (FT _, zeta') -> raise (TypeError ("lam: body manipulates stack in invalid way. Expected " ^ TAL.show_sigma zeta_out ^ " but got " ^ TAL.show_sigma zeta' , l))
           | _ -> raise (TypeError ("lam: Uh-oh, got something I didn't understand.", l))
           end
         | EApp (l,f,args), TAL.QOut -> begin match tc' f with
@@ -350,6 +350,26 @@ end = struct
                                                      show t ^ " but has type " ^ show t' ^ ".", l))
                      | _ -> raise (TypeError ("app: Uh-oh, got something I didn't understand.", l))
                    ) ~init:s (List.zip_exn ps args))
+            | FT (TArrowMod (ps, sin, sout, rv)), s ->
+              if List.length ps <> List.length args then
+                raise (TypeError ("app: function expected " ^
+                                  string_of_int (List.length ps) ^
+                                  " arguments, but passed " ^
+                                  string_of_int (List.length args) ^ ".", l))
+              else
+                let i = ref 0 in
+                let s' = List.fold_left ~f:(fun s0 (t,e) ->
+                     i := !i + 1;
+                     match tc (set_stack context s0) (FC e) with
+                     | FT t', s1 when t_eq t t' -> s1
+                     | FT t', _ -> raise (TypeError ("app: " ^ string_of_int !i ^
+                                                     "th argument should have type " ^
+                                                     show t ^ " but has type " ^ show t' ^ ".", l))
+                     | _ -> raise (TypeError ("app: Uh-oh, got something I didn't understand.", l))
+                  ) ~init:s (List.zip_exn ps args) in
+                if TAL.stack_pref_length s' >= List.length sin && TAL.s_pref_eq (TAL.stack_take s' (List.length sin)) sin then
+                  (FT rv, s')
+                else raise (TypeError ("app: stack modifying lambda expected stack prefix of " ^ TAL.show_sigma_prefix sin ^ ", but got stack of shape " ^ TAL.show_sigma s' ^ ".", l))
             | (FT t,_) ->
               raise (TypeError ("app: got non-function of type " ^ show t ^ ".", l))
             | _ -> raise (TypeError ("app: Uh-oh, got something I didn't understand.", l))

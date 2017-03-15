@@ -67,7 +67,7 @@ let factorial_t = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_t, [F.
 let call_to_call = Ftal.(F.show_exp (F.(EBoundary (dummy_loc, TInt, None, Examples.call_to_call))))
 let blocks_1 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_1, [F.EInt (dummy_loc, 3)])))
 let blocks_2 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_2, [F.EInt (dummy_loc, 3)])))
-
+let with_ref = Ftal.F.show_exp Examples.with_ref
 
 let stack_error = {|
 FT [int, ?] (
@@ -219,6 +219,7 @@ let _ =
   set_click "blocks_2" (ehandle blocks_2);
   set_click "factorial_f" (ehandle factorial_f);
   set_click "factorial_t" (ehandle factorial_t);
+  set_click "with_ref" (ehandle with_ref);
   set_click "stack_error" (ehandle stack_error);
   set_click "call_error" (ehandle call_error);
   set_editor simple;

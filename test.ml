@@ -74,6 +74,12 @@ let test_factorial_f _ =
     (snd (F.stepn 300 (empty, F.EApp (dummy_loc, factorial_f, [F.EInt (dummy_loc, 3)]))))
     6
 
+let test_with_ref _ =
+  assert_eint
+    (snd (F.stepn 300 (empty, with_ref)))
+    7
+
+
 let test_mv_ty _ =
   assert_equal
     (FTAL.tc
@@ -556,6 +562,14 @@ let test_factorial_f_ty _ =
        (FTAL.FC factorial_f))
     (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 
+let test_with_ref_ty _ =
+  assert_equal
+    (FTAL.tc
+       (FTAL.default_context TAL.QOut)
+       (FTAL.FC with_ref))
+    (FTAL.FT F.TInt, TAL.SConcrete [])
+
+
 let test_factorial_t _ =
   assert_eint
     (snd (F.stepn 30 (empty, F.EApp (dummy_loc, factorial_t, [F.EInt (dummy_loc, 3)]))))
@@ -660,6 +674,7 @@ let test_examples _ =
   assert_roundtrip_f Examples.blocks_2;
   assert_roundtrip_c Examples.call_to_call;
   assert_roundtrip_f Examples.higher_order;
+  assert_roundtrip_f Examples.with_ref;
   ()
 
 let suite = "FTAL evaluations" >:::
@@ -718,6 +733,8 @@ let suite = "FTAL evaluations" >:::
               "TAL(2blocks): (lam x. x + 2)3 = 5" >:: test_blocks2;
               "TAL(2blocks): (lam x. x + 2)3 : int" >:: test_blocks2_ty;
               "FT: factorial : int -> int" >:: test_ft_factorial_t_ty;
+              "FT: with_ref : int" >:: test_with_ref_ty;
+              "FT: with_ref = 7" >:: test_with_ref;
               "Example roundtrips" >:: test_examples;
             ]
 
