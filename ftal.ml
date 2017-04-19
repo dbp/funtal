@@ -25,8 +25,10 @@ module rec FTAL : sig
 
   type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
   val get_reg : context -> TAL.chi
+  val set_reg : context -> TAL.chi -> context
   val get_stack : context -> TAL.sigma
   val set_heap : context -> TAL.psi -> context
+  val set_stack : context -> TAL.sigma -> context
 
   val default_context : TAL.q -> context
 
@@ -456,13 +458,19 @@ end = struct
         | QR r, UR (_, r') when r = r' -> set_ret context (QR rd)
         | _ -> context in
       tc_is l (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) is
-    | Iimport (l,rd,z,s,t,f)::is, QR r when rd = r ->
-      raise (TypeError ("import: can't overwrite current return address in register " ^ rd ^ ".", l))
+    | Iimport (l,rd,z,s,t,f)::is, (QR _ as q) | Iimport (l,rd,z,s,t,f)::is, (QEpsilon _ as q) ->
+      raise (TypeError ("import: return marker must be end or stack position, not " ^ show_q q ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, _ when
         stack_pref_length s > stack_pref_length (get_stack context) ||
         not (s_eq (stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s)) s) ->
       raise (TypeError ("import: protected suffix does not match current stack. Suffix is " ^
                         show_sigma s ^ ", but current stack is " ^ show_sigma (get_stack context) ^ ".", l))
+    | Iimport (l,rd,z,s,t,f)::is, QI i when
+        (let exposed = (stack_pref_length (get_stack context) - stack_pref_length s) in
+         i < exposed) ->
+      raise (TypeError ("import: return marker is not in protected suffix of stack. It's at position " ^
+                        string_of_int i ^
+                        " and current stack is " ^ show_sigma (get_stack context) ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, _ ->
       let pref = stack_take (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in
       let suf = stack_drop (get_stack context) (stack_pref_length (get_stack context) - stack_pref_length s) in

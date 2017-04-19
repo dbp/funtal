@@ -145,6 +145,33 @@ let test_import_ty_exc3 _ =
        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC TAL.(dummy_loc, [Iimport (dummy_loc, "r1", "z", SConcrete [TUnit], F.TInt, F.EInt (dummy_loc, 1)); Ihalt (dummy_loc, TInt, SConcrete [], "r1")], [])))
 
+let test_import_ty2 _ =
+  let retty = TAL.(TBox (PBlock ([], [("r2", TInt)], SConcrete [], QEnd (TInt, SConcrete [])))) in
+  assert_equal
+    (FTAL.tc
+       (FTAL.set_stack (FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
+       (FTAL.TC
+          (tal_comp "([import r2, box forall [].{r2 : int; *} end{int;*} :: * as z, int TF{10}; sld r1, 0; sfree 1; ret r1 {r2}], [])")))
+    (FTAL.TT TAL.TInt, TAL.SConcrete [])
+
+let test_import_ty_exc4 _ =
+  let retty = TAL.(TBox (PBlock ([], [("r2", TInt)], SConcrete [], QEnd (TInt, SConcrete [])))) in
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.set_stack (FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
+       (FTAL.TC
+          (tal_comp "([import r2, * as z, int TF{10}; sld r1, 0; sfree 1; ret r1 {r2}], [])")))
+
+let test_import_ty_exc5 _ =
+  let retty = TAL.(TBox (PBlock ([], [("r2", TInt)], SConcrete [], QEnd (TInt, SConcrete [])))) in
+  assert_raises_typeerror
+    (fun _ -> FTAL.tc
+       (FTAL.set_reg (FTAL.default_context (TAL.(QR "r1"))) [("r1",retty)])
+       (FTAL.TC
+          (tal_comp "([import r2, * as z, int TF{10}; ret r1 {r2}], [])")))
+
+
+
 let test_salloc_ty _ =
   assert_equal
     (FTAL.tc
@@ -695,6 +722,9 @@ let suite = "FTAL evaluations" >:::
               "TAL: import exc" >:: test_import_ty_exc;
               "TAL: import exc" >:: test_import_ty_exc2;
               "TAL: import exc" >:: test_import_ty_exc3;
+              "TAL: import w/ stack retmarker" >:: test_import_ty2;
+              "TAL: import exc" >:: test_import_ty_exc4;
+              "TAL: import exc" >:: test_import_ty_exc5;
               "TAL: mv r1, 1; salloc 2; halt r1 : int" >:: test_salloc_ty;
               "TAL: import w/ stack mod : int" >:: test_import_stk_ty;
               "TAL: sst" >:: test_sst_ty;

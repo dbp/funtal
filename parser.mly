@@ -237,7 +237,7 @@ return_marker:
 | OUT { QOut }
 
 type_env: li=bracketed(simple_type_env) { li }
-simple_type_env: li=separated_list(COMMA, type_env_elem) { li}
+simple_type_env: li=separated_list(COMMA, type_env_elem) { li }
 
   type_env_elem:
   | alpha=type_variable { DAlpha alpha }
