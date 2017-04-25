@@ -34,3 +34,9 @@ EDITOR:
 RUN TESTS:
 
 - `docker run funtal`
+
+## Install pre-built artifact from docker hub
+
+- `docker run dbp1/funtal`
+
+This is automatically built by docker from this repository, and hosted here: https://hub.docker.com/r/dbp1/funtal/
