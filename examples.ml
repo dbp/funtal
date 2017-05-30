@@ -1,5 +1,60 @@
 open Ftal;;
 
+let simple = {|
+FT [int, ?] (
+[mv ra, lh;
+ salloc 1; mv r1, 0; sst 0, r1;
+ call l {*, end{int; *}}],
+[l -> box code [z, e]
+          {ra: box forall[]. {r1:int; z} e; int :: z} ra.
+          [sld r1, 0;
+           sfree 1;
+           ret ra {r1}],
+ lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])
+|}
+
+let omega = {|
+(lam(f : mu a. (a) -> a).((unfold f) f))
+(fold (mu a. (a) -> a) lam(f : mu a. (a) -> a).((unfold f) f))
+|}
+
+let import = {|
+FT [int, ?] ([import r1, * as z, int TF{10}; halt int, * {r1}], [])
+|}
+
+let stack_error = {|
+FT [int, ?] (
+[mv ra, lh;
+ salloc 1; mv r1, 0; sst 0, r1;
+ call l {*, end{int; *}}],
+[l -> box code [z, e]
+          {ra: box forall[]. {r1:int; z} e; int :: z} ra.
+          [sld r1, 0;
+           ret ra {r1}],
+ lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])
+|}
+
+let call_error = {|
+FT[int,?](
+[mv ra, lh;
+ call l {*, end{int; *}}],
+[l -> box code [z1, e1]
+       {ra: box forall[]. {r1:int; z1} e1; z1} ra.
+       [salloc 1;
+        sst 0, ra;
+        mv ra, l1h[z1,e1];
+        call l1 {box forall[]. {r1:int; z1} e1 :: z1, 0}],
+ l1 -> box code [z2, e]
+       {ra: box forall[]. {r1:int; z2} e; z2} ra.
+       [mv r1, 0;
+        jmp ra],
+ l1h -> box code [z3,e3] {r1:int; box forall[]. {r1:int; z3} e3 :: z3} 0.
+            [sld ra, 0; sfree 1; ret ra {r1}],
+ lh -> box code [] {r1:int; *} end{int; *}.
+            [halt int, * {r1}]])
+|} (*jmp ra should be ret ra {r1}],*)
+
+(* OLD EXAMPLES: *)
 
 (* Factorial Two Ways *)
 

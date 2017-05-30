@@ -39,28 +39,9 @@ let parse_report_loc parse_fun str =
         `Error (start_line, Buffer.contents buf)
     end
 
-let simple = {|
-FT [int, ?] (
-[mv ra, lh;
- salloc 1; mv r1, 0; sst 0, r1;
- call l {*, end{int; *}}],
-[l -> box code [z, e]
-          {ra: box forall[]. {r1:int; z} e; int :: z} ra.
-          [sld r1, 0;
-           sfree 1;
-           ret ra {r1}],
- lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])
-|}
-
-let omega = {|
-(lam(f : mu a. (a) -> a).((unfold f) f))
-(fold (mu a. (a) -> a) lam(f : mu a. (a) -> a).((unfold f) f))
-|}
-
-let import = {|
-FT [int, ?] ([import r1, * as z, int TF{10}; halt int, * {r1}], [])
-|}
-
+let simple = Examples.simple
+let omega = Examples.omega
+let import = Examples.import
 let higher_order = Ftal.F.show_exp Examples.higher_order
 let factorial_f = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_f, [F.EInt (dummy_loc, 3)])))
 let factorial_t = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_t, [F.EInt (dummy_loc, 3)])))
@@ -68,38 +49,8 @@ let call_to_call = Ftal.(F.show_exp (F.(EBoundary (dummy_loc, TInt, None, Exampl
 let blocks_1 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_1, [F.EInt (dummy_loc, 3)])))
 let blocks_2 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_2, [F.EInt (dummy_loc, 3)])))
 let with_ref = Ftal.F.show_exp Examples.with_ref
-
-let stack_error = {|
-FT [int, ?] (
-[mv ra, lh;
- salloc 1; mv r1, 0; sst 0, r1;
- call l {*, end{int; *}}],
-[l -> box code [z, e]
-          {ra: box forall[]. {r1:int; z} e; int :: z} ra.
-          [sld r1, 0;
-           ret ra {r1}],
- lh -> box code [] {r1:int; *} end{int; *}. [halt int, * {r1}]])
-|}
-
-let call_error = {|
-FT[int,?](
-[mv ra, lh;
- call l {*, end{int; *}}],
-[l -> box code [z1, e1]
-       {ra: box forall[]. {r1:int; z1} e1; z1} ra.
-       [salloc 1;
-        sst 0, ra;
-        mv ra, l1h[z1,e1];
-        call l1 {box forall[]. {r1:int; z1} e1 :: z1, 0}],
- l1 -> box code [z2, e]
-       {ra: box forall[]. {r1:int; z2} e; z2} ra.
-       [mv r1, 0;
-        jmp ra],
- l1h -> box code [z3,e3] {r1:int; box forall[]. {r1:int; z3} e3 :: z3} 0.
-            [sld ra, 0; sfree 1; ret ra {r1}],
- lh -> box code [] {r1:int; *} end{int; *}.
-            [halt int, * {r1}]])
-|} (*jmp ra should be ret ra {r1}],*)
+let stack_error = Examples.stack_error
+let call_error = Examples.call_error
 
 let set_error ln m =
   let _ = Js.Unsafe.((coerce global)##seterror (Js.number_of_float (float_of_int ln)) (Js.string m)) in
