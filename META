@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: 0820b5843b6989f59a89869d64d75e7c)
+version = "0.1"
+description = "."
+requires = "ppx_deriving.show str pprint unix menhirLib"
+archive(byte) = "ftal.cma"
+archive(byte, plugin) = "ftal.cma"
+archive(native) = "ftal.cmxa"
+archive(native, plugin) = "ftal.cmxs"
+exists_if = "ftal.cma"
+# OASIS_STOP
+

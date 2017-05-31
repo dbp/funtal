@@ -1,4 +1,4 @@
-open Ftal;;
+open Syntax;;
 
 let simple = {|
 FT [int, ?] (
@@ -94,8 +94,8 @@ let with_ref = Parse.parse_string Parse.f_expression_eof {|
 |}
 
 let factorial_t' =
-  let lf = FTAL.gen_sym ~pref:"lf" () in
-  let la = FTAL.gen_sym ~pref:"la" () in
+  let lf = Ftal.FTAL.gen_sym ~pref:"lf" () in
+  let la = Ftal.FTAL.gen_sym ~pref:"la" () in
   let h = [(lf, TAL.(Box, HCode ([DZeta "z3"; DEpsilon "e"],
                             [("ra", TBox (PBlock ([],
                                                   [("r1", TInt)],

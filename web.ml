@@ -43,11 +43,11 @@ let simple = Examples.simple
 let omega = Examples.omega
 let import = Examples.import
 let higher_order = Ftal.F.show_exp Examples.higher_order
-let factorial_f = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_f, [F.EInt (dummy_loc, 3)])))
-let factorial_t = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.factorial_t, [F.EInt (dummy_loc, 3)])))
-let call_to_call = Ftal.(F.show_exp (F.(EBoundary (dummy_loc, TInt, None, Examples.call_to_call))))
-let blocks_1 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_1, [F.EInt (dummy_loc, 3)])))
-let blocks_2 = Ftal.(F.show_exp (F.EApp (dummy_loc, Examples.blocks_2, [F.EInt (dummy_loc, 3)])))
+let factorial_f = Ftal.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.factorial_f, [F.EInt (dummy_loc, 3)]))
+let factorial_t = Ftal.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.factorial_t, [F.EInt (dummy_loc, 3)]))
+let call_to_call = Ftal.F.show_exp Syntax.(F.(EBoundary (dummy_loc, TInt, None, Examples.call_to_call)))
+let blocks_1 = Ftal.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.blocks_1, [F.EInt (dummy_loc, 3)]))
+let blocks_2 = Ftal.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.blocks_2, [F.EInt (dummy_loc, 3)]))
 let with_ref = Ftal.F.show_exp Examples.with_ref
 let stack_error = Examples.stack_error
 let call_error = Examples.call_error
@@ -81,7 +81,7 @@ let set_click i h =
   ()
 
 let _ =
-  let hist = ref ((Ftal.F.EUnit Ftal.dummy_loc, ([],[],[])), []) in
+  let hist = ref ((Syntax.F.EUnit Syntax.dummy_loc, ([],[],[])), []) in
   let refresh _ =
     let ((e, (h,r,s)), past) = !hist in
     let _ = match Ftal.F.decomp e with
@@ -115,11 +115,11 @@ let _ =
     let open H in
     let _ =
       let s = Js.to_string (get_editor ()) in
-      Ftal.(FTAL.(
+      Syntax.(FTAL.(
           try
             match parse_report_loc Parse.f_expression_eof s with
             | `Success e -> begin
-                let _ = tc (default_context TAL.QOut) (FC e) in
+                let _ = Ftal.FTAL.(tc (default_context TAL.QOut) (FC e)) in
                 hist := ((e, ([],[],[])), []);
                 refresh ();
                 clear_errors ();
@@ -131,7 +131,7 @@ let _ =
                 set_error line msg;
                 Js.Opt.return Js._false
               end
-          with TypeError (t,l) ->
+          with Ftal.FTAL.TypeError (t,l) ->
             begin
               set_error l.line ("Type Error: " ^ t);
               hide_machine ();

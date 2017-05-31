@@ -19,19 +19,19 @@
 %left PLUS MINUS
 %left TIMES
 
-%start<Ftal.TAL.component> component_eof
+%start<Syntax.TAL.component> component_eof
 /*
-%start<Ftal.TAL.mem> memory_eof
-%start<Ftal.TAL.instr list> instruction_sequence_eof
-%start<Ftal.TAL.heapm> heap_fragment_eof
-%start<Ftal.TAL.w> word_value_eof
-%start<Ftal.TAL.u> small_value_eof
-%start<Ftal.TAL.delta> type_env_eof
-%start<Ftal.F.t> f_type_eof
+%start<Syntax.TAL.mem> memory_eof
+%start<Syntax.TAL.instr list> instruction_sequence_eof
+%start<Syntax.TAL.heapm> heap_fragment_eof
+%start<Syntax.TAL.w> word_value_eof
+%start<Syntax.TAL.u> small_value_eof
+%start<Syntax.TAL.delta> type_env_eof
+%start<Syntax.F.t> f_type_eof
 */
-%start<Ftal.F.exp> f_expression_eof
+%start<Syntax.F.exp> f_expression_eof
 
-%{ open Ftal
+%{ open Syntax
    open TAL
 
    (* NOTE(gasche 2017-02-19): see #5. We merged the syntactic categories of word

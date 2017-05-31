@@ -1,5 +1,5 @@
 open OUnit2;;
-open Ftal;;
+open Syntax;;
 open Examples;;
 let f_expr str = Parse.parse_string Parse.f_expression_eof str
 
@@ -17,7 +17,7 @@ let roundtrip ?source comp =
         close_out chan;
   in
   let write_result () =
-    let doc = TALP.p_component comp in
+    let doc = Ftal.TALP.p_component comp in
     let chan = open_out roundtrip in
     PPrintEngine.ToChannel.pretty 0.8 80 chan doc;
     flush chan;
@@ -45,18 +45,18 @@ let assert_eint e n =
 
 
 let test1 _ = assert_eint
-    (snd (F.stepn 10 (empty, f_expr "1 + 1")))
+    (snd (Ftal.F.stepn 10 (empty, f_expr "1 + 1")))
     2
 
 let test1_ty _ = assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC (f_expr "1 + 1")))
     (FTAL.FT F.TInt, TAL.SConcrete []);;
 
 let test2 _ =
   assert_eint
-    (snd (F.stepn 10 (empty, F.EBoundary (dummy_loc, F.TInt, None,
+    (snd (Ftal.F.stepn 10 (empty, F.EBoundary (dummy_loc, F.TInt, None,
                                           (tal_comp
                                              "([mv r1, 1;
                                           add r1, r1, 1;
@@ -66,61 +66,61 @@ let test2 _ =
 
 let test_f_app _ =
   assert_eint
-    (snd (F.stepn 10 (empty, f_expr "(lam (x:int). x + x) 1")))
+    (snd (Ftal.F.stepn 10 (empty, f_expr "(lam (x:int). x + x) 1")))
     2
 
 let test_factorial_f _ =
   assert_eint
-    (snd (F.stepn 300 (empty, F.EApp (dummy_loc, factorial_f, [F.EInt (dummy_loc, 3)]))))
+    (snd (Ftal.F.stepn 300 (empty, F.EApp (dummy_loc, factorial_f, [F.EInt (dummy_loc, 3)]))))
     6
 
 let test_with_ref _ =
   assert_eint
-    (snd (F.stepn 300 (empty, with_ref)))
+    (snd (Ftal.F.stepn 300 (empty, with_ref)))
     7
 
 
 let test_mv_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp "([mv r1, 1; halt int, * {r1};], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let test_aop_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp "([mv r1, 1; add r2, r1, 2; halt int, * {r2}], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
 
 let assert_raises_typeerror (f : unit -> 'a) : unit =
   FTAL.(try (f (); assert_failure "didn't raise an exception")
-        with TypeError _  -> ())
+        with Ftal.FTAL.TypeError _  -> ())
 
 let test_aop_ty_exc _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (fun _ -> Ftal.FTAL.tc
+        (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
         (FTAL.TC (tal_comp "([mv r1, (); add r2, r1, 2; halt int, * {r2}], [])")))
 
 let test_aop_ty_exc2 _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (fun _ -> Ftal.FTAL.tc
+        (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
         (FTAL.TC (tal_comp "([mv r1, 1; add r2, r1, (); halt int, * {r2}], [])")))
 
 let test_aop_ty_exc3 _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-        (FTAL.default_context (TAL.QR "r2"))
+    (fun _ -> Ftal.FTAL.tc
+        (Ftal.FTAL.default_context (TAL.QR "r2"))
         (FTAL.TC (tal_comp "([mv r1, 1; add r2, r1, 1; halt int, * {r2}], [])")))
 
 
 let test_import_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC
           (tal_comp "([import r1, * as z, int TF{10}; halt int, * {r1}], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
@@ -128,28 +128,28 @@ let test_import_ty _ =
 
 let test_import_ty_exc _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC
           (tal_comp "([import r1, * as z, int TF{()}; halt int, * {r1}], [])")))
 
 let test_import_ty_exc2 _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC TAL.(dummy_loc, [Iimport (dummy_loc, "r1", "z", SConcrete [], F.TUnit, F.EInt (dummy_loc, 1)); Ihalt (dummy_loc, TInt, SConcrete [], "r1")], [])))
 
 let test_import_ty_exc3 _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC TAL.(dummy_loc, [Iimport (dummy_loc, "r1", "z", SConcrete [TUnit], F.TInt, F.EInt (dummy_loc, 1)); Ihalt (dummy_loc, TInt, SConcrete [], "r1")], [])))
 
 let test_import_ty2 _ =
   let retty = TAL.(TBox (PBlock ([], [("r2", TInt)], SConcrete [], QEnd (TInt, SConcrete [])))) in
   assert_equal
-    (FTAL.tc
-       (FTAL.set_stack (FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.set_stack (Ftal.FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
        (FTAL.TC
           (tal_comp "([import r2, box forall [].{r2 : int; *} end{int;*} :: * as z, int TF{10}; sld r1, 0; sfree 1; ret r1 {r2}], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
@@ -157,16 +157,16 @@ let test_import_ty2 _ =
 let test_import_ty_exc4 _ =
   let retty = TAL.(TBox (PBlock ([], [("r2", TInt)], SConcrete [], QEnd (TInt, SConcrete [])))) in
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.set_stack (FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.set_stack (Ftal.FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
        (FTAL.TC
           (tal_comp "([import r2, * as z, int TF{10}; sld r1, 0; sfree 1; ret r1 {r2}], [])")))
 
 let test_import_ty_exc5 _ =
   let retty = TAL.(TBox (PBlock ([], [("r2", TInt)], SConcrete [], QEnd (TInt, SConcrete [])))) in
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.set_reg (FTAL.default_context (TAL.(QR "r1"))) [("r1",retty)])
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.set_reg (Ftal.FTAL.default_context (TAL.(QR "r1"))) [("r1",retty)])
        (FTAL.TC
           (tal_comp "([import r2, * as z, int TF{10}; ret r1 {r2}], [])")))
 
@@ -174,15 +174,15 @@ let test_import_ty_exc5 _ =
 
 let test_salloc_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit; TUnit]))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit; TUnit]))))
        (FTAL.TC TAL.(dummy_loc, [Imv (dummy_loc, "r1", UW (dummy_loc, WInt (dummy_loc, 1))); Isalloc (dummy_loc, 2); Ihalt (dummy_loc, TInt, SConcrete [TUnit; TUnit], "r1")], [])))
     (FTAL.TT TAL.TInt, TAL.(SConcrete [TUnit; TUnit]))
 
 let test_import_stk_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
        (FTAL.TC (tal_comp "([salloc 3;
                              import r1, unit::* as z', int TF{
                                FT [int, unit::z'] (
@@ -201,16 +201,16 @@ let test_import_stk_ty _ =
 
 let test_sst_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TInt]))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TInt]))))
        (FTAL.TC TAL.(dummy_loc, [Imv (dummy_loc, "r1", UW (dummy_loc, WInt (dummy_loc, 1))); Isalloc (dummy_loc, 1); Isst (dummy_loc, 0,"r1"); Ihalt (dummy_loc, TInt, SConcrete [TInt], "r1")],[])))
     (FTAL.TT TAL.TInt, TAL.SConcrete [TAL.TInt])
 
 
 let test_sld_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete [TUnit]))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TUnit, SConcrete [TUnit]))))
        (FTAL.TC (tal_comp
                    "([mv r1, 1; salloc 1; sld r2, 0; halt unit, unit::* {r2}],
                      [])")))
@@ -218,8 +218,8 @@ let test_sld_ty _ =
 
 let test_ld_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
                    "([
                        mv r2, l;
@@ -230,8 +230,8 @@ let test_ld_ty _ =
 
 let test_ld2_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
                    "([
                        mv r2, l;
@@ -244,8 +244,8 @@ let test_ld2_ty _ =
 
 let test_st_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
                    "([
                      mv r1, l;
@@ -259,8 +259,8 @@ let test_st_ty _ =
 
 let test_ralloc_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
                    "([
                        mv r1, 1;
@@ -276,8 +276,8 @@ let test_ralloc_ty _ =
 
 let test_balloc_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
        (FTAL.TC (tal_comp
                    "([
                        mv r1, 1;
@@ -291,8 +291,8 @@ let test_balloc_ty _ =
 
 let test_balloc_ty_exc _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-        (FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
+    (fun _ -> Ftal.FTAL.tc
+        (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete [TUnit]))))
         (FTAL.TC (tal_comp
                     "([
                         mv r1, 1;
@@ -311,8 +311,8 @@ let test_balloc_ty_exc _ =
 
 let test_unpack_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
        (FTAL.TC (tal_comp
                    "([unpack <a, r2>, pack <int, 1> as exists a. a;
                       mv r1, ();
@@ -335,8 +335,8 @@ let test_parse5 _ =
 
 let test_unpack_ty_exc _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-        (FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
+    (fun _ -> Ftal.FTAL.tc
+        (Ftal.FTAL.default_context (TAL.(QEnd (TUnit, SConcrete []))))
         (FTAL.TC (tal_comp
                     "([unpack <a, r2>, 10;
                        mv r1, ();
@@ -346,8 +346,8 @@ let test_unpack_ty_exc _ =
    large values. But we can do trivial ones easily! *)
 let test_unfold_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
                    "([unfold r1, fold mu a. int 1;
                       halt int, * {r1}],
@@ -356,8 +356,8 @@ let test_unfold_ty _ =
 
 let test_unfold_ty_exc _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context (TAL.(QEnd (TInt, SConcrete []))))
        (FTAL.TC (tal_comp
                    "([unfold r1, 1;
                       halt int, * {r1};]
@@ -376,12 +376,12 @@ let call_tl =
 
 
 let test_call_tl _ =
-  assert_eint (snd (F.stepn 30 (empty, call_tl))) 10
+  assert_eint (snd (Ftal.F.stepn 30 (empty, call_tl))) 10
 
 let test_call_tl_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC call_tl))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
@@ -401,8 +401,8 @@ let call_tl_exc =
 
 let test_call_tl_ty_exc _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC call_tl_exc))
 
 let call_tl_exc2 =
@@ -420,8 +420,8 @@ let call_tl_exc2 =
 
 let test_call_tl_ty_exc2 _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC call_tl_exc2))
 
 let call_tl_exc3 =
@@ -439,8 +439,8 @@ let call_tl_exc3 =
 
 let test_call_tl_ty_exc3 _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC call_tl_exc3))
 
 
@@ -459,8 +459,8 @@ let call_tl_exc4 =
 
 let test_call_tl_ty_exc4 _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC call_tl_exc4))
 
 let call_st =
@@ -484,12 +484,12 @@ let call_st =
                     [halt int, * {r1}]])")
 
 let test_call_st _ =
-  assert_eint (snd (F.stepn 30 (empty, call_st))) 0
+  assert_eint (snd (Ftal.F.stepn 30 (empty, call_st))) 0
 
 let test_call_st_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC call_st))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
@@ -513,8 +513,8 @@ let call_st_exc =
 
 let test_call_st_ty_exc _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC call_st_exc))
 
 let call_st_exc2 =
@@ -538,8 +538,8 @@ let call_st_exc2 =
 
 let test_call_st_ty_exc2 _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC call_st_exc2))
 
 let call_st_exc3 =
@@ -562,21 +562,21 @@ let call_st_exc3 =
 
 let test_call_st_ty_exc3 _ =
   assert_raises_typeerror
-    (fun _ -> FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (fun _ -> Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC call_st_exc3))
 
 
 let test_call_to_call _ =
   assert_eint
-    (snd (F.stepn 50 (empty, F.EBoundary (dummy_loc, F.TInt, None, call_to_call))))
+    (snd (Ftal.F.stepn 50 (empty, F.EBoundary (dummy_loc, F.TInt, None, call_to_call))))
     2
 
 
 let test_call_to_call_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC (F.EBoundary (dummy_loc, F.TInt, None, call_to_call))))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
@@ -584,43 +584,43 @@ let test_call_to_call_ty _ =
 
 let test_factorial_f_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC factorial_f))
     (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 
 let test_with_ref_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC with_ref))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
 
 let test_factorial_t _ =
   assert_eint
-    (snd (F.stepn 30 (empty, F.EApp (dummy_loc, factorial_t, [F.EInt (dummy_loc, 3)]))))
+    (snd (Ftal.F.stepn 30 (empty, F.EApp (dummy_loc, factorial_t, [F.EInt (dummy_loc, 3)]))))
     6
 
 let test_factorial_t_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC factorial_t))
     (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 
 
 let test_higher_order _ =
   assert_eint
-    (snd (F.stepn 60 (empty, higher_order)))
+    (snd (Ftal.F.stepn 60 (empty, higher_order)))
     2
 
 
 
 let test_higher_order_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC higher_order))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
@@ -630,54 +630,54 @@ let f_closures =
                    EApp (dummy_loc, EBoundary (dummy_loc, TArrow ( [TInt], TInt), None,
                                     (dummy_loc, [TAL.Iprotect (dummy_loc, [], "z2");
                                       TAL.Iimport (dummy_loc, "rf", "_z", TAL.SAbstract ([], "z2"), TArrow ([TInt], TInt), ELam (dummy_loc, [("y", TInt)], EBinop (dummy_loc, EVar (dummy_loc, "x"), BMinus, EVar (dummy_loc, "y"))));
-                                      TAL.Ihalt (dummy_loc, FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2"), "rf")], [])),
+                                      TAL.Ihalt (dummy_loc, Ftal.FTAL.tytrans (TArrow ([TInt], TInt)), TAL.SAbstract ([], "z2"), "rf")], [])),
                          [EInt (dummy_loc, 1)])))
 
 let test_closures _ =
   assert_eint
-    (snd (F.stepn 50 (empty, F.EApp (dummy_loc, f_closures, [F.EInt (dummy_loc, 3)]))))
+    (snd (Ftal.F.stepn 50 (empty, F.EApp (dummy_loc, f_closures, [F.EInt (dummy_loc, 3)]))))
     2
 
 let test_closures_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC (F.EApp (dummy_loc, f_closures, [F.EInt (dummy_loc, 3)]))))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
 let test_blocks1 _ =
   assert_eint
-    (snd (F.stepn 20 (empty, F.EApp (dummy_loc, blocks_1, [F.EInt (dummy_loc, 3)]))))
+    (snd (Ftal.F.stepn 20 (empty, F.EApp (dummy_loc, blocks_1, [F.EInt (dummy_loc, 3)]))))
     5
 
 let test_blocks1_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC (F.EApp (dummy_loc, blocks_1, [F.EInt (dummy_loc, 3)]))))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
 
 let test_blocks2 _ =
   assert_eint
-    (snd (F.stepn 30 (empty, F.EApp (dummy_loc, blocks_2, [F.EInt (dummy_loc, 3)]))))
+    (snd (Ftal.F.stepn 30 (empty, F.EApp (dummy_loc, blocks_2, [F.EInt (dummy_loc, 3)]))))
     5
 
 let test_blocks2_ty _ =
   assert_equal
-    (FTAL.tc
-       (FTAL.default_context TAL.QOut)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.default_context TAL.QOut)
        (FTAL.FC (F.EApp (dummy_loc, blocks_2, [F.EInt (dummy_loc, 3)]))))
     (FTAL.FT F.TInt, TAL.SConcrete [])
 
 let test_ft_factorial_t_ty _ =
   let (l, h) = factorial_t' in
-  let ((h',_,_),e) = FTAL.ft (F.TArrow ([F.TInt], F.TInt)) l (h,[],[]) in
-  let context = FTAL.default_context TAL.QOut in
-  let ht = List.map (fun (l,(m, p)) -> (l, (m, FTAL.tc_h_shallow context dummy_loc TAL.Box p))) h' in
+  let ((h',_,_),e) = Ftal.FTAL.ft (F.TArrow ([F.TInt], F.TInt)) l (h,[],[]) in
+  let context = Ftal.FTAL.default_context TAL.QOut in
+  let ht = List.map (fun (l,(m, p)) -> (l, (m, Ftal.FTAL.tc_h_shallow context dummy_loc TAL.Box p))) h' in
   assert_equal
-    (FTAL.tc
-       (FTAL.set_heap context ht)
+    (Ftal.FTAL.tc
+       (Ftal.FTAL.set_heap context ht)
        (FTAL.FC e))
     (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 

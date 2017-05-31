@@ -1,4 +1,56 @@
 # OASIS_START
+# DO NOT EDIT (digest: 5fddfb2b5dbbed18383058c869644dd7)
+# Ignore VCS directories, you can use the same kind of rule outside
+# OASIS_START/STOP if you want to exclude directories that contains
+# useless stuff for the build process
+true: annot, bin_annot
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library ftal
+"ftal.cmxs": use_ftal
+# Executable web
+"web.byte": package(js_of_ocaml)
+"web.byte": package(js_of_ocaml.ocamlbuild)
+"web.byte": package(js_of_ocaml.ppx)
+"web.byte": package(menhirLib)
+"web.byte": package(pprint)
+"web.byte": package(ppx_deriving.show)
+"web.byte": package(str)
+"web.byte": package(unix)
+"web.byte": use_ftal
+<*.ml{,i,y}>: package(js_of_ocaml)
+<*.ml{,i,y}>: package(js_of_ocaml.ocamlbuild)
+<*.ml{,i,y}>: package(js_of_ocaml.ppx)
+# Executable driver
+<driver.{native,byte}>: package(menhirLib)
+<driver.{native,byte}>: package(pprint)
+<driver.{native,byte}>: package(ppx_deriving.show)
+<driver.{native,byte}>: package(str)
+<driver.{native,byte}>: package(unix)
+<driver.{native,byte}>: use_ftal
+# Executable test_ftal
+<test.{native,byte}>: package(menhirLib)
+<test.{native,byte}>: package(oUnit)
+<test.{native,byte}>: package(pprint)
+<test.{native,byte}>: package(ppx_deriving.show)
+<test.{native,byte}>: package(str)
+<test.{native,byte}>: package(unix)
+<test.{native,byte}>: use_ftal
+<*.ml{,i,y}>: package(menhirLib)
+<*.ml{,i,y}>: package(oUnit)
+<*.ml{,i,y}>: package(pprint)
+<*.ml{,i,y}>: package(ppx_deriving.show)
+<*.ml{,i,y}>: package(str)
+<*.ml{,i,y}>: package(unix)
+<*.ml{,i,y}>: use_ftal
 # OASIS_STOP
 
 true: debug
