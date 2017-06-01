@@ -1,11 +1,11 @@
 let print_component chan comp =
-  let doc = Ftal.TALP.p_component comp in
+  let doc = Pretty.TALP.p_component comp in
   PPrintEngine.ToChannel.pretty 0.8 80 chan doc;
   output_string chan "\n";
   flush chan
 
 let print_f_expression chan expr =
-  let doc = Ftal.FP.p_exp expr in
+  let doc = Pretty.FP.p_exp expr in
   PPrintEngine.ToChannel.pretty 0.8 80 chan doc;
   output_string chan "\n";
   flush chan
