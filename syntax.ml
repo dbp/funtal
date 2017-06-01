@@ -9,6 +9,10 @@ let cpos {Lexing.pos_fname; pos_lnum; pos_cnum; pos_bol} =
 
 let dummy_loc = { line = -1; col = -1 }
 
+let gen_sym =
+  let count = ref 0 in
+  fun ?(pref="g") () -> let v = !count in count := v + 1; String.concat "" [pref; string_of_int v]
+
 module rec FTAL : sig
 
   type e = FC of F.exp | TC of TAL.component

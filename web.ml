@@ -119,7 +119,7 @@ let _ =
           try
             match parse_report_loc Parse.f_expression_eof s with
             | `Success e -> begin
-                let _ = Ftal.FTAL.(tc (default_context TAL.QOut) (FC e)) in
+                let _ = Typecheck.FTAL.(tc (default_context TAL.QOut) (FC e)) in
                 hist := ((e, ([],[],[])), []);
                 refresh ();
                 clear_errors ();
@@ -131,7 +131,7 @@ let _ =
                 set_error line msg;
                 Js.Opt.return Js._false
               end
-          with Ftal.FTAL.TypeError (t,l) ->
+          with Typecheck.FTAL.TypeError (t,l) ->
             begin
               set_error l.line ("Type Error: " ^ t);
               hide_machine ();
