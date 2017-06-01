@@ -314,7 +314,7 @@ end = struct
                                                      F'.show t ^ " but has type " ^ F'.show t' ^ ".", l))
                      | _ -> raise (TypeError ("app: Uh-oh, got something I didn't understand.", l))
                   ) ~init:s (List.zip_exn ps args) in
-                if TAL'.stack_pref_length s' >= List.length sin && TAL'.s_pref_eq (TAL'.stack_take s' (List.length sin)) sin then
+                if TAL.stack_pref_length s' >= List.length sin && TAL'.s_pref_eq (TAL.stack_take s' (List.length sin)) sin then
                   (FT rv, s')
                 else raise (TypeError ("app: stack modifying lambda expected stack prefix of " ^ TAL'.show_sigma_prefix sin ^ ", but got stack of shape " ^ TAL'.show_sigma s' ^ ".", l))
             | (FT t,_) ->
@@ -377,7 +377,7 @@ end = struct
               raise (TypeError ("component: Uh-oh, got something I didn't understand.", loc)) else ()) h in
       begin
         tc_is loc context instrs;
-        match TAL'.ret_type context (get_ret context) with
+        match TAL.ret_type context (get_ret context) with
         | Some s -> s
         | None -> raise (TypeError ("component: return marker invalid: " ^
                                     TAL'.show_q (get_ret context) ^ ".", loc))
@@ -406,19 +406,19 @@ end = struct
     | Iimport (l,rd,z,s,t,f)::is, (QR _ as q) | Iimport (l,rd,z,s,t,f)::is, (QEpsilon _ as q) ->
       raise (TypeError ("import: return marker must be end or stack position, not " ^ TAL'.show_q q ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, _ when
-        TAL'.stack_pref_length s > TAL'.stack_pref_length (get_stack context) ||
-        not (TAL'.s_eq (TAL'.stack_drop (get_stack context) (TAL'.stack_pref_length (get_stack context) - TAL'.stack_pref_length s)) s) ->
+        TAL.stack_pref_length s > TAL.stack_pref_length (get_stack context) ||
+        not (TAL'.s_eq (TAL.stack_drop (get_stack context) (TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s)) s) ->
       raise (TypeError ("import: protected suffix does not match current stack. Suffix is " ^
                         TAL'.show_sigma s ^ ", but current stack is " ^ TAL'.show_sigma (get_stack context) ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, QI i when
-        (let exposed = (TAL'.stack_pref_length (get_stack context) - TAL'.stack_pref_length s) in
+        (let exposed = (TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s) in
          i < exposed) ->
       raise (TypeError ("import: return marker is not in protected suffix of stack. It's at position " ^
                         string_of_int i ^
                         " and current stack is " ^ TAL'.show_sigma (get_stack context) ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, _ ->
-      let pref = TAL'.stack_take (get_stack context) (TAL'.stack_pref_length (get_stack context) - TAL'.stack_pref_length s) in
-      let suf = TAL'.stack_drop (get_stack context) (TAL'.stack_pref_length (get_stack context) - TAL'.stack_pref_length s) in
+      let pref = TAL.stack_take (get_stack context) (TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s) in
+      let suf = TAL.stack_drop (get_stack context) (TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s) in
       begin match tc (set_stack (set_ret context QOut) (SAbstract (pref, z))) (FC f) with
         | (FT t',s') when not (F'.t_eq t t') ->
           raise (TypeError ("import: F expression has type " ^ F'.show t' ^ ", but should have type " ^ F'.show t ^ ".", l))
@@ -426,7 +426,7 @@ end = struct
           raise (TypeError ("import: F expression does not protect abstract stack tail.", l))
         | (FT t',SAbstract (_, z')) when z <> z'  ->
           raise (TypeError ("import: F expression does not preserve abstract stack tail. Should have been " ^ z ^ " but was " ^ z' ^ ".", l))
-        | (FT t',SAbstract (newpref, _)) -> tc_is l (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) (TAL'.stack_prepend newpref suf)) is
+        | (FT t',SAbstract (newpref, _)) -> tc_is l (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (tytrans t))) (TAL.stack_prepend newpref suf)) is
         | _  -> raise (TypeError ("import: Uh-oh, got something I didn't understand.", l))
       end
     | [Ihalt (l,t,s,r)], QEnd (t',s') when not (TAL'.t_eq t' t) ->
@@ -447,33 +447,33 @@ end = struct
     | [Ihalt (l,_,_,_)], q ->
       raise (TypeError ("halt: return marker must be end{}, instead is: " ^ TAL'.show_q q ^ ".", l))
     | Isalloc (l,n) :: is, _ ->
-      tc_is l (set_stack context (List.fold_left ~f:(fun s _ -> TAL'.stack_cons TUnit s)
+      tc_is l (set_stack context (List.fold_left ~f:(fun s _ -> TAL.stack_cons TUnit s)
                                   ~init:(get_stack context) (List.init ~f:(fun x -> x) n))) is
     | Isfree (l,n) :: is, QI n' when n > n' ->
       raise (TypeError ("sfree: return marker is at position " ^ string_of_int n' ^ ", so you can't free " ^
                         string_of_int n ^ " cells: the return address would be lost.", l))
-    | Isfree (l,n) :: is, _ when TAL'.stack_pref_length (get_stack context) < n ->
-      raise (TypeError ("sfree: only " ^ string_of_int (TAL'.stack_pref_length (get_stack context)) ^
+    | Isfree (l,n) :: is, _ when TAL.stack_pref_length (get_stack context) < n ->
+      raise (TypeError ("sfree: only " ^ string_of_int (TAL.stack_pref_length (get_stack context)) ^
                         " stack cells are exposed, so can't free " ^ string_of_int n ^ ".", l))
     | Isfree (l,n) :: is, QI n' ->
-      tc_is l (set_ret (set_stack context (TAL'.stack_drop (get_stack context) n ))
+      tc_is l (set_ret (set_stack context (TAL.stack_drop (get_stack context) n ))
             (QI (n' - n))) is
     | Isfree (l,n) :: is, _ ->
-      tc_is l (set_stack context (TAL'.stack_drop (get_stack context) n )) is
+      tc_is l (set_stack context (TAL.stack_drop (get_stack context) n )) is
     | Iprotect (l,pref,v)::is, QI n when n > List.length pref ->
       raise (TypeError ("protect: return marker is at position " ^ string_of_int n ^
                         ", so you can't hide everything past the first " ^
                         string_of_int (List.length pref) ^ " cells: the return address would be hidden.", l))
-    | Iprotect (l,pref, v)::is, _ when not (TAL'.s_pref_eq (TAL'.stack_take (get_stack context) (List.length pref)) pref) ->
+    | Iprotect (l,pref, v)::is, _ when not (TAL'.s_pref_eq (TAL.stack_take (get_stack context) (List.length pref)) pref) ->
       raise (TypeError ("protect: specified prefix " ^
                         TAL'.show_sigma_prefix pref ^ " does not match current stack: " ^
                         TAL'.show_sigma (get_stack context) ^ ".", l))
     | Iprotect (l,pref, v)::is, _ ->
-      let stail = TAL'.stack_drop (get_stack context) (List.length pref) in
+      let stail = TAL.stack_drop (get_stack context) (List.length pref) in
       let new_q = TAL'.retmarker_sub (SAbs (stail, v)) (get_ret context) in
       tc_is l (set_ret (set_stack (set_tyenv context (List.append (get_tyenv context) [DZeta v])) (SAbstract (pref, v))) new_q) is
-    | Isst(l,n,r):: is, _ when TAL'.stack_pref_length (get_stack context) <= n ->
-      raise (TypeError ("sst: only " ^ string_of_int (TAL'.stack_pref_length (get_stack context)) ^
+    | Isst(l,n,r):: is, _ when TAL.stack_pref_length (get_stack context) <= n ->
+      raise (TypeError ("sst: only " ^ string_of_int (TAL.stack_pref_length (get_stack context)) ^
                         " stack cells are exposed, so can't store at position " ^ string_of_int n ^ ".", l))
     | Isst(l,n,r):: is, QI n' when n = n' ->
       raise (TypeError ("sst: can't overwrite current return marker at position " ^
@@ -486,12 +486,12 @@ end = struct
             | QR r' when r = r' -> set_ret context (QI n)
             | _ -> context
           in
-          tc_is l (set_stack context (TAL'.stack_prepend (TAL'.stack_take (get_stack context) n) (TAL'.stack_cons t (TAL'.stack_drop (get_stack context) (n+1))))) is
+          tc_is l (set_stack context (TAL.stack_prepend (TAL.stack_take (get_stack context) n) (TAL.stack_cons t (TAL.stack_drop (get_stack context) (n+1))))) is
       end
     | Isld(l,rd,n)::is, QR r when r = rd ->
       raise (TypeError ("sld: can't overwrite current return address in register " ^ rd ^ ".", l))
-    | Isld(l,rd,n)::is, _ when TAL'.stack_pref_length (get_stack context) <= n ->
-      raise (TypeError ("sld: only " ^ string_of_int (TAL'.stack_pref_length (get_stack context)) ^
+    | Isld(l,rd,n)::is, _ when TAL.stack_pref_length (get_stack context) <= n ->
+      raise (TypeError ("sld: only " ^ string_of_int (TAL.stack_pref_length (get_stack context)) ^
                         " stack cells are exposed, so can't load from position " ^
                         string_of_int n ^ ".", l))
     | Isld(l,rd,n)::is, q ->
@@ -499,7 +499,7 @@ end = struct
         | QI n' when n = n' -> set_ret context (QR rd)
         | _ -> context
       in
-      tc_is l (set_reg context (List.Assoc.add (get_reg context) rd (List.last_exn (TAL'.stack_take (get_stack context) (n+1))))) is
+      tc_is l (set_reg context (List.Assoc.add (get_reg context) rd (List.last_exn (TAL.stack_take (get_stack context) (n+1))))) is
     | Ild(l,rd,rs,n)::is, QR r when r = rd ->
       raise (TypeError ("ld: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Ild(l,rd,rs,n)::is, _ ->
@@ -539,9 +539,9 @@ end = struct
               raise (TypeError ("st: can't store to a non-tuple of type: " ^ TAL'.show t ^ ".", l))
           end
       end
-    | Iralloc (l,rd, n)::is, _ when TAL'.stack_pref_length (get_stack context) < n ->
+    | Iralloc (l,rd, n)::is, _ when TAL.stack_pref_length (get_stack context) < n ->
       raise (TypeError ("ralloc: trying to allocate a tuple of size " ^ string_of_int n ^ " but there are only " ^
-                        string_of_int (TAL'.stack_pref_length (get_stack context))  ^ " visible cells on the stack.", l))
+                        string_of_int (TAL.stack_pref_length (get_stack context))  ^ " visible cells on the stack.", l))
     | Iralloc (l,rd,n)::is, QR r when rd = r ->
       raise (TypeError ("ralloc: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iralloc (l,rd,n)::is, QI n' when n' + 1 <= n ->
@@ -551,10 +551,10 @@ end = struct
       let q' = match q with
         | QI n' -> QI (n' - n)
         | _ -> q in
-      tc_is l (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TTupleRef (TAL'.stack_take (get_stack context) n)))) (TAL'.stack_drop (get_stack context) n)) q') is
-    | Iballoc (l,rd, n)::is, _ when TAL'.stack_pref_length (get_stack context) < n ->
+      tc_is l (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TTupleRef (TAL.stack_take (get_stack context) n)))) (TAL.stack_drop (get_stack context) n)) q') is
+    | Iballoc (l,rd, n)::is, _ when TAL.stack_pref_length (get_stack context) < n ->
       raise (TypeError ("balloc: trying to allocate a tuple of size " ^ string_of_int n ^ " but there are only " ^
-                        string_of_int (TAL'.stack_pref_length (get_stack context))  ^ " visible cells on the stack.", l))
+                        string_of_int (TAL.stack_pref_length (get_stack context))  ^ " visible cells on the stack.", l))
     | Iballoc (l,rd,n)::is, QR r when rd = r ->
       raise (TypeError ("balloc: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iballoc (l,rd,n)::is, QI n' when n' + 1 <= n ->
@@ -564,7 +564,7 @@ end = struct
       let q' = match q with
         | QI n' -> QI (n' - n)
         | _ -> q in
-      tc_is l (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TBox (PTuple (TAL'.stack_take (get_stack context) n))))) (TAL'.stack_drop (get_stack context) n)) q') is
+      tc_is l (set_ret (set_stack (set_reg context (List.Assoc.add (get_reg context) rd (TBox (PTuple (TAL.stack_take (get_stack context) n))))) (TAL.stack_drop (get_stack context) n)) q') is
     | Iunpack (l,a, rd, u)::is, QR r when rd = r ->
       raise (TypeError ("unpack: can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iunpack (l,a, rd, u)::is, _ ->
@@ -641,15 +641,15 @@ end = struct
     | [Icall(l,u,s,QEnd(t',s'))], QEnd(t,s'') when TAL'.t_eq t t' && TAL'.s_eq s' s'' ->
       begin match tc_u context u with
         | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
-          let pref_len = TAL'.stack_pref_length (get_stack context) - TAL'.stack_pref_length s in
+          let pref_len = TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s in
           if pref_len < 0 then
-            raise (TypeError ("call: can't protect suffix of length " ^ string_of_int (TAL'.stack_pref_length s) ^
-                              " when current stack only has length " ^ string_of_int (TAL'.stack_pref_length (get_stack context)) ^ ".", l))
-          else if not (TAL'.s_eq hats (SAbstract (TAL'.stack_take (get_stack context) pref_len, z))) then
+            raise (TypeError ("call: can't protect suffix of length " ^ string_of_int (TAL.stack_pref_length s) ^
+                              " when current stack only has length " ^ string_of_int (TAL.stack_pref_length (get_stack context)) ^ ".", l))
+          else if not (TAL'.s_eq hats (SAbstract (TAL.stack_take (get_stack context) pref_len, z))) then
             raise (TypeError ("call: block being called expects stack of type " ^ TAL'.show_sigma hats ^
                               ", which doesn't match specified prefix.", l))
           else
-            begin match TAL'.ret_addr_type (set_stack (set_reg context hatc) hats) hatq with
+            begin match TAL.ret_addr_type (set_stack (set_reg context hatc) hats) hatq with
               | Some (TBox (PBlock (_, _,hats', QEpsilon e))) ->
                 begin match hats' with
                   | SAbstract (_, z') when z = z' ->
@@ -670,20 +670,20 @@ end = struct
     | [Icall(l,u,s,QI i')], QI i ->
       begin match tc_u context u with
         | TBox (PBlock ([DZeta z; DEpsilon e], hatc, hats, hatq)) ->
-          let pref_len = TAL'.stack_pref_length (get_stack context) - TAL'.stack_pref_length s in
+          let pref_len = TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s in
           if pref_len < 0 then
-            raise (TypeError ("call: can't protect suffix of length " ^ string_of_int (TAL'.stack_pref_length s) ^
-                              " when current stack only has length " ^ string_of_int (TAL'.stack_pref_length (get_stack context)) ^ ".", l))
-          else if not (TAL'.s_eq hats (SAbstract (TAL'.stack_take (get_stack context) pref_len, z))) then
+            raise (TypeError ("call: can't protect suffix of length " ^ string_of_int (TAL.stack_pref_length s) ^
+                              " when current stack only has length " ^ string_of_int (TAL.stack_pref_length (get_stack context)) ^ ".", l))
+          else if not (TAL'.s_eq hats (SAbstract (TAL.stack_take (get_stack context) pref_len, z))) then
             raise (TypeError ("call: block being called expects stack of type " ^ TAL'.show_sigma hats ^
                               ", which doesn't match specified prefix.", l))
           else if i < pref_len then
             raise (TypeError ("call: return marker is stored at position " ^ string_of_int i ^
                               " on stack, which will not be in protected tail.", l))
           else
-            begin match TAL'.ret_addr_type (set_stack (set_reg context hatc) hats) hatq with
+            begin match TAL.ret_addr_type (set_stack (set_reg context hatc) hats) hatq with
               | Some (TBox (PBlock (_, _,hats', QEpsilon e))) ->
-                let new_pref_len = TAL'.stack_pref_length hats' in
+                let new_pref_len = TAL.stack_pref_length hats' in
                 if i' <> i + new_pref_len - pref_len then
                   raise (TypeError ("call: return marker, which started at position " ^ string_of_int i ^
                                     ", does not end up at specified position on stack.", l))
@@ -1069,17 +1069,6 @@ and TAL : sig
   open TAL
 
 
-  val ret_type : FTAL.context -> q -> (FTAL.t * sigma) option
-  val ret_addr_type : FTAL.context -> q -> t option
-
-  val stack_cons : t -> sigma -> sigma
-  val stack_take : sigma -> int -> sigma_prefix
-  val stack_drop : sigma -> int -> sigma
-  val stack_pref_length : sigma -> int
-  val stack_prepend : sigma_prefix -> sigma -> sigma
-  val stack_nth : sigma -> int -> t option
-  val stack_nth_exn : sigma -> int -> t
-
   val register_subset : chi -> chi -> bool
 
   val show : t -> string
@@ -1159,33 +1148,6 @@ end = struct
   let show_q q = pretty (Pretty.TAL.p_q q)
   let show_chi c = pretty (Pretty.TAL.p_chi c)
 
-  let ret_type context q = match q with
-    | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
-        | Some (TBox (PBlock ([], [(r,t)], s, _))) -> Some (FTAL.TT t, s)
-        | _ -> None
-      end
-    | QI i -> begin match TAL'.stack_nth (FTAL.get_stack context) i with
-        | Some (TBox (PBlock ([], [(r,t)], s, _))) -> Some (FTAL.TT t, s)
-        | _ -> None
-      end
-    | QEpsilon _ -> None
-    | QEnd (t, s) -> Some (FTAL.TT t, s)
-    | QOut -> None
-
-  let ret_addr_type context q = match q with
-    | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
-        | Some (TBox (PBlock ([], [(_,_)], _, _))) ->
-          Some (List.Assoc.find_exn (FTAL.get_reg context) r)
-        | _ -> None
-      end
-    | QI i -> begin match TAL'.stack_nth (FTAL.get_stack context) i with
-        | Some (TBox (PBlock ([], [(_,_)], s, _))) ->
-          Some (TAL'.stack_nth_exn (FTAL.get_stack context) i)
-        | _ -> None
-      end
-    | QEpsilon _
-    | QEnd _
-    | QOut -> None
 
   let show_omega o = pretty (Pretty.TAL.p_o o)
   let show_omega_list x = pretty (Pretty.TAL.p_o_list x)
@@ -1203,29 +1165,6 @@ end = struct
   let show_regm m = pretty (Pretty.TAL.p_regm m)
   let show_stackm m = pretty (Pretty.TAL.p_stackm m)
 
-  let stack_cons t s = match s with
-    | SConcrete l -> SConcrete (t::l)
-    | SAbstract (l,a) -> SAbstract (t::l,a)
-
-  let stack_take s n = match s with
-    | SConcrete l | SAbstract (l,_) -> List.take l n
-
-  let stack_drop s n = match s with
-    | SConcrete l -> SConcrete (List.drop l n)
-    | SAbstract (l,a) -> SAbstract (List.drop l n, a)
-
-  let stack_pref_length s = match s with
-    | SConcrete l | SAbstract (l,_) -> List.length l
-
-  let stack_prepend p s = match s with
-    | SConcrete l -> SConcrete (List.append p l)
-    | SAbstract (l,a) -> SAbstract (List.append p l, a)
-
-  let stack_nth s n = match s with
-    | SConcrete l | SAbstract (l,_) -> List.nth l n
-
-  let stack_nth_exn s n = match s with
-    | SConcrete l | SAbstract (l,_) -> List.nth_exn l n
 
   let load (h,r,s) h' =
     (* NOTE(dbp 2016-09-08): We should do renaming, but relying, for now, on the fact

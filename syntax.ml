@@ -1,3 +1,5 @@
+open Utils
+
 type l = { line : int; col : int }
          [@@deriving show]
 let cpos {Lexing.pos_fname; pos_lnum; pos_cnum; pos_bol} =
@@ -276,6 +278,17 @@ and TAL : sig
   and contextC =
       CHoleC
 
+  val ret_type : FTAL.context -> q -> (FTAL.t * sigma) option
+  val ret_addr_type : FTAL.context -> q -> t option
+
+  val stack_cons : t -> sigma -> sigma
+  val stack_take : sigma -> int -> sigma_prefix
+  val stack_drop : sigma -> int -> sigma
+  val stack_pref_length : sigma -> int
+  val stack_prepend : sigma_prefix -> sigma -> sigma
+  val stack_nth : sigma -> int -> t option
+  val stack_nth_exn : sigma -> int -> t
+
 end = struct
 
   type reg = string
@@ -388,5 +401,58 @@ end = struct
 
   and contextC =
       CHoleC
+
+  let ret_type context q = match q with
+    | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
+        | Some (TBox (PBlock ([], [(r,t)], s, _))) -> Some (FTAL.TT t, s)
+        | _ -> None
+      end
+    | QI i -> begin match TAL.stack_nth (FTAL.get_stack context) i with
+        | Some (TBox (PBlock ([], [(r,t)], s, _))) -> Some (FTAL.TT t, s)
+        | _ -> None
+      end
+    | QEpsilon _ -> None
+    | QEnd (t, s) -> Some (FTAL.TT t, s)
+    | QOut -> None
+
+  let ret_addr_type context q = match q with
+    | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
+        | Some (TBox (PBlock ([], [(_,_)], _, _))) ->
+          Some (List.Assoc.find_exn (FTAL.get_reg context) r)
+        | _ -> None
+      end
+    | QI i -> begin match TAL.stack_nth (FTAL.get_stack context) i with
+        | Some (TBox (PBlock ([], [(_,_)], s, _))) ->
+          Some (TAL.stack_nth_exn (FTAL.get_stack context) i)
+        | _ -> None
+      end
+    | QEpsilon _
+    | QEnd _
+    | QOut -> None
+
+
+  let stack_cons t s = match s with
+    | SConcrete l -> SConcrete (t::l)
+    | SAbstract (l,a) -> SAbstract (t::l,a)
+
+  let stack_take s n = match s with
+    | SConcrete l | SAbstract (l,_) -> List.take l n
+
+  let stack_drop s n = match s with
+    | SConcrete l -> SConcrete (List.drop l n)
+    | SAbstract (l,a) -> SAbstract (List.drop l n, a)
+
+  let stack_pref_length s = match s with
+    | SConcrete l | SAbstract (l,_) -> List.length l
+
+  let stack_prepend p s = match s with
+    | SConcrete l -> SConcrete (List.append p l)
+    | SAbstract (l,a) -> SAbstract (List.append p l, a)
+
+  let stack_nth s n = match s with
+    | SConcrete l | SAbstract (l,_) -> List.nth l n
+
+  let stack_nth_exn s n = match s with
+    | SConcrete l | SAbstract (l,_) -> List.nth_exn l n
 
 end
