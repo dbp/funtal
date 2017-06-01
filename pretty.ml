@@ -1,15 +1,14 @@
+open PPrint
 open Utils
 open Syntax
 
-module rec Printer : sig
-  open PPrint
-  val r : document -> string
-end = struct
-  let r d =
-    let b = Buffer.create 100 in
-    PPrint.ToBuffer.pretty 0.8 80 b d;
-    Buffer.contents b
-end and TALP : sig
+let pretty d =
+  let b = Buffer.create 100 in
+  PPrint.ToBuffer.pretty 0.8 80 b d;
+  Buffer.contents b
+
+
+module rec TAL : sig
   open Syntax
   open PPrint
   val p_w : TAL.w -> document
@@ -157,7 +156,7 @@ end = struct
       !^"import " ^^ args [
         !^r;
         p_s s ^^ space ^^ !^"as" ^^ space ^^ !^z;
-        FP.p_t t ^^ space ^^ !^ "TF" ^^ (braces @@ align @@ FP.p_exp e);
+        F.p_t t ^^ space ^^ !^ "TF" ^^ (braces @@ align @@ F.p_exp e);
       ]
   and p_instruction_sequence (is : instr list) : document =
     group (lbracket ^^ align
@@ -188,7 +187,7 @@ end = struct
     | CComponentEmpty (_, CHoleI) | CComponentHeap (_, CHoleC) -> !^"[.]"
     | CComponentEmpty (_, CImportI (_,r,z,s,t,c,is)) ->
       !^"import " ^^ args [!^r; !^z ^^ !^" as " ^^ p_s s;
-                           FP.p_t t ^^ lbrace ^^ FP.p_context c ^^ rbrace ^^ semi ^^ break 1
+                           F.p_t t ^^ lbrace ^^ F.p_context c ^^ rbrace ^^ semi ^^ break 1
                            ^^ separate_map (semi ^^ break 1) p_instr is]
 
   and pack_h t' d a t =
@@ -203,13 +202,10 @@ end = struct
             separate_map (!^", ") p_o os ^^
             rbracket)
 end
-and FP : sig
-  open Syntax
-  open PPrint
-  val p_t : F.t -> document
-  val p_exp : F.exp -> document
-  val p_context : F.context -> document
-
+and F : sig
+  val p_t : Syntax.F.t -> document
+  val p_exp : Syntax.F.exp -> document
+  val p_context : Syntax.F.context -> document
 end = struct
   open PPrint
   open Syntax.F
@@ -220,7 +216,7 @@ end = struct
     | TUnit -> !^"unit"
     | TInt -> !^"int"
     | TArrow (ts,t) -> nest 2 (lparen ^^ separate_map (comma ^^ break 1) p_t ts ^^ rparen ^^ !^" -> " ^^ p_t t)
-    | TArrowMod (ts,sin,sout,t) -> nest 2 (lparen ^^ separate_map (comma ^^ break 1) p_t ts ^^ rparen ^^ lbracket ^^ TALP.p_sigma_prefix sin ^^ rbracket ^^ !^" -> " ^^ lbracket ^^ TALP.p_sigma_prefix sout ^^ rbracket ^^ p_t t)
+    | TArrowMod (ts,sin,sout,t) -> nest 2 (lparen ^^ separate_map (comma ^^ break 1) p_t ts ^^ rparen ^^ lbracket ^^ TAL.p_sigma_prefix sin ^^ rbracket ^^ !^" -> " ^^ lbracket ^^ TAL.p_sigma_prefix sout ^^ rbracket ^^ p_t t)
     | TRec(a,t) -> nest 2 (!^"mu " ^^ !^a ^^ dot ^^ p_t t)
     | TTuple ts -> nest 2 (langle ^^ group (separate_map (comma ^^ break 1) p_t ts) ^^ rangle)
 
@@ -233,11 +229,11 @@ end = struct
     | EBoundary(_,t,ms,c) ->
       let p_ms = function
         | None -> !^"?"
-        | Some s -> TALP.p_s s in
+        | Some s -> TAL.p_s s in
       nest 2 (
         !^"FT"
         ^^ (brackets @@ align @@ group (p_t t ^^ comma ^^ break 1 ^^ p_ms ms))
-        ^^ break 0 ^^ TALP.p_component c
+        ^^ break 0 ^^ TAL.p_component c
       )
     | e -> group (lparen ^^ p_exp e ^^ rparen)
 
@@ -281,7 +277,7 @@ end = struct
       )
 
   and p_stack_prefix s =
-    lbracket ^^ TALP.p_sigma_prefix s ^^ rbracket
+    lbracket ^^ TAL.p_sigma_prefix s ^^ rbracket
 
   and p_telescope ps =
     let p_binding (p, t) = group (!^p ^^ colon ^^ align (p_t t)) in
@@ -319,6 +315,6 @@ end = struct
           !^"FT" ^^ lbracket ^^ p_t t ^^ comma ^^
           (match ms with
            | None -> !^"?"
-           | Some s -> TALP.p_s s) ^^ rbracket ^^ TALP.p_context c)
+           | Some s -> TAL.p_s s) ^^ rbracket ^^ TAL.p_context c)
 
 end

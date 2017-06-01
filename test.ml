@@ -17,7 +17,7 @@ let roundtrip ?source comp =
         close_out chan;
   in
   let write_result () =
-    let doc = Pretty.TALP.p_component comp in
+    let doc = Pretty.TAL.p_component comp in
     let chan = open_out roundtrip in
     PPrintEngine.ToChannel.pretty 0.8 80 chan doc;
     flush chan;
@@ -688,7 +688,7 @@ let test_examples _ =
     assert_equal reparsed rereparsed in
   let assert_roundtrip_c comp =
     let show_comp comp =
-      let doc = Pretty.TALP.p_component comp in
+      let doc = Pretty.TAL.p_component comp in
       let buf = Buffer.create 123 in
       PPrintEngine.ToBuffer.pretty 0.8 80 buf doc;
       Buffer.contents buf in

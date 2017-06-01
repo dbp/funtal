@@ -1,5 +1,4 @@
 open Utils
-open Syntax
 open Pretty
 module rec FTAL : sig
   open Syntax
@@ -843,9 +842,9 @@ end = struct
     | BMinus -> "-"
     | BTimes -> "*"
 
-  let show t = Printer.(r (FP.p_t t))
+  let show t = pretty (Pretty.F.p_t t)
 
-  let show_exp e = Printer.(r (FP.p_exp e))
+  let show_exp e = pretty (Pretty.F.p_exp e)
   let get_loc = function
     | EVar (l,_)
     | EUnit l
@@ -872,7 +871,7 @@ end = struct
     | ETuple (l,es) -> List.for_all ~f:value es
     | _ -> false
 
-  let show_context c = Printer.(r (FP.p_context c))
+  let show_context c = pretty (Pretty.F.p_context c)
 
   type env = (string * t) list
 
@@ -1175,14 +1174,14 @@ end = struct
     | Add -> "+"
     | Sub -> "-"
     | Mult -> "*"
-  let show_delta x = Printer.(r (TALP.p_delta x))
+  let show_delta x = pretty (Pretty.TAL.p_delta x)
 
-  let show_sigma s = Printer.(r (TALP.p_s s))
-  let show_sigma_prefix s = Printer.(r (TALP.p_sigma_prefix s))
-  let show t = Printer.(r (TALP.p_t t))
-  let show_psi_elem p = Printer.(r (TALP.p_psi p))
-  let show_q q = Printer.(r (TALP.p_q q))
-  let show_chi c = Printer.(r (TALP.p_chi c))
+  let show_sigma s = pretty (Pretty.TAL.p_s s)
+  let show_sigma_prefix s = pretty (Pretty.TAL.p_sigma_prefix s)
+  let show t = pretty (Pretty.TAL.p_t t)
+  let show_psi_elem p = pretty (Pretty.TAL.p_psi p)
+  let show_q q = pretty (Pretty.TAL.p_q q)
+  let show_chi c = pretty (Pretty.TAL.p_chi c)
 
   let ret_type context q = match q with
     | QR r -> begin match List.Assoc.find (FTAL'.get_reg context) r with
@@ -1212,21 +1211,21 @@ end = struct
     | QEnd _
     | QOut -> None
 
-  let show_omega o = Printer.(r (TALP.p_o o))
-  let show_omega_list x = Printer.(r (TALP.p_o_list x))
+  let show_omega o = pretty (Pretty.TAL.p_o o)
+  let show_omega_list x = pretty (Pretty.TAL.p_o_list x)
 
-  let show_w w = Printer.(r (TALP.p_w w))
+  let show_w w = pretty (Pretty.TAL.p_w w)
 
-  let show_u u = Printer.(r (TALP.p_u u))
+  let show_u u = pretty (Pretty.TAL.p_u u)
 
-  let show_instr i = Printer.(r (TALP.p_instr i))
-  let show_instrs is = Printer.(r (TALP.p_instruction_sequence is))
+  let show_instr i = pretty (Pretty.TAL.p_instr i)
+  let show_instrs is = pretty (Pretty.TAL.p_instruction_sequence is)
 
-  let show_h h = Printer.(r (TALP.p_h h))
+  let show_h h = pretty (Pretty.TAL.p_h h)
 
-  let show_heapm m = Printer.(r (TALP.p_heapm m))
-  let show_regm m = Printer.(r (TALP.p_regm m))
-  let show_stackm m = Printer.(r (TALP.p_stackm m))
+  let show_heapm m = pretty (Pretty.TAL.p_heapm m)
+  let show_regm m = pretty (Pretty.TAL.p_regm m)
+  let show_stackm m = pretty (Pretty.TAL.p_stackm m)
 
   let stack_cons t s = match s with
     | SConcrete l -> SConcrete (t::l)
@@ -1257,9 +1256,9 @@ end = struct
        that we always gensym new location names, so not renaming should be safe. *)
     (List.append h' h, r, s)
 
-  let show_component c = Printer.(r (TALP.p_component c))
+  let show_component c = pretty (Pretty.TAL.p_component c)
 
-  let show_context c = Printer.(r (TALP.p_context c))
+  let show_context c = pretty (Pretty.TAL.p_context c)
 
   let un_ti = function
     | F.TI is -> is
