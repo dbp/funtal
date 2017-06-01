@@ -15,6 +15,19 @@ module rec FTAL : sig
 
   type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
 
+  val get_tyenv : context -> TAL.delta
+  val set_tyenv : context -> TAL.delta -> context 
+  val get_env : context -> F.gamma
+  val set_env : context -> F.gamma -> context
+  val get_ret : context -> TAL.q
+  val set_ret : context -> TAL.q -> context
+  val get_reg : context -> TAL.chi
+  val set_reg : context -> TAL.chi -> context
+  val get_stack : context -> TAL.sigma
+  val set_stack : context -> TAL.sigma -> context
+  val get_heap : context -> TAL.psi
+  val set_heap : context -> TAL.psi -> context
+
   type substitution = FTerm of string * F.exp
                     | FType of string * F.t
                     | TType of string * TAL.t
@@ -30,6 +43,24 @@ end = struct
   type t = FT of F.t | TT of TAL.t
 
   type context = TAL.psi * TAL.delta * F.gamma * TAL.chi * TAL.q * TAL.sigma
+
+  let get_tyenv (_,d,_,_,_,_) = d
+  let set_tyenv (p,_,g,c,q,s) d = (p,d,g,c,q,s)
+
+  let get_env (_,_,g,_,_,_) = g
+  let set_env (p,d,_,c,q,s) g = (p,d,g,c,q,s)
+
+  let get_ret (_,_,_,_,q,_) = q
+  let set_ret (p,d,g,c,_,s) q = (p,d,g,c,q,s)
+
+  let get_stack (_,_,_,_,_,s) = s
+  let set_stack (p,d,g,c,q,_) s = (p,d,g,c,q,s)
+
+  let get_reg (_,_,_,c,_,_) = c
+  let set_reg (p,d,g,_,q,s) c = (p,d,g,c,q,s)
+
+  let get_heap (p,_,_,_,_,_) = p
+  let set_heap (_,d,g,c,q,s) p = (p,d,g,c,q,s)
 
   type substitution = FTerm of string * F.exp
                     | FType of string * F.t

@@ -149,7 +149,7 @@ let test_import_ty2 _ =
   let retty = TAL.(TBox (PBlock ([], [("r2", TInt)], SConcrete [], QEnd (TInt, SConcrete [])))) in
   assert_equal
     (Ftal.FTAL.tc
-       (Ftal.FTAL.set_stack (Ftal.FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
+       (FTAL.set_stack (Ftal.FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
        (FTAL.TC
           (tal_comp "([import r2, box forall [].{r2 : int; *} end{int;*} :: * as z, int TF{10}; sld r1, 0; sfree 1; ret r1 {r2}], [])")))
     (FTAL.TT TAL.TInt, TAL.SConcrete [])
@@ -158,7 +158,7 @@ let test_import_ty_exc4 _ =
   let retty = TAL.(TBox (PBlock ([], [("r2", TInt)], SConcrete [], QEnd (TInt, SConcrete [])))) in
   assert_raises_typeerror
     (fun _ -> Ftal.FTAL.tc
-       (Ftal.FTAL.set_stack (Ftal.FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
+       (FTAL.set_stack (Ftal.FTAL.default_context (TAL.(QI 0))) (TAL.(SConcrete [retty])))
        (FTAL.TC
           (tal_comp "([import r2, * as z, int TF{10}; sld r1, 0; sfree 1; ret r1 {r2}], [])")))
 
@@ -166,7 +166,7 @@ let test_import_ty_exc5 _ =
   let retty = TAL.(TBox (PBlock ([], [("r2", TInt)], SConcrete [], QEnd (TInt, SConcrete [])))) in
   assert_raises_typeerror
     (fun _ -> Ftal.FTAL.tc
-       (Ftal.FTAL.set_reg (Ftal.FTAL.default_context (TAL.(QR "r1"))) [("r1",retty)])
+       (FTAL.set_reg (Ftal.FTAL.default_context (TAL.(QR "r1"))) [("r1",retty)])
        (FTAL.TC
           (tal_comp "([import r2, * as z, int TF{10}; ret r1 {r2}], [])")))
 
@@ -677,7 +677,7 @@ let test_ft_factorial_t_ty _ =
   let ht = List.map (fun (l,(m, p)) -> (l, (m, Ftal.FTAL.tc_h_shallow context dummy_loc TAL.Box p))) h' in
   assert_equal
     (Ftal.FTAL.tc
-       (Ftal.FTAL.set_heap context ht)
+       (FTAL.set_heap context ht)
        (FTAL.FC e))
     (FTAL.FT (F.TArrow ([F.TInt], F.TInt)), TAL.SConcrete [])
 

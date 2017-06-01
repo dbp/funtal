@@ -12,12 +12,6 @@ module rec FTAL : sig
 
   exception TypeError of string * l
 
-  val get_reg : context -> TAL.chi
-  val set_reg : context -> TAL.chi -> context
-  val get_stack : context -> TAL.sigma
-  val set_heap : context -> TAL.psi -> context
-  val set_stack : context -> TAL.sigma -> context
-
   val default_context : TAL.q -> context
 
   val tc : context -> e -> t * TAL.sigma
@@ -229,24 +223,6 @@ end = struct
   exception TypeError of string * l
 
   let default_context q = ([],[],[],[],q,TAL.SConcrete [])
-
-  let get_tyenv (_,d,_,_,_,_) = d
-  let set_tyenv (p,_,g,c,q,s) d = (p,d,g,c,q,s)
-
-  let get_env (_,_,g,_,_,_) = g
-  let set_env (p,d,_,c,q,s) g = (p,d,g,c,q,s)
-
-  let get_ret (_,_,_,_,q,_) = q
-  let set_ret (p,d,g,c,_,s) q = (p,d,g,c,q,s)
-
-  let get_stack (_,_,_,_,_,s) = s
-  let set_stack (p,d,g,c,q,_) s = (p,d,g,c,q,s)
-
-  let get_reg (_,_,_,c,_,_) = c
-  let set_reg (p,d,g,_,q,s) c = (p,d,g,c,q,s)
-
-  let get_heap (p,_,_,_,_,_) = p
-  let set_heap (_,d,g,c,q,s) p = (p,d,g,c,q,s)
 
   let rec tc (context:context) e = match e with
     | FC exp -> begin
@@ -1184,11 +1160,11 @@ end = struct
   let show_chi c = pretty (Pretty.TAL.p_chi c)
 
   let ret_type context q = match q with
-    | QR r -> begin match List.Assoc.find (FTAL'.get_reg context) r with
+    | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
         | Some (TBox (PBlock ([], [(r,t)], s, _))) -> Some (FTAL.TT t, s)
         | _ -> None
       end
-    | QI i -> begin match TAL'.stack_nth (FTAL'.get_stack context) i with
+    | QI i -> begin match TAL'.stack_nth (FTAL.get_stack context) i with
         | Some (TBox (PBlock ([], [(r,t)], s, _))) -> Some (FTAL.TT t, s)
         | _ -> None
       end
@@ -1197,14 +1173,14 @@ end = struct
     | QOut -> None
 
   let ret_addr_type context q = match q with
-    | QR r -> begin match List.Assoc.find (FTAL'.get_reg context) r with
+    | QR r -> begin match List.Assoc.find (FTAL.get_reg context) r with
         | Some (TBox (PBlock ([], [(_,_)], _, _))) ->
-          Some (List.Assoc.find_exn (FTAL'.get_reg context) r)
+          Some (List.Assoc.find_exn (FTAL.get_reg context) r)
         | _ -> None
       end
-    | QI i -> begin match TAL'.stack_nth (FTAL'.get_stack context) i with
+    | QI i -> begin match TAL'.stack_nth (FTAL.get_stack context) i with
         | Some (TBox (PBlock ([], [(_,_)], s, _))) ->
-          Some (TAL'.stack_nth_exn (FTAL'.get_stack context) i)
+          Some (TAL'.stack_nth_exn (FTAL.get_stack context) i)
         | _ -> None
       end
     | QEpsilon _
@@ -1634,4 +1610,4 @@ end = struct
       ((hm,rm,sm), is)
     | _ -> c
 
-end 
+end
