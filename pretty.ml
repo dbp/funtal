@@ -2,34 +2,68 @@ open PPrint
 open Utils
 open Syntax
 
-let pretty d =
+let pprint d =
   let b = Buffer.create 100 in
   PPrint.ToBuffer.pretty 0.8 80 b d;
   Buffer.contents b
 
-
-module rec TAL : sig
+module rec FTAL : sig
   open Syntax
+  val show : FTAL.t -> string
+end = struct
+  module F' = F
+  module TAL' = TAL
+  open Syntax
+  open FTAL
+  let show x = match x with
+    | FT t -> "FT " ^ F'.show t
+    | TT t -> "TT " ^ TAL'.show t
+end
+and TAL : sig
+  open Syntax
+  open TAL
   open PPrint
-  val p_w : TAL.w -> document
-  val p_t : TAL.t -> document
-  val p_o : TAL.omega -> document
-  val p_o_list : TAL.omega list -> document
-  val p_s : TAL.sigma -> document
-  val p_sigma_prefix : TAL.sigma_prefix -> document
-  val p_q : TAL.q -> document
-  val p_u : TAL.u -> document
-  val p_h : TAL.h -> document
-  val p_psi : TAL.psi_elem -> document
-  val p_delta : TAL.delta -> document
-  val p_chi : TAL.chi -> document
-  val p_instr : TAL.instr -> document
-  val p_regm : TAL.regm -> document
-  val p_stackm : TAL.stackm -> document
-  val p_heapm : TAL.heapm -> document
-  val p_component : TAL.component -> document
-  val p_instruction_sequence : TAL.instr list -> document
-  val p_context : TAL.context -> document
+  val p_w : w -> document
+  val p_t : t -> document
+  val p_o : omega -> document
+  val p_o_list : omega list -> document
+  val p_s : sigma -> document
+  val p_sigma_prefix : sigma_prefix -> document
+  val p_q : q -> document
+  val p_u : u -> document
+  val p_h : h -> document
+  val p_psi : psi_elem -> document
+  val p_delta : delta -> document
+  val p_chi : chi -> document
+  val p_instr : instr -> document
+  val p_regm : regm -> document
+  val p_stackm : stackm -> document
+  val p_heapm : heapm -> document
+  val p_component : component -> document
+  val p_instruction_sequence : instr list -> document
+  val p_context : context -> document
+
+  val show : t -> string
+  val show_sigma : sigma -> string
+  val show_delta : delta -> string
+  val show_sigma_prefix : sigma_prefix -> string
+  val show_q : q -> string
+  val show_psi_elem : psi_elem -> string
+  val show_chi : chi -> string
+  val show_omega : omega -> string
+  val show_omega_list : omega list -> string
+  val show_w : w -> string
+  val show_u : u -> string
+  val show_aop : aop -> string
+  val show_instr : instr -> string
+  val show_instrs : instr list -> string
+  val show_h : h -> string
+  val show_heapm : heapm -> string
+  val show_regm : regm -> string
+  val show_stackm : stackm -> string
+  val show_component : component -> string
+  val show_context : context -> string
+
 end = struct
   open PPrint
   open Syntax.TAL
@@ -201,11 +235,53 @@ end = struct
     nest 2 (d ^^ lbracket ^^
             separate_map (!^", ") p_o os ^^
             rbracket)
+
+
+  let show_aop x = match x with
+    | Add -> "+"
+    | Sub -> "-"
+    | Mult -> "*"
+  let show_delta x = pprint (p_delta x)
+
+  let show_sigma s = pprint (p_s s)
+  let show_sigma_prefix s = pprint (p_sigma_prefix s)
+  let show t = pprint (p_t t)
+  let show_psi_elem p = pprint (p_psi p)
+  let show_q q = pprint (p_q q)
+  let show_chi c = pprint (p_chi c)
+
+
+  let show_omega o = pprint (p_o o)
+  let show_omega_list x = pprint (p_o_list x)
+
+  let show_w w = pprint (p_w w)
+
+  let show_u u = pprint (p_u u)
+
+  let show_instr i = pprint (p_instr i)
+  let show_instrs is = pprint (p_instruction_sequence is)
+
+  let show_h h = pprint (p_h h)
+
+  let show_heapm m = pprint (p_heapm m)
+  let show_regm m = pprint (p_regm m)
+  let show_stackm m = pprint (p_stackm m)
+  let show_component c = pprint (p_component c)
+  let show_context c = pprint (p_context c)
+
+
 end
 and F : sig
   val p_t : Syntax.F.t -> document
   val p_exp : Syntax.F.exp -> document
   val p_context : Syntax.F.context -> document
+
+  val show : Syntax.F.t -> string
+  val show_binop : Syntax.F.binop -> string
+  val show_exp : Syntax.F.exp -> string
+  val show_context : Syntax.F.context -> string
+  val show_ft : Syntax.F.ft -> string
+
 end = struct
   open PPrint
   open Syntax.F
@@ -316,5 +392,22 @@ end = struct
           (match ms with
            | None -> !^"?"
            | Some s -> TAL.p_s s) ^^ rbracket ^^ TAL.p_context c)
+
+
+  let show_binop x = match x with
+    | BPlus -> "+"
+    | BMinus -> "-"
+    | BTimes -> "*"
+
+  let show t = pprint (p_t t)
+
+  let show_exp e = pprint (p_exp e)
+
+  let show_context c = pprint (p_context c)
+
+  let show_ft = function
+    | F e -> show_exp e
+    | TC c -> TAL.show_component c
+    | TI is -> TAL.show_instrs is
 
 end

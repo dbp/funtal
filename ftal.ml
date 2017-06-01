@@ -1,5 +1,4 @@
 open Utils
-open Pretty
 module rec FTAL : sig
   open Syntax
   open FTAL
@@ -7,8 +6,6 @@ module rec FTAL : sig
   val tytrans : Syntax.F.t -> TAL.t
   val ft : F.t -> TAL.w -> TAL.mem -> (TAL.mem * F.exp)
   val tf : F.t -> F.exp -> TAL.mem -> (TAL.mem * TAL.w)
-
-  val show : t -> string
 
   exception TypeError of string * l
 
@@ -28,10 +25,6 @@ end = struct
   module F' = F
   open Syntax
   open FTAL
-
-  let show x = match x with
-    | FT t -> "FT " ^ F'.show t
-    | TT t -> "TT " ^ TAL'.show t
 
   let gen_sym =
     let count = ref 0 in
@@ -140,7 +133,7 @@ end = struct
                                    QEnd (tytrans t1, SAbstract (sout, z2)))]],
                         []))))
       in (((lend, (TAL.Box, hend))::hm,rm,sm), v)
-    | _ -> raise (Failure ("ft: can't convert at type " ^ F'.show t ^ " value " ^ TAL'.show_w w))
+    | _ -> raise (Failure ("ft: can't convert at type " ^ Pretty.F.show t ^ " value " ^ Pretty.TAL.show_w w))
 
   let rec tf t v m =
     let (hm,rm,sm) = m in
@@ -241,11 +234,11 @@ end = struct
             | (FT TInt, s1) ->
               begin match tc (set_stack context s1) (FC e2) with
                 | (FT TInt, s2) -> (FT TInt, s2)
-                | (FT t, _) -> raise (TypeError (F'.show_binop o ^ ": second argument has type " ^ F'.show t ^ ", not int.", l))
-                | _ -> raise (TypeError (F'.show_binop o ^ ": Uh-oh, got something I didn't understand.", l))
+                | (FT t, _) -> raise (TypeError (Pretty.F.show_binop o ^ ": second argument has type " ^ Pretty.F.show t ^ ", not int.", l))
+                | _ -> raise (TypeError (Pretty.F.show_binop o ^ ": Uh-oh, got something I didn't understand.", l))
               end
-            | (FT t, _) -> raise (TypeError (F'.show_binop o ^ ": first argument has type " ^ F'.show t ^ ", int.", l))
-            | _ -> raise (TypeError (F'.show_binop o ^ ": Uh-oh, got something I didn't understand.", l))
+            | (FT t, _) -> raise (TypeError (Pretty.F.show_binop o ^ ": first argument has type " ^ Pretty.F.show t ^ ", int.", l))
+            | _ -> raise (TypeError (Pretty.F.show_binop o ^ ": Uh-oh, got something I didn't understand.", l))
           end
         | EIf0 (l,c,e1,e2), TAL.QOut ->
           begin match tc' c with
@@ -254,7 +247,7 @@ end = struct
                 | FT t1, s2 ->
                   begin match tc (set_stack context s2) (FC e2) with
                     | FT t2, s3 -> if F'.t_eq t1 t2 && TAL'.s_eq s2 s3 then (FT t1, s2) else
-                        raise (TypeError ("if: then branch has type " ^ F'.show t1 ^ " but else branch has type " ^ F'.show t2 ^ ".", l))
+                        raise (TypeError ("if: then branch has type " ^ Pretty.F.show t1 ^ " but else branch has type " ^ Pretty.F.show t2 ^ ".", l))
                     | _ -> raise (TypeError ("if: Uh-oh, got something I didn't understand.", l))
                   end
                 | _ -> raise (TypeError ("if: Uh-oh, got something I didn't understand.", l))
@@ -276,7 +269,7 @@ end = struct
           begin match tc (set_stack (set_env context (List.append ps (get_env context))) zeta)
                         (FC b) with
           | (FT t, zeta') when zeta_out = zeta' -> (FT (TArrowMod (List.map ~f:snd ps, sin, sout, t)), get_stack context)
-          | (FT _, zeta') -> raise (TypeError ("lam: body manipulates stack in invalid way. Expected " ^ TAL'.show_sigma zeta_out ^ " but got " ^ TAL'.show_sigma zeta' , l))
+          | (FT _, zeta') -> raise (TypeError ("lam: body manipulates stack in invalid way. Expected " ^ Pretty.TAL.show_sigma zeta_out ^ " but got " ^ Pretty.TAL.show_sigma zeta' , l))
           | _ -> raise (TypeError ("lam: Uh-oh, got something I didn't understand.", l))
           end
         | EApp (l,f,args), TAL.QOut -> begin match tc' f with
@@ -294,7 +287,7 @@ end = struct
                      | FT t', s1 when F'.t_eq t t' -> s1
                      | FT t', _ -> raise (TypeError ("app: " ^ string_of_int !i ^
                                                      "th argument should have type " ^
-                                                     F'.show t ^ " but has type " ^ F'.show t' ^ ".", l))
+                                                     Pretty.F.show t ^ " but has type " ^ Pretty.F.show t' ^ ".", l))
                      | _ -> raise (TypeError ("app: Uh-oh, got something I didn't understand.", l))
                    ) ~init:s (List.zip_exn ps args))
             | FT (TArrowMod (ps, sin, sout, rv)), s ->
@@ -311,26 +304,26 @@ end = struct
                      | FT t', s1 when F'.t_eq t t' -> s1
                      | FT t', _ -> raise (TypeError ("app: " ^ string_of_int !i ^
                                                      "th argument should have type " ^
-                                                     F'.show t ^ " but has type " ^ F'.show t' ^ ".", l))
+                                                     Pretty.F.show t ^ " but has type " ^ Pretty.F.show t' ^ ".", l))
                      | _ -> raise (TypeError ("app: Uh-oh, got something I didn't understand.", l))
                   ) ~init:s (List.zip_exn ps args) in
                 if TAL.stack_pref_length s' >= List.length sin && TAL'.s_pref_eq (TAL.stack_take s' (List.length sin)) sin then
                   (FT rv, s')
-                else raise (TypeError ("app: stack modifying lambda expected stack prefix of " ^ TAL'.show_sigma_prefix sin ^ ", but got stack of shape " ^ TAL'.show_sigma s' ^ ".", l))
+                else raise (TypeError ("app: stack modifying lambda expected stack prefix of " ^ Pretty.TAL.show_sigma_prefix sin ^ ", but got stack of shape " ^ Pretty.TAL.show_sigma s' ^ ".", l))
             | (FT t,_) ->
-              raise (TypeError ("app: got non-function of type " ^ F'.show t ^ ".", l))
+              raise (TypeError ("app: got non-function of type " ^ Pretty.F.show t ^ ".", l))
             | _ -> raise (TypeError ("app: Uh-oh, got something I didn't understand.", l))
           end
         | EFold (l,a,t,e), TAL.QOut ->
           begin match tc' e with
             | FT t', s -> if F'.t_eq t' (F'.type_sub (FTAL.FType (a, TRec (a,t))) t) then (FT (TRec (a,t)), s)
               else
-                raise (TypeError ("fold: expected body to have type " ^ F'.show t' ^ ".", l))
+                raise (TypeError ("fold: expected body to have type " ^ Pretty.F.show t' ^ ".", l))
             | _ -> raise (TypeError ("fold: Uh-oh, got something I didn't understand.", l))
           end
         | EUnfold (l,e), TAL.QOut -> begin match tc' e with
             | FT (TRec (a,t)), s -> (FT (F'.type_sub (FTAL.FType (a, TRec (a,t))) t), s)
-            | (FT t, _) -> raise (TypeError ("unfold: body not a recursive type: " ^ F'.show t ^ ".", l))
+            | (FT t, _) -> raise (TypeError ("unfold: body not a recursive type: " ^ Pretty.F.show t ^ ".", l))
             | _ -> raise (TypeError ("unfold: Uh-oh, got something I didn't understand.", l))
           end
         | ETuple (l,es), TAL.QOut ->
@@ -345,18 +338,18 @@ end = struct
             | FT (TTuple l), s -> raise (TypeError ("pi: index " ^ string_of_int n
                                                     ^ " is too high for a tuple of size " ^
                                                     string_of_int (List.length l) ^ ".", loc))
-            | FT t, _ -> raise (TypeError ("pi: given non-tuple of type " ^ F'.show t ^ ".", loc))
+            | FT t, _ -> raise (TypeError ("pi: given non-tuple of type " ^ Pretty.F.show t ^ ".", loc))
             | _ -> raise (TypeError ("pi: Uh-oh, got something I didn't understand.", loc))
           end
         | EBoundary (l,t,s,c), TAL.QOut ->
           let s' = Option.value ~default:(get_stack context) s in
           begin match tc (set_ret context (TAL.QEnd (tytrans t, s'))) (TC c) with
             | TT t0, s0 when not (TAL'.t_eq t0 (tytrans t)) ->
-              raise (TypeError ("FT: contents should have had type " ^ F'.show t ^
-                                " which is not equivalent to type " ^ TAL'.show t0 ^ ".",l))
+              raise (TypeError ("FT: contents should have had type " ^ Pretty.F.show t ^
+                                " which is not equivalent to type " ^ Pretty.TAL.show t0 ^ ".",l))
             | TT t0, s0 when not (TAL'.s_eq s0 s') ->
               raise (TypeError ("FT: after running stack should have had type " ^
-                                TAL'.show_sigma s' ^ " but instead had type " ^ TAL'.show_sigma s0 ^ ".",l))
+                                Pretty.TAL.show_sigma s' ^ " but instead had type " ^ Pretty.TAL.show_sigma s0 ^ ".",l))
             | TT t0, s0 -> (FT t, s0)
             | _ -> raise (TypeError ("FT: Uh-oh, got something I didn't understand.", l))
           end
@@ -380,20 +373,20 @@ end = struct
         match TAL.ret_type context (get_ret context) with
         | Some s -> s
         | None -> raise (TypeError ("component: return marker invalid: " ^
-                                    TAL'.show_q (get_ret context) ^ ".", loc))
+                                    Pretty.TAL.show_q (get_ret context) ^ ".", loc))
       end
 
   and tc_is (prev_loc : l) context instrs : unit =
     let open TAL in
     match instrs, get_ret context with
     | Iaop (l,op, rd, rs, u)::is, QR r when rd = r ->
-      raise (TypeError (TAL'.show_aop op ^ ": can't overwrite current return address in register " ^ rd ^ ".", l))
+      raise (TypeError (Pretty.TAL.show_aop op ^ ": can't overwrite current return address in register " ^ rd ^ ".", l))
     | Iaop (l,op, rd, rs, u)::is, _ ->
       begin match List.Assoc.find (get_reg context) rs, tc_u context u with
-        | None, _ -> raise (TypeError (TAL'.show_aop op ^ ": source register " ^ rs ^ " is empty.", l))
-        | Some t, _ when t <> TInt -> raise (TypeError (TAL'.show_aop op ^ ": source register has type " ^
-                                                        TAL'.show t ^ ", not int.", l))
-        | _, t when t <> TInt -> raise (TypeError (TAL'.show_aop op ^ ": operand has type " ^ TAL'.show t ^ ", not int.", l))
+        | None, _ -> raise (TypeError (Pretty.TAL.show_aop op ^ ": source register " ^ rs ^ " is empty.", l))
+        | Some t, _ when t <> TInt -> raise (TypeError (Pretty.TAL.show_aop op ^ ": source register has type " ^
+                                                        Pretty.TAL.show t ^ ", not int.", l))
+        | _, t when t <> TInt -> raise (TypeError (Pretty.TAL.show_aop op ^ ": operand has type " ^ Pretty.TAL.show t ^ ", not int.", l))
         | _ -> tc_is l (set_reg context (List.Assoc.add (get_reg context) rd TInt)) is
       end
     | Imv (l,rd,u)::is, QR r when rd = r ->
@@ -404,24 +397,24 @@ end = struct
         | _ -> context in
       tc_is l (set_reg context (List.Assoc.add (get_reg context) rd (tc_u context u))) is
     | Iimport (l,rd,z,s,t,f)::is, (QR _ as q) | Iimport (l,rd,z,s,t,f)::is, (QEpsilon _ as q) ->
-      raise (TypeError ("import: return marker must be end or stack position, not " ^ TAL'.show_q q ^ ".", l))
+      raise (TypeError ("import: return marker must be end or stack position, not " ^ Pretty.TAL.show_q q ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, _ when
         TAL.stack_pref_length s > TAL.stack_pref_length (get_stack context) ||
         not (TAL'.s_eq (TAL.stack_drop (get_stack context) (TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s)) s) ->
       raise (TypeError ("import: protected suffix does not match current stack. Suffix is " ^
-                        TAL'.show_sigma s ^ ", but current stack is " ^ TAL'.show_sigma (get_stack context) ^ ".", l))
+                        Pretty.TAL.show_sigma s ^ ", but current stack is " ^ Pretty.TAL.show_sigma (get_stack context) ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, QI i when
         (let exposed = (TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s) in
          i < exposed) ->
       raise (TypeError ("import: return marker is not in protected suffix of stack. It's at position " ^
                         string_of_int i ^
-                        " and current stack is " ^ TAL'.show_sigma (get_stack context) ^ ".", l))
+                        " and current stack is " ^ Pretty.TAL.show_sigma (get_stack context) ^ ".", l))
     | Iimport (l,rd,z,s,t,f)::is, _ ->
       let pref = TAL.stack_take (get_stack context) (TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s) in
       let suf = TAL.stack_drop (get_stack context) (TAL.stack_pref_length (get_stack context) - TAL.stack_pref_length s) in
       begin match tc (set_stack (set_ret context QOut) (SAbstract (pref, z))) (FC f) with
         | (FT t',s') when not (F'.t_eq t t') ->
-          raise (TypeError ("import: F expression has type " ^ F'.show t' ^ ", but should have type " ^ F'.show t ^ ".", l))
+          raise (TypeError ("import: F expression has type " ^ Pretty.F.show t' ^ ", but should have type " ^ Pretty.F.show t ^ ".", l))
         | (FT t',SConcrete _)  ->
           raise (TypeError ("import: F expression does not protect abstract stack tail.", l))
         | (FT t',SAbstract (_, z')) when z <> z'  ->
@@ -430,22 +423,22 @@ end = struct
         | _  -> raise (TypeError ("import: Uh-oh, got something I didn't understand.", l))
       end
     | [Ihalt (l,t,s,r)], QEnd (t',s') when not (TAL'.t_eq t' t) ->
-      raise (TypeError ("halt: specified return type, " ^ TAL'.show t ^ ", does not match return marker's: " ^ TAL'.show t' ^ ".", l))
+      raise (TypeError ("halt: specified return type, " ^ Pretty.TAL.show t ^ ", does not match return marker's: " ^ Pretty.TAL.show t' ^ ".", l))
     | [Ihalt (l,t,s,r)], QEnd (t',s') when not (TAL'.s_eq s s') ->
-      raise (TypeError ("halt: specified stack, " ^ TAL'.show_sigma s ^ ", does not match return marker's: " ^ TAL'.show_sigma s' ^ ".", l))
+      raise (TypeError ("halt: specified stack, " ^ Pretty.TAL.show_sigma s ^ ", does not match return marker's: " ^ Pretty.TAL.show_sigma s' ^ ".", l))
     | [Ihalt (l,t,s,r)], QEnd _ when not (TAL'.s_eq s (get_stack context)) ->
-      raise (TypeError ("halt: specified stack, " ^ TAL'.show_sigma s ^
+      raise (TypeError ("halt: specified stack, " ^ Pretty.TAL.show_sigma s ^
                         ", does not match current stack: " ^
-                        TAL'.show_sigma (get_stack context) ^ ".", l))
+                        Pretty.TAL.show_sigma (get_stack context) ^ ".", l))
     | [Ihalt (l,t,s,r)], QEnd _ ->
       begin match List.Assoc.find (get_reg context) r with
         | Some t' when TAL'.t_eq t t' -> ()
         | Some t' -> raise (TypeError ("halt: value in return register " ^ r ^
-                                       " should have type " ^ TAL'.show t ^ " but instead is " ^ TAL'.show t' ^ ".", l))
+                                       " should have type " ^ Pretty.TAL.show t ^ " but instead is " ^ Pretty.TAL.show t' ^ ".", l))
         | None -> raise (TypeError ("halt: return register " ^ r ^ " is empty.", l))
       end
     | [Ihalt (l,_,_,_)], q ->
-      raise (TypeError ("halt: return marker must be end{}, instead is: " ^ TAL'.show_q q ^ ".", l))
+      raise (TypeError ("halt: return marker must be end{}, instead is: " ^ Pretty.TAL.show_q q ^ ".", l))
     | Isalloc (l,n) :: is, _ ->
       tc_is l (set_stack context (List.fold_left ~f:(fun s _ -> TAL.stack_cons TUnit s)
                                   ~init:(get_stack context) (List.init ~f:(fun x -> x) n))) is
@@ -466,8 +459,8 @@ end = struct
                         string_of_int (List.length pref) ^ " cells: the return address would be hidden.", l))
     | Iprotect (l,pref, v)::is, _ when not (TAL'.s_pref_eq (TAL.stack_take (get_stack context) (List.length pref)) pref) ->
       raise (TypeError ("protect: specified prefix " ^
-                        TAL'.show_sigma_prefix pref ^ " does not match current stack: " ^
-                        TAL'.show_sigma (get_stack context) ^ ".", l))
+                        Pretty.TAL.show_sigma_prefix pref ^ " does not match current stack: " ^
+                        Pretty.TAL.show_sigma (get_stack context) ^ ".", l))
     | Iprotect (l,pref, v)::is, _ ->
       let stail = TAL.stack_drop (get_stack context) (List.length pref) in
       let new_q = TAL'.retmarker_sub (SAbs (stail, v)) (get_ret context) in
@@ -513,7 +506,7 @@ end = struct
           let t = List.nth_exn ps n in
           tc_is l (set_reg context (List.Assoc.add (get_reg context) rd t)) is
         | Some t ->
-          raise (TypeError ("ld: can't load from non-tuple of type " ^ TAL'.show t ^ ".", l))
+          raise (TypeError ("ld: can't load from non-tuple of type " ^ Pretty.TAL.show t ^ ".", l))
       end
     | Ist(l,rd, n, rs)::is, QR r when r = rd ->
       raise (TypeError ("st: can't overwrite current return address in register " ^ rd ^ ".", l))
@@ -531,12 +524,12 @@ end = struct
               let t' = List.nth_exn ps n in
               if not (TAL'.t_eq t t') then
                 raise (TypeError ("st: can't overwrite a position with type "
-                                  ^ TAL'.show t' ^ " with a value of type " ^ TAL'.show t ^ ".", l))
+                                  ^ Pretty.TAL.show t' ^ " with a value of type " ^ Pretty.TAL.show t ^ ".", l))
               else tc_is l context is
             | Some (TBox (PTuple _)) ->
               raise (TypeError ("st: can't write to a box (i.e., immutable) tuple.", l))
             | Some t ->
-              raise (TypeError ("st: can't store to a non-tuple of type: " ^ TAL'.show t ^ ".", l))
+              raise (TypeError ("st: can't store to a non-tuple of type: " ^ Pretty.TAL.show t ^ ".", l))
           end
       end
     | Iralloc (l,rd, n)::is, _ when TAL.stack_pref_length (get_stack context) < n ->
@@ -572,7 +565,7 @@ end = struct
         | TExists (a', t) ->
           let newt = TAL'.type_sub (TType (a, TVar a')) t in
           tc_is l (set_reg context (List.Assoc.add (get_reg context) rd newt)) is
-        | t -> raise (TypeError ("unpack: operand is non-existential of type " ^ TAL'.show t ^ ".", l))
+        | t -> raise (TypeError ("unpack: operand is non-existential of type " ^ Pretty.TAL.show t ^ ".", l))
       end
     | Iunfold (l,rd, u)::is, QR r when rd = r ->
       raise (TypeError ("unfold: can't overwrite current return address in register " ^ rd ^ ".", l))
@@ -581,7 +574,7 @@ end = struct
         | TRec (a, t) ->
           let t' = TAL'.type_sub (TType (a, TRec (a,t))) t in
           tc_is l (set_reg context (List.Assoc.add (get_reg context) rd t')) is
-        | t -> raise (TypeError ("unfold: operand is non-fold of type " ^ TAL'.show t ^ ".", l))
+        | t -> raise (TypeError ("unfold: operand is non-fold of type " ^ Pretty.TAL.show t ^ ".", l))
       end
     | [Iret (l,rt, rv)], QR r when r = rt ->
       begin match List.Assoc.find (get_reg context) rt,
@@ -589,11 +582,11 @@ end = struct
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta when ra <> rv ->
         raise (TypeError ("ret: returning to a block expecting value in register " ^ ra ^ ", not " ^ rv ^ ".", l))
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta when not (TAL'.t_eq ta t) ->
-        raise (TypeError ("ret: returning to a block expecting value of type " ^ TAL'.show t ^ ", not " ^ TAL'.show ta ^ ".", l))
+        raise (TypeError ("ret: returning to a block expecting value of type " ^ Pretty.TAL.show t ^ ", not " ^ Pretty.TAL.show ta ^ ".", l))
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta when not (TAL'.s_eq s (get_stack context)) ->
         raise (TypeError ("ret: returning to a block expecting stack of type " ^
-                          TAL'.show_sigma s ^ " but current stack has type " ^
-                          TAL'.show_sigma (get_stack context) ^ ".", l))
+                          Pretty.TAL.show_sigma s ^ " but current stack has type " ^
+                          Pretty.TAL.show_sigma (get_stack context) ^ ".", l))
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), Some ta -> ()
       | Some (TBox (PBlock ([], [(ra,t)], s, q))), None ->
         raise (TypeError ("ret: value register " ^ ra ^ " is empty.", l))
@@ -603,39 +596,39 @@ end = struct
       raise (TypeError ("ret: return marker says to return to " ^
                         r ^ ", but trying to return to " ^ rt ^ ".", l))
     | [Iret (l,rt, rv)], q  ->
-      raise (TypeError ("ret: return marker isn't register " ^ rt ^ ", it's " ^ TAL'.show_q q ^ ".", l))
+      raise (TypeError ("ret: return marker isn't register " ^ rt ^ ", it's " ^ Pretty.TAL.show_q q ^ ".", l))
     | [Ijmp (l,u)], q -> begin match tc_u context u with
         | TBox (PBlock ([], c, s, q')) when not (TAL'.q_eq q q') ->
-          raise (TypeError ("jmp: current return marker is " ^ TAL'.show_q q ^
-                            ", but trying to jump to block with return marker " ^ TAL'.show_q q' ^ ".", l))
+          raise (TypeError ("jmp: current return marker is " ^ Pretty.TAL.show_q q ^
+                            ", but trying to jump to block with return marker " ^ Pretty.TAL.show_q q' ^ ".", l))
         | TBox (PBlock ([], c, s, q')) when not (TAL'.s_eq s (get_stack context)) ->
           raise (TypeError ("jmp: block being jumped to expects stack of type " ^
-                            TAL'.show_sigma s ^ ", but current stack has type " ^
-                            TAL'.show_sigma (get_stack context) ^ ".", l))
+                            Pretty.TAL.show_sigma s ^ ", but current stack has type " ^
+                            Pretty.TAL.show_sigma (get_stack context) ^ ".", l))
         | TBox (PBlock ([], c, s, q')) when not (TAL'.register_subset c (get_reg context)) ->
-          raise (TypeError ("jmp: block being jumped to expects register file of type " ^ TAL'.show_chi c ^
-                            ", but current register file has type " ^ TAL'.show_chi (get_reg context) ^ ".", l))
+          raise (TypeError ("jmp: block being jumped to expects register file of type " ^ Pretty.TAL.show_chi c ^
+                            ", but current register file has type " ^ Pretty.TAL.show_chi (get_reg context) ^ ".", l))
         | TBox (PBlock ([], c, s, q')) -> ()
-        | t -> raise (TypeError ("jmp: can't jump to non-block of type " ^ TAL'.show t ^ ".", l))
+        | t -> raise (TypeError ("jmp: can't jump to non-block of type " ^ Pretty.TAL.show t ^ ".", l))
       end
     | Ibnz(l,rt,u)::is, q -> begin match List.Assoc.find (get_reg context) rt with
         | None -> raise (TypeError ("bnz: test register " ^ rt ^ " is empty.", l))
         | Some t when t <> TInt ->
-          raise (TypeError ("bnz: test register has type " ^ TAL'.show t ^ ", not int.", l))
+          raise (TypeError ("bnz: test register has type " ^ Pretty.TAL.show t ^ ", not int.", l))
         | Some t -> begin match tc_u context u with
             | TBox (PBlock ([], c, s, q')) when not (TAL'.q_eq q q') ->
-              raise (TypeError ("bnz: current return marker is " ^ TAL'.show_q q ^
+              raise (TypeError ("bnz: current return marker is " ^ Pretty.TAL.show_q q ^
                                 ", but trying to branch to a block with return marker " ^
-                                TAL'.show_q q' ^ ".", l))
+                                Pretty.TAL.show_q q' ^ ".", l))
             | TBox (PBlock ([], c, s, q')) when not (TAL'.s_eq s (get_stack context)) ->
-              raise (TypeError ("bnz: block being branched to expects stack of type " ^ TAL'.show_sigma s ^
-                                ", but current stack has type " ^ TAL'.show_sigma (get_stack context) ^ ".", l))
+              raise (TypeError ("bnz: block being branched to expects stack of type " ^ Pretty.TAL.show_sigma s ^
+                                ", but current stack has type " ^ Pretty.TAL.show_sigma (get_stack context) ^ ".", l))
             | TBox (PBlock ([], c, s, q')) when not (TAL'.register_subset c (get_reg context)) ->
-              raise (TypeError ("bnz: block being branched to expects register file of type " ^ TAL'.show_chi c ^
-                                ", but current register file has type " ^ TAL'.show_chi (get_reg context) ^ ".", l))
+              raise (TypeError ("bnz: block being branched to expects register file of type " ^ Pretty.TAL.show_chi c ^
+                                ", but current register file has type " ^ Pretty.TAL.show_chi (get_reg context) ^ ".", l))
             | TBox (PBlock ([], c, s, q')) ->
               tc_is l context is
-            | t -> raise (TypeError ("bnz: can't branch to non-block of type " ^ TAL'.show t ^ ".", l))
+            | t -> raise (TypeError ("bnz: can't branch to non-block of type " ^ Pretty.TAL.show t ^ ".", l))
           end
       end
     | [Icall(l,u,s,QEnd(t',s'))], QEnd(t,s'') when TAL'.t_eq t t' && TAL'.s_eq s' s'' ->
@@ -646,7 +639,7 @@ end = struct
             raise (TypeError ("call: can't protect suffix of length " ^ string_of_int (TAL.stack_pref_length s) ^
                               " when current stack only has length " ^ string_of_int (TAL.stack_pref_length (get_stack context)) ^ ".", l))
           else if not (TAL'.s_eq hats (SAbstract (TAL.stack_take (get_stack context) pref_len, z))) then
-            raise (TypeError ("call: block being called expects stack of type " ^ TAL'.show_sigma hats ^
+            raise (TypeError ("call: block being called expects stack of type " ^ Pretty.TAL.show_sigma hats ^
                               ", which doesn't match specified prefix.", l))
           else
             begin match TAL.ret_addr_type (set_stack (set_reg context hatc) hats) hatq with
@@ -655,9 +648,9 @@ end = struct
                   | SAbstract (_, z') when z = z' ->
                     if not (TAL'.register_subset (TAL'.chi_sub (EMarker (e, QEnd(t',s'))) (TAL'.chi_sub (SType (z, s)) hatc)) (get_reg context)) then
                       raise (TypeError ("call: block being called expects register file with type " ^
-                                        TAL'.show_chi (TAL'.chi_sub (EMarker (e, QEnd(t',s'))) (TAL'.chi_sub (SType (z, s)) hatc)) ^
+                                        Pretty.TAL.show_chi (TAL'.chi_sub (EMarker (e, QEnd(t',s'))) (TAL'.chi_sub (SType (z, s)) hatc)) ^
                                         " which is not compatible with current register file of type " ^
-                                        TAL'.show_chi (get_reg context) ^ ".", l))
+                                        Pretty.TAL.show_chi (get_reg context) ^ ".", l))
                     else
                       ()
                   | _ ->
@@ -665,7 +658,7 @@ end = struct
                 end
               | _ -> raise (TypeError ("call: block being called to does not return to block with abstract return marker.", l))
             end
-        | t -> raise (TypeError ("call: block being called does not follow calling convention: " ^ TAL'.show t ^ ".", l))
+        | t -> raise (TypeError ("call: block being called does not follow calling convention: " ^ Pretty.TAL.show t ^ ".", l))
       end
     | [Icall(l,u,s,QI i')], QI i ->
       begin match tc_u context u with
@@ -675,7 +668,7 @@ end = struct
             raise (TypeError ("call: can't protect suffix of length " ^ string_of_int (TAL.stack_pref_length s) ^
                               " when current stack only has length " ^ string_of_int (TAL.stack_pref_length (get_stack context)) ^ ".", l))
           else if not (TAL'.s_eq hats (SAbstract (TAL.stack_take (get_stack context) pref_len, z))) then
-            raise (TypeError ("call: block being called expects stack of type " ^ TAL'.show_sigma hats ^
+            raise (TypeError ("call: block being called expects stack of type " ^ Pretty.TAL.show_sigma hats ^
                               ", which doesn't match specified prefix.", l))
           else if i < pref_len then
             raise (TypeError ("call: return marker is stored at position " ^ string_of_int i ^
@@ -691,9 +684,9 @@ end = struct
                   | SAbstract (_, z') when z = z' ->
                     if not (TAL'.register_subset (TAL'.chi_sub (EMarker (e, QI i')) (TAL'.chi_sub (SType (z, s)) hatc)) (get_reg context)) then
                       raise (TypeError ("call: block being called expects register file with type " ^
-                                        TAL'.show_chi (TAL'.chi_sub (EMarker (e, QI i')) (TAL'.chi_sub (SType (z, s)) hatc)) ^
+                                        Pretty.TAL.show_chi (TAL'.chi_sub (EMarker (e, QI i')) (TAL'.chi_sub (SType (z, s)) hatc)) ^
                                         " which is not compatible with current register file of type " ^
-                                        TAL'.show_chi (get_reg context) ^ ".", l))
+                                        Pretty.TAL.show_chi (get_reg context) ^ ".", l))
                     else
                       ()
                   | _ ->
@@ -701,7 +694,7 @@ end = struct
                 end
               | _ -> raise (TypeError ("call: block being called to does not return to block with abstract return marker.", l))
             end
-        | t -> raise (TypeError ("call: block being called does not follow calling convention: " ^ TAL'.show t ^ ".", l))
+        | t -> raise (TypeError ("call: block being called does not follow calling convention: " ^ Pretty.TAL.show t ^ ".", l))
       end
     | (Ihalt(l,_,_,_)::_), _ -> raise (TypeError ("halt: must be the last instruction in a block.", l))
     | (Iret(l,_,_)::_), _ -> raise (TypeError ("ret: must be the last instruction in a block.", l))
@@ -779,23 +772,15 @@ and F : sig
   open Syntax
   open F
 
-  val show : t -> string
   val t_eq : t -> t -> bool
 
-  val show_binop : binop -> string
-
-  val show_exp : exp -> string
   val get_loc : exp -> l
-
-
-  val show_context : context -> string
 
   val value : exp -> bool
 
   val sub : FTAL.substitution -> exp -> exp
-  val type_sub : FTAL.substitution -> t -> t
 
-  val show_ft : ft -> string
+  val type_sub : FTAL.substitution -> t -> t
 
   val plug : context -> ft -> exp
 
@@ -805,7 +790,6 @@ and F : sig
 
   val stepn : int -> TAL.mem * exp -> TAL.mem * exp
 
-
 end = struct
   module FTAL' = FTAL
   module F' = F
@@ -813,14 +797,6 @@ end = struct
   open Syntax
   open F
 
-  let show_binop x = match x with
-    | BPlus -> "+"
-    | BMinus -> "-"
-    | BTimes -> "*"
-
-  let show t = pretty (Pretty.F.p_t t)
-
-  let show_exp e = pretty (Pretty.F.p_exp e)
   let get_loc = function
     | EVar (l,_)
     | EUnit l
@@ -846,8 +822,6 @@ end = struct
     | EFold _ -> true
     | ETuple (l,es) -> List.for_all ~f:value es
     | _ -> false
-
-  let show_context c = pretty (Pretty.F.p_context c)
 
   type env = (string * t) list
 
@@ -945,10 +919,6 @@ end = struct
   let is_some = function | None -> false
                          | Some _ -> true
 
-  let show_ft = function
-    | F e -> F'.show_exp e
-    | TC c -> TAL'.show_component c
-    | TI is -> TAL'.show_instrs is
 
   let rec decomp e =
     match e with
@@ -1029,22 +999,22 @@ end = struct
     let (h,r,s) = m in
     match decomp e with
     | Some (ctxt, F e') ->
-      let _ = Debug.log "decomp F ctxt" (F'.show_context ctxt) in
-      let _ = Debug.log "decomp F exp" (F'.show_exp e') in
+      let _ = Debug.log "decomp F ctxt" (Pretty.F.show_context ctxt) in
+      let _ = Debug.log "decomp F exp" (Pretty.F.show_exp e') in
       let (m', e'') = step_prim (m, e') in
-      let _ = Debug.log "stepped F exp" (F'.show_exp e'') in
+      let _ = Debug.log "stepped F exp" (Pretty.F.show_exp e'') in
       (m', plug ctxt (F e''))
     | Some (ctxt, TI is) ->
-      let () = Debug.log "decomp TI ctxt" (F'.show_context ctxt) in
-      let _ = Debug.log "decomp TI instrs" (String.concat "; " (List.map ~f:(fun i -> TAL'.show_instr i) is)) in
-      let _ = Debug.log "decomp TI regs" (TAL'.show_regm r) in
-      let _ = Debug.log "decomp TI stack" (TAL'.show_stackm s) in
+      let () = Debug.log "decomp TI ctxt" (Pretty.F.show_context ctxt) in
+      let _ = Debug.log "decomp TI instrs" (String.concat "; " (List.map ~f:(fun i -> Pretty.TAL.show_instr i) is)) in
+      let _ = Debug.log "decomp TI regs" (Pretty.TAL.show_regm r) in
+      let _ = Debug.log "decomp TI stack" (Pretty.TAL.show_stackm s) in
       let (m', is') = TAL'.reduce (m, is) in
       let (h',r',s') = m' in
-      let _ = Debug.log "stepped TI instrs" (String.concat "; " (List.map ~f:(fun i -> TAL'.show_instr i) is')) in
-      let _ = Debug.log "stepped TI regs" (TAL'.show_regm r') in
-      let _ = Debug.log "stepped TI stack" (TAL'.show_stackm s') in
-      let _ = Debug.log "stepped TI heap" (TAL'.show_heapm h') in
+      let _ = Debug.log "stepped TI instrs" (String.concat "; " (List.map ~f:(fun i -> Pretty.TAL.show_instr i) is')) in
+      let _ = Debug.log "stepped TI regs" (Pretty.TAL.show_regm r') in
+      let _ = Debug.log "stepped TI stack" (Pretty.TAL.show_stackm s') in
+      let _ = Debug.log "stepped TI heap" (Pretty.TAL.show_heapm h') in
       (m', plug ctxt (TI is'))
     | Some (ctxt, TC (l,is,h)) ->
       let m' = TAL'.load m h in
@@ -1071,42 +1041,13 @@ and TAL : sig
 
   val register_subset : chi -> chi -> bool
 
-  val show : t -> string
   val t_eq : t -> t -> bool
-  val show_sigma : sigma -> string
-  val show_sigma_prefix : sigma_prefix -> string
   val s_eq : sigma -> sigma -> bool
   val s_pref_eq : sigma_prefix -> sigma_prefix -> bool
-  val show_q : q -> string
   val q_eq : q -> q -> bool
   val psi_elem_eq : psi_elem -> psi_elem -> bool
-  val show_psi_elem : psi_elem -> string
-  val show_chi : chi -> string
-
-  val show_omega : omega -> string
-
-  val show_w : w -> string
-
-  val show_u : u -> string
-
-  val show_aop : aop -> string
-
-  val show_instr : instr -> string
-  val show_instrs : instr list -> string
-
-  val show_h : h -> string
-
-  val show_heapm : heapm -> string
-
-  val show_regm : regm -> string
-
-  val show_stackm : stackm -> string
 
   val load : mem -> heapm -> mem
-
-  val show_component : component -> string
-
-  val show_context : context -> string
 
   val sub : FTAL.substitution -> component -> component
 
@@ -1135,45 +1076,11 @@ end = struct
   open Syntax
   open TAL
 
-  let show_aop x = match x with
-    | Add -> "+"
-    | Sub -> "-"
-    | Mult -> "*"
-  let show_delta x = pretty (Pretty.TAL.p_delta x)
-
-  let show_sigma s = pretty (Pretty.TAL.p_s s)
-  let show_sigma_prefix s = pretty (Pretty.TAL.p_sigma_prefix s)
-  let show t = pretty (Pretty.TAL.p_t t)
-  let show_psi_elem p = pretty (Pretty.TAL.p_psi p)
-  let show_q q = pretty (Pretty.TAL.p_q q)
-  let show_chi c = pretty (Pretty.TAL.p_chi c)
-
-
-  let show_omega o = pretty (Pretty.TAL.p_o o)
-  let show_omega_list x = pretty (Pretty.TAL.p_o_list x)
-
-  let show_w w = pretty (Pretty.TAL.p_w w)
-
-  let show_u u = pretty (Pretty.TAL.p_u u)
-
-  let show_instr i = pretty (Pretty.TAL.p_instr i)
-  let show_instrs is = pretty (Pretty.TAL.p_instruction_sequence is)
-
-  let show_h h = pretty (Pretty.TAL.p_h h)
-
-  let show_heapm m = pretty (Pretty.TAL.p_heapm m)
-  let show_regm m = pretty (Pretty.TAL.p_regm m)
-  let show_stackm m = pretty (Pretty.TAL.p_stackm m)
-
 
   let load (h,r,s) h' =
     (* NOTE(dbp 2016-09-08): We should do renaming, but relying, for now, on the fact
        that we always gensym new location names, so not renaming should be safe. *)
     (List.append h' h, r, s)
-
-  let show_component c = pretty (Pretty.TAL.p_component c)
-
-  let show_context c = pretty (Pretty.TAL.p_context c)
 
   let un_ti = function
     | F.TI is -> is
@@ -1431,7 +1338,7 @@ end = struct
         | DEpsilon e, OQ q -> FTAL.EMarker (e,q)
         | _ ->
           raise (Failure ("Trying to instantiate wrong type of type variables: "
-                          ^ show_delta delt ^ " and " ^ show_omega_list os)))
+                          ^ Pretty.TAL.show_delta delt ^ " and " ^ Pretty.TAL.show_omega_list os)))
       delt os
 
 

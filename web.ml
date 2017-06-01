@@ -42,13 +42,13 @@ let parse_report_loc parse_fun str =
 let simple = Examples.simple
 let omega = Examples.omega
 let import = Examples.import
-let higher_order = Ftal.F.show_exp Examples.higher_order
-let factorial_f = Ftal.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.factorial_f, [F.EInt (dummy_loc, 3)]))
-let factorial_t = Ftal.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.factorial_t, [F.EInt (dummy_loc, 3)]))
-let call_to_call = Ftal.F.show_exp Syntax.(F.(EBoundary (dummy_loc, TInt, None, Examples.call_to_call)))
-let blocks_1 = Ftal.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.blocks_1, [F.EInt (dummy_loc, 3)]))
-let blocks_2 = Ftal.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.blocks_2, [F.EInt (dummy_loc, 3)]))
-let with_ref = Ftal.F.show_exp Examples.with_ref
+let higher_order = Pretty.F.show_exp Examples.higher_order
+let factorial_f = Pretty.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.factorial_f, [F.EInt (dummy_loc, 3)]))
+let factorial_t = Pretty.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.factorial_t, [F.EInt (dummy_loc, 3)]))
+let call_to_call = Pretty.F.show_exp Syntax.(F.(EBoundary (dummy_loc, TInt, None, Examples.call_to_call)))
+let blocks_1 = Pretty.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.blocks_1, [F.EInt (dummy_loc, 3)]))
+let blocks_2 = Pretty.F.show_exp Syntax.(F.EApp (dummy_loc, Examples.blocks_2, [F.EInt (dummy_loc, 3)]))
+let with_ref = Pretty.F.show_exp Examples.with_ref
 let stack_error = Examples.stack_error
 let call_error = Examples.call_error
 
@@ -88,20 +88,20 @@ let _ =
       | None ->
         H.((getElementById "next")##setAttribute (Js.string "disabled") (Js.string "on"));
         H.((getElementById "many")##setAttribute (Js.string "disabled") (Js.string "on"));
-        let _ = set_text "context" (Ftal.F.show_exp e) in
+        let _ = set_text "context" (Pretty.F.show_exp e) in
         let _ = set_text "focus" "" in
         ()
       | Some (c, f) ->
         H.((getElementById "next")##removeAttribute (Js.string "disabled"));
         H.((getElementById "many")##removeAttribute (Js.string "disabled"));
-        let _ = set_text "context" (Ftal.F.show_context c) in
-        let _ = set_text "focus" (Ftal.F.show_ft f) in
+        let _ = set_text "context" (Pretty.F.show_context c) in
+        let _ = set_text "focus" (Pretty.F.show_ft f) in
         ()
     in
     let _ = set_text "pc" (string_of_int (List.length past)) in
-    let _ = set_text "registers" (Ftal.TAL.show_regm r) in
-    let _ = set_text "stack" (Ftal.TAL.show_stackm s) in
-    let _ = set_text "heap" (Ftal.TAL.show_heapm h) in
+    let _ = set_text "registers" (Pretty.TAL.show_regm r) in
+    let _ = set_text "stack" (Pretty.TAL.show_stackm s) in
+    let _ = set_text "heap" (Pretty.TAL.show_heapm h) in
     ()
   in
   let next' _ =

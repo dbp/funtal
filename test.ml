@@ -683,8 +683,8 @@ let test_ft_factorial_t_ty _ =
 
 let test_examples _ =
   let assert_roundtrip_f fexpr =
-    let reparsed = Parse.parse_string Parse.f_expression_eof (Ftal.F.show_exp fexpr) in
-    let rereparsed = Parse.parse_string Parse.f_expression_eof (Ftal.F.show_exp reparsed) in
+    let reparsed = Parse.parse_string Parse.f_expression_eof (Pretty.F.show_exp fexpr) in
+    let rereparsed = Parse.parse_string Parse.f_expression_eof (Pretty.F.show_exp reparsed) in
     assert_equal reparsed rereparsed in
   let assert_roundtrip_c comp =
     let show_comp comp =
