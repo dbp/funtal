@@ -13,7 +13,7 @@ XOCamlbuildPluginTags: package(js_of_ocaml.ocamlbuild)
 
 Library "ftal"
   Path: .
-  Modules: Syntax, Pretty, Ftal, Examples, Parser, Parse, Lexer, Utils
+  Modules: Syntax, Pretty, Typecheck, Interp, Examples, Parser, Parse, Lexer, Utils
   BuildDepends: ppx_deriving.show,str,pprint,unix,menhirLib
 
 Executable "web"

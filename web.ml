@@ -84,7 +84,7 @@ let _ =
   let hist = ref ((Syntax.F.EUnit Syntax.dummy_loc, ([],[],[])), []) in
   let refresh _ =
     let ((e, (h,r,s)), past) = !hist in
-    let _ = match Ftal.F.decomp e with
+    let _ = match Interp.F.decomp e with
       | None ->
         H.((getElementById "next")##setAttribute (Js.string "disabled") (Js.string "on"));
         H.((getElementById "many")##setAttribute (Js.string "disabled") (Js.string "on"));
@@ -106,7 +106,7 @@ let _ =
   in
   let next' _ =
     let ((e,m), rest) = !hist in
-    let (nm,ne) = Ftal.F.step (m, e) in
+    let (nm,ne) = Interp.F.step (m, e) in
     if e = ne && m = nm
     then ()
     else hist := ((ne,nm), (e,m)::rest)

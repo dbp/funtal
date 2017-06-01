@@ -45,7 +45,7 @@ let assert_eint e n =
 
 
 let test1 _ = assert_eint
-    (snd (Ftal.F.stepn 10 (empty, f_expr "1 + 1")))
+    (snd (Interp.F.stepn 10 (empty, f_expr "1 + 1")))
     2
 
 let test1_ty _ = assert_equal
@@ -56,7 +56,7 @@ let test1_ty _ = assert_equal
 
 let test2 _ =
   assert_eint
-    (snd (Ftal.F.stepn 10 (empty, F.EBoundary (dummy_loc, F.TInt, None,
+    (snd (Interp.F.stepn 10 (empty, F.EBoundary (dummy_loc, F.TInt, None,
                                           (tal_comp
                                              "([mv r1, 1;
                                           add r1, r1, 1;
@@ -66,17 +66,17 @@ let test2 _ =
 
 let test_f_app _ =
   assert_eint
-    (snd (Ftal.F.stepn 10 (empty, f_expr "(lam (x:int). x + x) 1")))
+    (snd (Interp.F.stepn 10 (empty, f_expr "(lam (x:int). x + x) 1")))
     2
 
 let test_factorial_f _ =
   assert_eint
-    (snd (Ftal.F.stepn 300 (empty, F.EApp (dummy_loc, factorial_f, [F.EInt (dummy_loc, 3)]))))
+    (snd (Interp.F.stepn 300 (empty, F.EApp (dummy_loc, factorial_f, [F.EInt (dummy_loc, 3)]))))
     6
 
 let test_with_ref _ =
   assert_eint
-    (snd (Ftal.F.stepn 300 (empty, with_ref)))
+    (snd (Interp.F.stepn 300 (empty, with_ref)))
     7
 
 
@@ -376,7 +376,7 @@ let call_tl =
 
 
 let test_call_tl _ =
-  assert_eint (snd (Ftal.F.stepn 30 (empty, call_tl))) 10
+  assert_eint (snd (Interp.F.stepn 30 (empty, call_tl))) 10
 
 let test_call_tl_ty _ =
   assert_equal
@@ -484,7 +484,7 @@ let call_st =
                     [halt int, * {r1}]])")
 
 let test_call_st _ =
-  assert_eint (snd (Ftal.F.stepn 30 (empty, call_st))) 0
+  assert_eint (snd (Interp.F.stepn 30 (empty, call_st))) 0
 
 let test_call_st_ty _ =
   assert_equal
@@ -569,7 +569,7 @@ let test_call_st_ty_exc3 _ =
 
 let test_call_to_call _ =
   assert_eint
-    (snd (Ftal.F.stepn 50 (empty, F.EBoundary (dummy_loc, F.TInt, None, call_to_call))))
+    (snd (Interp.F.stepn 50 (empty, F.EBoundary (dummy_loc, F.TInt, None, call_to_call))))
     2
 
 
@@ -599,7 +599,7 @@ let test_with_ref_ty _ =
 
 let test_factorial_t _ =
   assert_eint
-    (snd (Ftal.F.stepn 30 (empty, F.EApp (dummy_loc, factorial_t, [F.EInt (dummy_loc, 3)]))))
+    (snd (Interp.F.stepn 30 (empty, F.EApp (dummy_loc, factorial_t, [F.EInt (dummy_loc, 3)]))))
     6
 
 let test_factorial_t_ty _ =
@@ -612,7 +612,7 @@ let test_factorial_t_ty _ =
 
 let test_higher_order _ =
   assert_eint
-    (snd (Ftal.F.stepn 60 (empty, higher_order)))
+    (snd (Interp.F.stepn 60 (empty, higher_order)))
     2
 
 
@@ -635,7 +635,7 @@ let f_closures =
 
 let test_closures _ =
   assert_eint
-    (snd (Ftal.F.stepn 50 (empty, F.EApp (dummy_loc, f_closures, [F.EInt (dummy_loc, 3)]))))
+    (snd (Interp.F.stepn 50 (empty, F.EApp (dummy_loc, f_closures, [F.EInt (dummy_loc, 3)]))))
     2
 
 let test_closures_ty _ =
@@ -647,7 +647,7 @@ let test_closures_ty _ =
 
 let test_blocks1 _ =
   assert_eint
-    (snd (Ftal.F.stepn 20 (empty, F.EApp (dummy_loc, blocks_1, [F.EInt (dummy_loc, 3)]))))
+    (snd (Interp.F.stepn 20 (empty, F.EApp (dummy_loc, blocks_1, [F.EInt (dummy_loc, 3)]))))
     5
 
 let test_blocks1_ty _ =
@@ -660,7 +660,7 @@ let test_blocks1_ty _ =
 
 let test_blocks2 _ =
   assert_eint
-    (snd (Ftal.F.stepn 30 (empty, F.EApp (dummy_loc, blocks_2, [F.EInt (dummy_loc, 3)]))))
+    (snd (Interp.F.stepn 30 (empty, F.EApp (dummy_loc, blocks_2, [F.EInt (dummy_loc, 3)]))))
     5
 
 let test_blocks2_ty _ =
@@ -672,7 +672,7 @@ let test_blocks2_ty _ =
 
 let test_ft_factorial_t_ty _ =
   let (l, h) = factorial_t' in
-  let ((h',_,_),e) = Ftal.FTAL.ft (F.TArrow ([F.TInt], F.TInt)) l (h,[],[]) in
+  let ((h',_,_),e) = Interp.FTAL.ft (F.TArrow ([F.TInt], F.TInt)) l (h,[],[]) in
   let context = Typecheck.FTAL.default_context TAL.QOut in
   let ht = List.map (fun (l,(m, p)) -> (l, (m, Typecheck.FTAL.tc_h_shallow context dummy_loc TAL.Box p))) h' in
   assert_equal
